@@ -1,57 +1,65 @@
-version: '2'
+version: '3'
 services:
-
-# SERVICE1: APACHE SPARK -------------------------------------
-  spark:
-    image: docker.io/bitnami/spark:3
-    environment:
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-    ports:
-      - '8080:8080'
-  spark-worker:
-    image: docker.io/bitnami/spark:3
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=1
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-
-# SERVICE2: HDFS ---------------------------------------------
-  namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
-    container_name: hdfs-namenode
-    restart: always
-    ports:
-      - 9870:9870
-      - 9000:9000
-    environment:
-      - CLUSTER_NAME=test
-      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - HDFS_CONF_dfs_permissions_enabled=false
-      - HDFS_CONF_dfs_replication=1
-
-  datanode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: hdfs-datanode
-    restart: always
-    environment:
-      SERVICE_PRECONDITION: "namenode:9870"
+#
+## SERVICE1: APACHE SPARK -------------------------------------
+#  spark:
+#    image: docker.io/bitnami/spark:3
+#    environment:
+#      - SPARK_MODE=master
+#      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+#      - SPARK_RPC_ENCRYPTION_ENABLED=no
+#      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+#      - SPARK_SSL_ENABLED=no
+#    ports:
+#      - '8080:8080'
+#  spark-worker:
+#    image: docker.io/bitnami/spark:3
+#    environment:
+#      - SPARK_MODE=worker
+#      - SPARK_MASTER_URL=spark://spark:7077
+#      - SPARK_WORKER_MEMORY=1G
+#      - SPARK_WORKER_CORES=1
+#      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+#      - SPARK_RPC_ENCRYPTION_ENABLED=no
+#      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+#      - SPARK_SSL_ENABLED=no
+#
+## SERVICE2: HDFS ---------------------------------------------
+#  namenode:
+#    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+#    container_name: hdfs-namenode
+#    restart: always
+#    ports:
+#      - 9870:9870
+#      - 9000:9000
+#    environment:
+#      - CLUSTER_NAME=test
+#      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+#      - HDFS_CONF_dfs_permissions_enabled=false
+#      - HDFS_CONF_dfs_replication=1
+#
+#  datanode:
+#    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+#    container_name: hdfs-datanode
+#    restart: always
+#    environment:
+#      SERVICE_PRECONDITION: "namenode:9870"
 
 
 # SERVICE3: NIFI ----------------------------------------------
   nifi:
-    image: apache/nifi
+    image: apache/nifi:latest
+    restart: always
     container_name: nifi
     ports:
-      - '9090:8080'
+      - '8181:8181'
+    environment:
+      NIFI_WEB_HTTP_PORT: '8181'
+    volumes:
+      - .nifi:/opt/nifi/nifi-current/ls-target
+      - type: bind
+        source: .nifi/security/cacerts
+        target: /opt/nifi/nifi-current/cacerts
 
 # SERVICE4: REDIS ---------------------------------------------
 #  redis:
@@ -59,3 +67,6 @@ services:
 #    container_name: redis-cache
 #    ports:
 #      - #to be defined
+
+volumes:
+  nifi-volume:
