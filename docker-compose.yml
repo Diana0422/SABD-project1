@@ -1,58 +1,109 @@
 version: '3'
 services:
-#
-## SERVICE1: APACHE SPARK -------------------------------------
-#  spark:
-#    image: docker.io/bitnami/spark:3
-#    environment:
-#      - SPARK_MODE=master
-#      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-#      - SPARK_RPC_ENCRYPTION_ENABLED=no
-#      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-#      - SPARK_SSL_ENABLED=no
-#    ports:
-#      - '8080:8080'
-#  spark-worker:
-#    image: docker.io/bitnami/spark:3
-#    environment:
-#      - SPARK_MODE=worker
-#      - SPARK_MASTER_URL=spark://spark:7077
-#      - SPARK_WORKER_MEMORY=1G
-#      - SPARK_WORKER_CORES=1
-#      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-#      - SPARK_RPC_ENCRYPTION_ENABLED=no
-#      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-#      - SPARK_SSL_ENABLED=no
-#
-# SERVICE2: HDFS ---------------------------------------------
+  #
+  ## SERVICE1: APACHE SPARK -------------------------------------
+  #  spark:
+  #    image: docker.io/bitnami/spark:3
+  #    environment:
+  #      - SPARK_MODE=master
+  #      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #      - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+  #      - SPARK_SSL_ENABLED=no
+  #    ports:
+  #      - '8080:8080'
+  #  spark-worker:
+  #    image: docker.io/bitnami/spark:3
+  #    environment:
+  #      - SPARK_MODE=worker
+  #      - SPARK_MASTER_URL=spark://spark:7077
+  #      - SPARK_WORKER_MEMORY=1G
+  #      - SPARK_WORKER_CORES=1
+  #      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #      - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+  #      - SPARK_SSL_ENABLED=no
+  #
+
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
-    container_name: hdfs-namenode
+    container_name: namenode
     restart: always
     ports:
       - 9870:9870
       - 9000:9000
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
     environment:
       - CLUSTER_NAME=test
-      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - HDFS_CONF_dfs_permissions_enabled=false
-      - HDFS_CONF_dfs_replication=1
+    env_file:
+      - ./hadoop.env
 
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: hdfs-datanode
+    container_name: datanode
     restart: always
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
     environment:
       SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
 
 
-# SERVICE3: NIFI ----------------------------------------------
+  # SERVICE2: HDFS ---------------------------------------------
+  #  namenode:
+  #    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+  #    container_name: hdfs-namenode
+  #    restart: always
+  #    ports:
+  #      - 9870:9870 # per le connessioni con gli altri container datanode
+  #      - 9000:9000 # per le connessioni dall'esterno
+  #    environment:
+  #      - CLUSTER_NAME=test
+  #      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
+  #      - HDFS_CONF_dfs_permissions_enabled=false
+  #      - HDFS_CONF_dfs_replication=1
+  #    networks:
+  #      - hdfs-net
+  #    volumes:
+  #      - nifi-hdfs:/etc/hadoop
+  ##      - type: volume
+  ##        source: hdfs-volume
+  ##        target: /etc/hadoop/
+  ##        volume:
+  ##          - nocopy: true
+  #      - type: bind
+  #        source: nifi-hdfs/core-site.xml
+  #        target: /etc/hadoop/core-site.xml
+  #      - type: bind
+  #        source: nifi-hdfs/hdfs-site.xml
+  #        target: /etc/hadoop/hdfs-site.xml
+  #
+  #  datanode:
+  #    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+  #    container_name: hdfs-datanode
+  #    restart: always
+  #    networks:
+  #      - hdfs-net
+  #    environment:
+  #      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
+  #    depends_on: #dipende dal namenode
+  #      - namenode
+  #    # links:
+  #    #  - namenode
+  #
+  #      # SERVICE_PRECONDITION: "hdfs-namenode:9870"
+
+
+  # SERVICE3: NIFI ----------------------------------------------
   nifi:
     image: apache/nifi:latest
     restart: always
     container_name: nifi
     ports:
       - '8181:8181'
+      # - '9000:9000' # serve per connettersi al namenode hdfs
     environment:
       NIFI_WEB_HTTP_PORT: '8181'
     volumes:
@@ -60,6 +111,7 @@ services:
       - type: bind
         source: .nifi/security/cacerts
         target: /opt/nifi/nifi-current/cacerts
+      - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # montiamo il volume nifi-hdfs nella cartella hdfs-conf, che è collegata anche in .nifi/hdfs-conf
 
 # SERVICE4: REDIS ---------------------------------------------
 #  redis:
@@ -69,4 +121,18 @@ services:
 #      - #to be defined
 
 volumes:
-  nifi-volume:
+  #  nifi-volume: # crea un volume con nome "nifi-volume"
+  nifi-hdfs:
+    driver: local # Dove salvare i dati? Di default è local
+    external: false # Il container nifi-hdfs è stato definito fuori da docker-compose? Di default è false.
+#  hdfs-volume:
+  hadoop_datanode:
+    driver: local # Dove salvare i dati? Di default è local
+    external: false # Il container nifi-hdfs è stato definito fuori da docker-compose? Di default è false.
+  hadoop_namenode:
+    driver: local # Dove salvare i dati? Di default è local
+    external: false # Il container nifi-hdfs è stato definito fuori da docker-compose? Di default è false.
+
+networks:
+  hdfs-net:
+    driver: bridge
