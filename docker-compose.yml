@@ -25,6 +25,7 @@ services:
   #      - SPARK_SSL_ENABLED=no
   #
 
+  # SERVICE2: HDFS ---------------------------------------------
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
@@ -33,7 +34,20 @@ services:
       - 9870:9870
       - 9000:9000
     volumes:
-      - hadoop_namenode:/hadoop/dfs/name
+      - hadoop_namenode:/hadoop/dfs/name # volume di hdfs namenode
+      - nifi-hdfs:/etc/hadoop # volume in comune con nifi
+      - type: volume
+        source: hdfs-volume
+        target: /etc/hadoop/
+        volume:
+          - nocopy: true
+      - type: bind
+        source: nifi-hdfs/core-site.xml
+        target: /etc/hadoop/core-site.xml
+      - type: bind
+        source: nifi-hdfs/hdfs-site.xml
+        target: /etc/hadoop/hdfs-site.xml
+
     environment:
       - CLUSTER_NAME=test
     env_file:
@@ -49,52 +63,6 @@ services:
       SERVICE_PRECONDITION: "namenode:9870"
     env_file:
       - ./hadoop.env
-
-
-  # SERVICE2: HDFS ---------------------------------------------
-  #  namenode:
-  #    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
-  #    container_name: hdfs-namenode
-  #    restart: always
-  #    ports:
-  #      - 9870:9870 # per le connessioni con gli altri container datanode
-  #      - 9000:9000 # per le connessioni dall'esterno
-  #    environment:
-  #      - CLUSTER_NAME=test
-  #      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
-  #      - HDFS_CONF_dfs_permissions_enabled=false
-  #      - HDFS_CONF_dfs_replication=1
-  #    networks:
-  #      - hdfs-net
-  #    volumes:
-  #      - nifi-hdfs:/etc/hadoop
-  ##      - type: volume
-  ##        source: hdfs-volume
-  ##        target: /etc/hadoop/
-  ##        volume:
-  ##          - nocopy: true
-  #      - type: bind
-  #        source: nifi-hdfs/core-site.xml
-  #        target: /etc/hadoop/core-site.xml
-  #      - type: bind
-  #        source: nifi-hdfs/hdfs-site.xml
-  #        target: /etc/hadoop/hdfs-site.xml
-  #
-  #  datanode:
-  #    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-  #    container_name: hdfs-datanode
-  #    restart: always
-  #    networks:
-  #      - hdfs-net
-  #    environment:
-  #      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
-  #    depends_on: #dipende dal namenode
-  #      - namenode
-  #    # links:
-  #    #  - namenode
-  #
-  #      # SERVICE_PRECONDITION: "hdfs-namenode:9870"
-
 
   # SERVICE3: NIFI ----------------------------------------------
   nifi:
@@ -113,6 +81,9 @@ services:
         target: /opt/nifi/nifi-current/cacerts
       - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # montiamo il volume nifi-hdfs nella cartella hdfs-conf, che è collegata anche in .nifi/hdfs-conf
 
+# nifi salva su HDFS, per vedere il file usa: "hdfs dfs -ls /home/dataset-batch"
+
+
 # SERVICE4: REDIS ---------------------------------------------
 #  redis:
 #    image: redis
@@ -121,18 +92,12 @@ services:
 #      - #to be defined
 
 volumes:
-  #  nifi-volume: # crea un volume con nome "nifi-volume"
-  nifi-hdfs:
+  nifi-hdfs: # volume in comune tra hdfs
     driver: local # Dove salvare i dati? Di default è local
-    external: false # Il container nifi-hdfs è stato definito fuori da docker-compose? Di default è false.
-#  hdfs-volume:
+    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
   hadoop_datanode:
     driver: local # Dove salvare i dati? Di default è local
-    external: false # Il container nifi-hdfs è stato definito fuori da docker-compose? Di default è false.
+    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
   hadoop_namenode:
     driver: local # Dove salvare i dati? Di default è local
-    external: false # Il container nifi-hdfs è stato definito fuori da docker-compose? Di default è false.
-
-networks:
-  hdfs-net:
-    driver: bridge
+    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
