@@ -19,6 +19,7 @@ services:
 
   spark-worker:
     image: docker.io/bitnami/spark:3
+    container_name: spark-worker
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark:7077
@@ -43,7 +44,7 @@ services:
       - '9000:9000' #
     volumes:
       - hadoop_namenode:/hadoop/dfs/name # volume di hdfs namenode
-      - nifi-hdfs:/etc/hadoop # volume in comune con nifi
+      - nifi-hdfs:/etc/hadoop # TODO: serve davvero? volume in comune con nifi
     environment:
       - CLUSTER_NAME=test
     env_file:
@@ -76,7 +77,7 @@ services:
       - type: bind
         source: .nifi/security/cacerts
         target: /opt/nifi/nifi-current/cacerts
-      - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # montiamo il volume nifi-hdfs nella cartella hdfs-conf, che è collegata anche in .nifi/hdfs-conf
+      - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # Todo: serve davvero? montiamo il volume nifi-hdfs nella cartella hdfs-conf, che è collegata anche in .nifi/hdfs-conf
 
 # nifi salva su HDFS, per vedere il file usa: "hdfs dfs -ls /home/dataset-batch"
 

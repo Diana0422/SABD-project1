@@ -1,8 +1,8 @@
 # Comandi Utili
 
-Per recuperare l'<id-container>:
+Per recuperare l'<id-container> e il nome:
 
-    docker ps
+    docker ps --format "table {{.ID}}\t{{.Names}}"
 
 Accedere al file system di un container in esecuzione:
         

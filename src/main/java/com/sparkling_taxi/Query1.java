@@ -12,26 +12,27 @@ public class Query1 {
     public static final String FILE_2 = "hdfs://namenode:9000/home/dataset-batch/ciao.txt";
 
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         // TODO: chiamare NiFi da qui
 
 
         SparkConf conf = new SparkConf()
                 .setMaster("local")
                 .setAppName("Query1");
-        JavaSparkContext sc = new JavaSparkContext(conf);
 
-        System.out.println("====<<<>>0>=>=>===>==== Spark context ok ======>=>><><>>0<00>>==>=>=");
-        // List<String> rows = spark.read().textFile(FILE_2).javaRDD().collect();
-        List<String> collect = sc.textFile(FILE_2).collect();
-        collect.stream().limit(10).forEach(System.out::println);
-//        JavaRDD<String> ds = spark.read().parquet(FILE_1).javaRDD().collect();
-//
-//        System.out.println("====<<<>>0>=>=>===>==== Read ok ======>=>><><>>0<00>>==>=>=");
-//        rows.stream()
-//                .limit(10)
-//                .forEach(System.out::println);
+        // try-with-resources (closes automatically the spark context)
+        try (JavaSparkContext sc = new JavaSparkContext()){
+            System.out.println("====<<<>>0>=>=>===>==== Spark context ok ======>=>><><>>0<00>>==>=>=");
+            // List<String> rows = spark.read().textFile(FILE_2).javaRDD().collect();
 
-        sc.stop();
+            // spark query
+            List<String> collect = sc.textFile(FILE_2).collect();
+
+            // java 8 stream API to print only 10 rows
+            collect.stream().limit(10).forEach(System.out::println);
+
+            // TODO: bisogna lavorare direttamente sui parquet (o in alternativa lavorare sul CSV)
+            // JavaRDD<String> ds = spark.read().parquet(FILE_1).javaRDD().collect();
+        }
     }
 }
