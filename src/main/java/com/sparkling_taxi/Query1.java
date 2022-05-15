@@ -6,17 +6,52 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Query1 {
 
     public static final String FILE_1 = "hdfs://namenode:9000/home/dataset-batch/yellow_tripdata_2021-12.parquet";
+    private static final Pattern SPACE = Pattern.compile(" ");
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+
+        if (args.length < 1) {
+            System.err.println("Usage: JavaWordCount <file>");
+            System.exit(1);
+        }
+
+        SparkSession spark = SparkSession
+                .builder()
+                .appName("JavaWordCount")
+                .getOrCreate();
+
+        JavaRDD<String> lines = spark.read().textFile(args[0]).javaRDD();
+
+        JavaRDD<String> words = lines.flatMap(s -> Arrays.asList(SPACE.split(s)).iterator());
+
+        JavaPairRDD<String, Integer> ones = words.mapToPair(s -> new Tuple2<>(s, 1));
+
+        JavaPairRDD<String, Integer> counts = ones.reduceByKey((i1, i2) -> i1 + i2);
+
+        List<Tuple2<String, Integer>> output = counts.collect();
+        for (Tuple2<?,?> tuple : output) {
+            System.out.println(tuple._1() + ": " + tuple._2());
+        }
+        spark.stop();
+    }
+    /*public static void main(String[] args) {
 //        if (args.length < 1) {
 //            System.err.println("Usage: JavaWordCount <file>");
 //            System.exit(1);
 //        }
+        // connect spark to hdfs inside docker
+//        SparkSession spark = SparkSession.builder()
+//                .master("local")
+//                .appName("query1")
+//                .config("HADOOP_HOME", "hdfs://localhost:9000")
+//                .getOrCreate();
 
         SparkSession spark = SparkSession
                 .builder()
@@ -26,21 +61,21 @@ public class Query1 {
                 .config("hadoop.home.dir", "hdfs://namenode:9000/")
                 .getOrCreate();
 
-        var collect = spark.read().parquet(FILE_1).collectAsList();
-        for (Row row : collect) {
-            System.out.println(row);
-        }
-
-//        JavaRDD<String> words = lines.flatMap(s -> Arrays.asList(SPACE.split(s)).iterator());
-//
-//        JavaPairRDD<String, Integer> ones = words.mapToPair(s -> new Tuple2<>(s, 1));
-//
-//        JavaPairRDD<String, Integer> counts = ones.reduceByKey((i1, i2) -> i1 + i2);
-//
-//        List<Tuple2<String, Integer>> output = counts.collect();
-//        for (JavaRDD<String> tuple : collect.toLocalIterator()) {
-//            System.out.println(tuple);
+//        var collect = spark.read().parquet(FILE_1).collectAsList();
+//        for (Row row : collect) {
+//            System.out.println(row);
 //        }
+
+         JavaRDD<String> words = lines.flatMap(s -> Arrays.asList(SPACE.split(s)).iterator());
+
+        JavaPairRDD<String, Integer> ones = words.mapToPair(s -> new Tuple2<>(s, 1));
+
+        JavaPairRDD<String, Integer> counts = ones.reduceByKey((i1, i2) -> i1 + i2);
+
+        List<Tuple2<String, Integer>> output = counts.collect();
+        for (JavaRDD<String> tuple : collect.toLocalIterator()) {
+            System.out.println(tuple);
+        }
         spark.stop();
-    }
+    }*/
 }

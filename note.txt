@@ -1,0 +1,20 @@
+https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_2021-12.parquet
+https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_2022-01.parquet
+https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_2022-02.parquet
+
+select VendorID, 
+       tpep_pickup_datetime,
+       tpep_dropoff_datetime,
+       passenger_count,
+       trip_distance,
+       PULocationID, 
+       DOLocationID,
+       payment_type,
+       fare_amount,
+       tip_amount,
+       tolls_amount,
+       total_amount
+from FLOWFILE
+
+NOPE: extra, mta_tax, improvement_surcharge
+UNSURE: VendorID, RatecodeID, congestion_surcharge, airport_fee
