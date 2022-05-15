@@ -36,7 +36,6 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.12.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-network-common_2.13:3.2.1" level="project" />
     <orderEntry type="library" name="Maven: com.google.crypto.tink:tink:1.6.0" level="project" />
-    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:3.14.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-network-shuffle_2.13:3.2.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-unsafe_2.13:3.2.1" level="project" />
@@ -109,5 +108,34 @@
     <orderEntry type="library" name="Maven: org.apache.spark:spark-tags_2.13:3.2.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-crypto:1.1.0" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.spark:unused:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.spark:spark-sql_2.13:3.2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.rocksdb:rocksdbjni:6.20.3" level="project" />
+    <orderEntry type="library" name="Maven: com.univocity:univocity-parsers:2.9.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.spark:spark-sketch_2.13:3.2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.spark:spark-catalyst_2.13:3.2.1" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-parser-combinators_2.13:1.1.2" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.janino:janino:3.0.16" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.janino:commons-compiler:3.0.16" level="project" />
+    <orderEntry type="library" name="Maven: org.antlr:antlr4-runtime:4.8" level="project" />
+    <orderEntry type="library" name="Maven: javax.xml.bind:jaxb-api:2.2.11" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.arrow:arrow-vector:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.arrow:arrow-format:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.arrow:arrow-memory-core:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: com.google.flatbuffers:flatbuffers-java:1.9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.arrow:arrow-memory-netty:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.orc:orc-core:1.6.12" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.orc:orc-shims:1.6.12" level="project" />
+    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:2.5.0" level="project" />
+    <orderEntry type="library" name="Maven: io.airlift:aircompressor:0.21" level="project" />
+    <orderEntry type="library" name="Maven: org.jetbrains:annotations:17.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.threeten:threeten-extra:1.5.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.orc:orc-mapreduce:1.6.12" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.hive:hive-storage-api:2.7.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.parquet:parquet-column:1.12.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.parquet:parquet-common:1.12.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.parquet:parquet-encoding:1.12.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.parquet:parquet-hadoop:1.12.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.parquet:parquet-format-structures:1.12.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.parquet:parquet-jackson:1.12.2" level="project" />
   </component>
 </module>
