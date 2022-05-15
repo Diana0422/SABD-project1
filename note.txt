@@ -18,3 +18,21 @@ from FLOWFILE
 
 NOPE: extra, mta_tax, improvement_surcharge
 UNSURE: VendorID, RatecodeID, congestion_surcharge, airport_fee
+
+
+
+./bin/spark-submit \
+--class  com.sparkling_taxi.Query1           \   #entry point dell’applicazione (esempio classe Main)
+--master localhost:7077          \   # URL del master del cluster (default: local, esempio spark://23.195.26.187:7077)
+# --deploy-mode      \   # cluster se distribuire il driver sui worker node o client solo localmente come client esterno. Di default è client.
+# --conf             \   # proprietà di configurazione Spark come sequenza di coppie key-value
+--num-executors 1   \   # numero di Executor su cui si eseguono i task dopo una Azione
+# --driver-memory    \   # RAM massima usata dal DriverProgram
+# --executor-memory  \   # RAM massima usata dal DriverProgram
+# --executor-cores   \   # numero di core utilizzati da ogni executor.
+<application-jar>  ./target/sabd1-1.0.jar   # Il path a un (fat) jar che include l’applicazione e tutte le dipendenze. L’URL/path del JAR  deve essere globalmente visibile a tutti i nodi del cluster, quindi il JAR deve stare o su HDFS (hdfs::// …) oppure su un path presente su tutti i nodi. (ERRORE COMUNE)
+
+
+
+docker cp .\sabd1-1.0.jar spark-master:/opt/bitnami/spark/sabd1-1.0.jar
+bin/spark-submit --class com.sparkling_taxi.Query1 --master local ./sabd1-1.0.jar ciao.txt

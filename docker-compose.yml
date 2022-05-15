@@ -1,33 +1,37 @@
 version: '3'
 services:
   ## SERVICE1: APACHE SPARK -------------------------------------
-#  spark:
-#    image: docker.io/bitnami/spark:3
-#    container_name: spark-master
-#    restart: always
-#    environment:
-#      - SPARK_MODE=master
-#      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-#      - SPARK_RPC_ENCRYPTION_ENABLED=no
-#      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-#      - SPARK_SSL_ENABLED=no
-#    ports:
-#      - '8080:8080'
-#      - '7077:7077'
-#
-#  spark-worker:
-#    image: docker.io/bitnami/spark:3
-#    environment:
-#      - SPARK_MODE=worker
-#      - SPARK_MASTER_URL=spark://spark:7077
-#      - SPARK_WORKER_MEMORY=1G
-#      - SPARK_WORKER_CORES=1
-#      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-#      - SPARK_RPC_ENCRYPTION_ENABLED=no
-#      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-#      - SPARK_SSL_ENABLED=no
-#    depends_on:
-#      - spark
+  spark:
+    image: docker.io/bitnami/spark:3
+    container_name: spark-master
+    restart: always
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - '8080:8080' # web ui spark
+      - '7077:7077' # per connettersi a spark master
+    volumes:
+      - ./target:/opt/bitnami/spark/taxi-app/
+
+  spark-worker:
+    image: docker.io/bitnami/spark:3
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    volumes:
+      - ./target:/opt/bitnami/spark/taxi-app/
+    depends_on:
+      - spark
 
   # SERVICE2: HDFS ---------------------------------------------
   namenode:
@@ -35,8 +39,8 @@ services:
     container_name: namenode
     restart: always
     ports:
-      - '9870:9870'
-      - '9000:9000'
+      - '9870:9870' # web ui hdfs
+      - '9000:9000' #
     volumes:
       - hadoop_namenode:/hadoop/dfs/name # volume di hdfs namenode
       - nifi-hdfs:/etc/hadoop # volume in comune con nifi
@@ -55,6 +59,7 @@ services:
       SERVICE_PRECONDITION: "namenode:9870"
     env_file:
       - ./hadoop.env
+
 
 #  # SERVICE3: NIFI ----------------------------------------------
   nifi:
@@ -93,4 +98,6 @@ volumes:
   hadoop_namenode:
     driver: local # Dove salvare i dati? Di default è local
     external: false # Il container è stato definito fuori da docker-compose? Di default è false.
-  hdfs-volume:
+#  spark-volume:
+#    driver: local # Dove salvare i dati? Di default è local
+#    external: false # Il container è stato definito fuori da docker-compose? Di default è false.

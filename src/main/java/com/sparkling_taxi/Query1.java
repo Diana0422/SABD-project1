@@ -1,81 +1,39 @@
 package com.sparkling_taxi;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import scala.Tuple2;
 
-import java.util.Arrays;
+import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class Query1 {
 
     public static final String FILE_1 = "hdfs://namenode:9000/home/dataset-batch/yellow_tripdata_2021-12.parquet";
-    private static final Pattern SPACE = Pattern.compile(" ");
+    public static final String FILE_2 = "hdfs://namenode:9000/home/dataset-batch/ciao.txt";
+
 
     public static void main(String[] args) throws Exception {
+        // TODO: chiamare NiFi da qui
 
-        if (args.length < 1) {
-            System.err.println("Usage: JavaWordCount <file>");
-            System.exit(1);
-        }
 
-        SparkSession spark = SparkSession
-                .builder()
-                .appName("JavaWordCount")
-                .getOrCreate();
+        SparkConf conf = new SparkConf()
+                .setMaster("local")
+                .setAppName("Query1");
+        JavaSparkContext sc = new JavaSparkContext(conf);
 
-        JavaRDD<String> lines = spark.read().textFile(args[0]).javaRDD();
+        System.out.println("====<<<>>0>=>=>===>==== Spark context ok ======>=>><><>>0<00>>==>=>=");
+        // List<String> rows = spark.read().textFile(FILE_2).javaRDD().collect();
+        List<String> collect = sc.textFile(FILE_2).collect();
+        collect.stream().limit(10).forEach(System.out::println);
+//        JavaRDD<String> ds = spark.read().parquet(FILE_1).javaRDD().collect();
+//
+//        System.out.println("====<<<>>0>=>=>===>==== Read ok ======>=>><><>>0<00>>==>=>=");
+//        rows.stream()
+//                .limit(10)
+//                .forEach(System.out::println);
 
-        JavaRDD<String> words = lines.flatMap(s -> Arrays.asList(SPACE.split(s)).iterator());
-
-        JavaPairRDD<String, Integer> ones = words.mapToPair(s -> new Tuple2<>(s, 1));
-
-        JavaPairRDD<String, Integer> counts = ones.reduceByKey((i1, i2) -> i1 + i2);
-
-        List<Tuple2<String, Integer>> output = counts.collect();
-        for (Tuple2<?,?> tuple : output) {
-            System.out.println(tuple._1() + ": " + tuple._2());
-        }
-        spark.stop();
+        sc.stop();
     }
-    /*public static void main(String[] args) {
-//        if (args.length < 1) {
-//            System.err.println("Usage: JavaWordCount <file>");
-//            System.exit(1);
-//        }
-        // connect spark to hdfs inside docker
-//        SparkSession spark = SparkSession.builder()
-//                .master("local")
-//                .appName("query1")
-//                .config("HADOOP_HOME", "hdfs://localhost:9000")
-//                .getOrCreate();
-
-        SparkSession spark = SparkSession
-                .builder()
-                .master("local")
-                .appName("Query1")
-                .config("HADOOP_HOME", "hdfs://namenode:9000/")
-                .config("hadoop.home.dir", "hdfs://namenode:9000/")
-                .getOrCreate();
-
-//        var collect = spark.read().parquet(FILE_1).collectAsList();
-//        for (Row row : collect) {
-//            System.out.println(row);
-//        }
-
-         JavaRDD<String> words = lines.flatMap(s -> Arrays.asList(SPACE.split(s)).iterator());
-
-        JavaPairRDD<String, Integer> ones = words.mapToPair(s -> new Tuple2<>(s, 1));
-
-        JavaPairRDD<String, Integer> counts = ones.reduceByKey((i1, i2) -> i1 + i2);
-
-        List<Tuple2<String, Integer>> output = counts.collect();
-        for (JavaRDD<String> tuple : collect.toLocalIterator()) {
-            System.out.println(tuple);
-        }
-        spark.stop();
-    }*/
 }
