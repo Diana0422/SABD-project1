@@ -14,6 +14,7 @@ services:
     ports:
       - '8080:8080' # http://localhost:8080 web ui spark
       - '7077:7077' # per connettersi a spark master
+      - '4040:4040'
     volumes:
       - ./target:/opt/bitnami/spark/taxi-app/
 
@@ -22,15 +23,15 @@ services:
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_MASTER_URL=spark://spark:7077 # the url of the master the worker will connect to
       - SPARK_WORKER_MEMORY=2G
       - SPARK_WORKER_CORES=2
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
-    # ports:
-    #   - '8081:8081' # http://localhost:8081 web ui spark
+    ports:
+      - '8081:8081' # http://localhost:8081 web ui spark
     volumes:
       - ./target:/opt/bitnami/spark/taxi-app/
     depends_on:
@@ -62,6 +63,8 @@ services:
       SERVICE_PRECONDITION: "namenode:9870"
     env_file:
       - ./hadoop.env
+    depends_on:
+      - namenode
 
 
 #  # SERVICE3: NIFI ----------------------------------------------

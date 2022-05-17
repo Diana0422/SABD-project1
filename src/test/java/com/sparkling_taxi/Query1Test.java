@@ -18,11 +18,11 @@ class Query1Test {
         SparkSession spark = SparkSession
                 .builder()
                 .master("local")
-                .appName("JavaWordCount")
+                .appName("Query1")
                 .getOrCreate();
         JavaSparkContext j = new JavaSparkContext(spark.sparkContext());
-        List<Integer> list = Arrays.asList(2,1,3,2,1,2);
-        JavaRDD<Integer> rdd = j.parallelize(list);
+        List<Double> list = Arrays.asList(2.0,1.0,3.0,2.0,1.0,2.0);
+        JavaRDD<Double> rdd = j.parallelize(list);
         double mean = Query1.passengerMean(rdd);
 
         assertEquals((double) (2+1+3+2+1+2)/6, mean);
