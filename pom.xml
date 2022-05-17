@@ -20,14 +20,7 @@
             <artifactId>spark-sql_2.13</artifactId>
             <version>3.2.1</version>
         </dependency>
-
-
-<!--        <dependency>-->
-<!--            <groupId>org.codehaus.jackson</groupId>-->
-<!--            <artifactId>jackson-mapper-asl</artifactId>-->
-<!--            <version>1.9.13</version>-->
-<!--        </dependency>-->
-
+        
     </dependencies>
 
     <build>
