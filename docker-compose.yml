@@ -12,7 +12,7 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
     ports:
-      - '8080:8080' # web ui spark
+      - '8080:8080' # http://localhost:8080 web ui spark
       - '7077:7077' # per connettersi a spark master
     volumes:
       - ./target:/opt/bitnami/spark/taxi-app/
@@ -22,13 +22,15 @@ services:
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+    # ports:
+    #   - '8081:8081' # http://localhost:8081 web ui spark
     volumes:
       - ./target:/opt/bitnami/spark/taxi-app/
     depends_on:
@@ -40,7 +42,7 @@ services:
     container_name: namenode
     restart: always
     ports:
-      - '9870:9870' # web ui hdfs
+      - '9870:9870' # http://localhost:9870 web ui HDFS.
       - '9000:9000' #
     volumes:
       - hadoop_namenode:/hadoop/dfs/name # volume di hdfs namenode
@@ -68,7 +70,7 @@ services:
     restart: always
     container_name: nifi
     ports:
-      - '8181:8181'
+      - '8181:8181'   # http://localhost:8181 web ui NiFi
       # - '9000:9000' # serve per connettersi al namenode hdfs
     environment:
       NIFI_WEB_HTTP_PORT: '8181'
@@ -91,8 +93,6 @@ services:
 
 volumes:
   nifi-hdfs: # volume in comune tra hdfs
-    driver: local # Dove salvare i dati? Di default è local
-    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
   hadoop_datanode:
     driver: local # Dove salvare i dati? Di default è local
     external: false # Il container è stato definito fuori da docker-compose? Di default è false.
