@@ -1,13 +1,18 @@
 package com.sparkling_taxi;
 
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.execution.datasources.parquet.ParquetFileFormat;
+import scala.Tuple2;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static sun.font.FontUtilities.isWindows;
@@ -15,7 +20,9 @@ import static sun.font.FontUtilities.isWindows;
 public class Query1 {
 
     public static final String FILE_1 = "hdfs://namenode:9000/home/dataset-batch/yellow_tripdata_2021-12.parquet";
-    public static final String FILE_2 = "hdfs://namenode:9000/home/dataset-batch/ciao.txt";
+    public static final String FILE_2 = "hdfs://namenode:9000/home/dataset-batch/yellow_tripdata_2022-01.parquet";
+    public static final String FILE_3 = "hdfs://namenode:9000/home/dataset-batch/yellow_tripdata_2022-02.parquet";
+    public static final String FILE_CIAO = "hdfs://namenode:9000/home/dataset-batch/ciao.txt";
     public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1/";
     public static final int PASSENGER_COUNT_COL = 3;
 
@@ -75,6 +82,24 @@ public class Query1 {
         return sum / (double) num;
     }
 
+    public static void singleMonthMean(SparkSession spark, String file, List<Tuple2<String,Double>> means) {
+        System.out.println("======================= before passengers =========================");
+        JavaRDD<Double> passengers = spark.read().parquet(file)
+                .toJavaRDD()
+                .cache()
+                .map(row -> {
+                    try {
+                        return row.getDouble(3);
+                    } catch (NullPointerException e){
+                        return 0.0;
+                    }
+                });
+        System.out.println("======================= before mean =========================");
+        Double mean = passengers.reduce(Double::sum)/passengers.count();
+        System.out.println("Mean number of passengers 2021-12: " + mean);
+        means.add(new Tuple2<>(Arrays.asList(FILE_1.split("/")).get(FILE_1.split("/").length-1), mean));
+    }
+
     public static void main(String[] args) {
         // TODO: chiamare NiFi da qui
 
@@ -88,20 +113,27 @@ public class Query1 {
                 .getOrCreate();
         ) {
             spark.sparkContext().setLogLevel("WARN");
-            // jSpark.hadoopFile(FILE_1, ParquetFileFormat.class, Integer.class, Object.class);
-            System.out.println("======================= before passengers =========================");
-            JavaRDD<Double> passengers = spark.read().parquet(FILE_1)
-                    .toJavaRDD()
-                    .map(row -> {
-                        try {
-                            return row.getDouble(3);
-                        } catch (NullPointerException e){
-                            return 0.0;
-                        }
-                    });
-            System.out.println("======================= before mean =========================");
-            double mean = passengerMean(passengers);
-            System.out.println("Mean number of passengers 2021-12: " + mean);
+            List<Tuple2<String,Double>> means = new ArrayList<>();
+            singleMonthMean(spark, FILE_1, means);
+            singleMonthMean(spark, FILE_2, means);
+            singleMonthMean(spark, FILE_3, means);
+            JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
+            JavaRDD<Tuple2<String, Double>> result = sc.parallelize(means);
+            result.collect().forEach(System.out::println);
+//            // jSpark.hadoopFile(FILE_1, ParquetFileFormat.class, Integer.class, Object.class);
+//            System.out.println("======================= before passengers =========================");
+//            JavaRDD<Double> passengers = spark.read().parquet(FILE_1)
+//                    .toJavaRDD()
+//                    .map(row -> {
+//                        try {
+//                            return row.getDouble(3);
+//                        } catch (NullPointerException e){
+//                            return 0.0;
+//                        }
+//                    });
+//            System.out.println("======================= before mean =========================");
+//            double mean = passengerMean(passengers);
+//            System.out.println("Mean number of passengers 2021-12: " + mean);
         }
 
         // spark.read().parquet(FILE_1).write().mode("overwrite").parquet(OUT_DIR);
