@@ -35,11 +35,20 @@ public class Query1 {
                 .getOrCreate();
         ) {
             System.out.println("======================= before batch =========================");
-            JavaRDD<Row> batch1 = spark.read().format("parquet").load(FILE_1).toJavaRDD().cache();
-
-            batch1.collect().stream().map(row -> row.get(3)).forEach(System.out::println);
+            JavaRDD<Row> batch1 = spark.read().format("parquet").load(FILE_1)
+                    .toJavaRDD();
             System.out.println("======================= before passengers =========================");
-            JavaRDD<Integer> passengers = batch1.map(row -> row.getInt(3));
+            JavaRDD<String> stringArrRDD = batch1.map(row->{
+                StringBuilder sb = new StringBuilder();
+                int length = row.length();
+                for(int i=0; i<length;i++){
+                    sb.append(row.get(i) !=null? row.get(i).toString():"");
+                }
+                return  sb.toString();});
+
+            stringArrRDD.collect().forEach(System.out::println);
+
+
 
 //            System.out.println(passengers.collect());
 //            System.out.println("======================= before mean =========================");
