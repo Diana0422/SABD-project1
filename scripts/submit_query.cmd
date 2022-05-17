@@ -5,7 +5,9 @@
 set directory=%~dp0..\target
 if NOT exist %directory% (
     echo "target directory does not exists - packaging app "
-    mvn -f %~dp0..\pom.xml clean compile jar:jar
+    CALL mvn -f %~dp0..\pom.xml clean compile jar:jar
+) else (
+    CALL mvn compile jar:jar
 )
 
 @rem if argument 1 is number in 1-3, then execute the query
