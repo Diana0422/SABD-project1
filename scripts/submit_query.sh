@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # PREPARE ENVIRONMENT
 DIR=../target
 if [ -d "$DIR" ];
