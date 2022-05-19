@@ -20,8 +20,8 @@ services:
 
   spark-worker:
     image: docker.io/bitnami/spark:3
-#    container_name: spark-worker
     deploy:
+      mode: replicated
       replicas: 3
     environment:
       - SPARK_MODE=worker
@@ -32,8 +32,8 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
-#    ports:
-#      - '8081:8081' # http://localhost:8081 web ui spark
+    #    ports:
+    #      - '8081:8081' # http://localhost:8081 web ui spark
     volumes:
       - ./target:/opt/bitnami/spark/taxi-app/
     depends_on:
@@ -55,10 +55,10 @@ services:
     env_file:
       - ./hadoop.env
 
-  datanode:
+  datanode: # se il datanode va in un ciclo di riavvii, bisogna eliminare tutti i container e volumi di questo compose e riavviare.
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode
-    restart: always
+    restart: unless-stopped
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
     environment:
@@ -69,7 +69,7 @@ services:
       - namenode
 
 
-#  # SERVICE3: NIFI ----------------------------------------------
+  #  # SERVICE3: NIFI ----------------------------------------------
   nifi:
     image: apache/nifi:latest
     restart: always
