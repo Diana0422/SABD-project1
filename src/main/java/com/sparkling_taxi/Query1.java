@@ -107,13 +107,11 @@ public class Query1 {
                 .mapToPair(row -> new Tuple2<>(row.getTimestamp(DROP_OUT_COL), row.getDouble(PASSENGER_COUNT_COL)));
         // JavaRDD<Row> -> JavaRDD<Timestamp, n_passengers>
 
-
-        // TODO: Puoi provare con questo
-        //
-
-        // Vedo cosa ha scritto su hdfs (se troppo lento commenta)
-        // recupera dal namenode: hdfs dfs -get /home/dataset-batch/timestamp/part... /home/result.csv
-        // recupera dall'host: docker cp namenode:/home/result.csv ./result.csv
+        // FIXME: elimina...
+        //  Vedo cosa ha scritto su hdfs (se troppo lento commenta, ma sono poche righe)
+        //  leggi dal namenode: hdfs dfs -cat /home/dataset-batch/timestamp/part*.csv
+        //  oppure recupera dal namenode: hdfs dfs -get /home/dataset-batch/timestamp/part*.csv /home/result.csv
+        //         recupera dall'host: docker cp namenode:/home/result.csv ./result.csv
         spark.createDataset(JavaRDD.toRDD(passengersTS.keys()), Encoders.TIMESTAMP()).limit(10)
                 .write().csv(DIR_TIMESTAMP);
 
