@@ -25,8 +25,7 @@ public class Query1 {
     public static final String FILE_CIAO = "hdfs://namenode:9000/home/dataset-batch/ciao.txt";
     public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1/";
     public static final String DIR_TIMESTAMP = "hdfs://namenode:9000/home/dataset-batch/timestamp";
-//    public static final int PASSENGER_COUNT_COL = 2;
-    public static final int PASSENGER_COUNT_COL = 3;
+    public static final int PASSENGER_COUNT_COL = 2;
     public static final int DROP_OUT_COL = 1;
 
     /**
