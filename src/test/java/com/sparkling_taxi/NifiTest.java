@@ -31,7 +31,7 @@ public class NifiTest {
     }
 
     @Test
-    public void instantiateTemplateTest(){
+    public void instantiateTemplateTest() {
         // upload a template
         Optional<String> templateId = executor.uploadTemplate(EXAMPLE_TEMPLATE);
         // if it all goes well
@@ -39,7 +39,7 @@ public class NifiTest {
             System.out.println("templateId = " + templateId.get());
             // instantiate a processGroup from the template
             Optional<String> s = executor.instantiateTemplate(templateId.get());
-            if (s.isPresent()){
+            if (s.isPresent()) {
                 System.out.println(s.get());
             } else {
                 Optional<JSONObject> jsonObject2 = executor.deleteTemplate(templateId.get());
@@ -52,22 +52,26 @@ public class NifiTest {
         }
     }
 
-    public static void main(String[] args) {
-        /* supponendo di aver già caricato il template in nifi */
-        // recupera il process group istanziato
-        NifiExecutor executor = new NifiExecutor();
-        String group = executor.getRootProcessGroup();
-        // executor.uploadTemplate(); // Questo template istanzia contiene un process group
+    /**
+     * Initially there are no processor Groups and check all are empty
+     */
+    @Test
+    public void listProcessorGroupsTest() {
+        List<String> processorGroups = executor.getProcessorGroups();
+        int prevSize = processorGroups.size();
 
-        // cerco i process group
-        List<String> groups = executor.getProcessorGroups();
-        // prendo il primo group, quello presente nel template
-        executor.instantiateTemplate(groups.get(0));
-        // stamp tutti i gruppi presenti (dovrebbe essere 1)
-        System.out.println(groups);
-        for (String g : groups) {
-            // stampa tutti i processor nel gruppo
-            System.out.println(executor.getProcessors(g));
+        // calls the previous test to get at least one template...
+        instantiateTemplateTest();
+        List<String> processorGroupsNew = executor.getProcessorGroups();
+        assertEquals(prevSize + 1, processorGroupsNew.size());
+        System.out.println(processorGroupsNew);
+
+        // checks Processors inside the processor Group:
+        assertEquals(6, executor.getProcessors(processorGroupsNew.get(0)).size());
+
+        // removes all the templates
+        for (String processorGroup : processorGroupsNew) {
+            executor.removeProcessGroup(processorGroup);
         }
     }
 }

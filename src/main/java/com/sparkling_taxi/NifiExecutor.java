@@ -6,6 +6,7 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -19,18 +20,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NifiExecutor {
-
-    private String processGroup;
-    private List<String> processGroups;
-    private List<String> processors;
-
-    private static final String EXAMPLE_TEMPLATE = ".nifi/templates/multi_file_preprocessing_group.xml";
-
-    public NifiExecutor() {
-        //this.processGroup = getRootProcessGroup();
-        //this.processGroups = getProcessorGroups();
-        //this.processors = getProcessors(processGroup);
-    }
 
     /**
      * [TESTED] Uploads a template in the form of a ProcessGroup
@@ -61,12 +50,12 @@ public class NifiExecutor {
     }
 
     /**
-     * A bit useless
+     * [TESTED] The list of processor groups currently instantiated in NiFi
      *
      * @return the list of processor groups in NiFi.
      */
     public List<String> getProcessorGroups() {
-        String url = GET_ROOT_PROCESS_GROUP;
+        String url = "http://localhost:8181/nifi-api/process-groups/" + getRootProcessGroup() + "/process-groups";
         Optional<JSONObject> response = getNifi(url);
         Optional<JSONArray> groups = response.map(r -> r.getJSONArray("processGroups"));
         return collectIDs(groups.orElse(new JSONArray()));
@@ -75,13 +64,13 @@ public class NifiExecutor {
     }
 
     /**
-     * Get all processors in a processor group
+     * [TESTED only with a print] Get all processors in a processor group
      *
      * @param processGroup a processor group
      * @return the list of processor ids
      */
     public List<String> getProcessors(String processGroup) {
-        String url = GET_PROCESS_GROUPS + processGroup + "/processors";
+        String url = "http://localhost:8181/nifi-api/process-groups/" + processGroup + "/processors";
         Optional<JSONObject> response = getNifi(url);
         Optional<JSONArray> processes = response.map(r -> r.getJSONArray("processors"));
         return collectIDs(processes.orElse(new JSONArray()));
@@ -89,16 +78,11 @@ public class NifiExecutor {
         // otherwise collects the processors ids
     }
 
-    public List<String> getAllTemplates() {
-        String s = "http://localhost:8181/nifi-api/templates/root/download";
-        return new ArrayList<>();
-    }
-
     /**
-     * [TESTED] Instantiate a new template inside NiFi
+     * [TESTED] Instantiate a new template inside NiFi as a processor group
      *
      * @param templateId the template id
-     * @return the Optional with the id of the instantiated processGroup.
+     * @return the Optional with the id of the instantiated ProcessorGroup.
      */
     public Optional<String> instantiateTemplate(String templateId) {
         String rootProcessGroup = getRootProcessGroup();
@@ -108,15 +92,38 @@ public class NifiExecutor {
         // The map-filter chain on an Optional prevents NullPointerExceptions
         // if all goes well it returns an Optional with the id of the instantiated processorGroup
         // otherwise returns Optional.empty()
-        return response.map(r -> r.getJSONObject("flow"))
-                .map(f -> f.getJSONArray("processGroups"))
-                .filter(p -> !p.isEmpty())
-                .map(p -> p.getJSONObject(0))
-                .map(p -> p.getString("id"));
+        try {
+            return response.map(r -> r.getJSONObject("flow"))
+                    .map(f -> f.getJSONArray("processGroups"))
+                    .filter(p -> !p.isEmpty())
+                    .map(p -> p.getJSONObject(0))
+                    .map(p -> p.getString("id"));
+        } catch (JSONException j) {
+            System.err.println(j.getMessage());
+            return Optional.empty();
+        }
     }
 
-    public Optional<String> removeProcessGroup(String processGroupId){
-        return Optional.empty();
+    /**
+     * Returns a JSON object with the information of a processor group in the flow
+     * @param processorGroupId id of the processor group in the flow
+     * @return the json object in an Optional
+     */
+    public Optional<JSONObject> getProcessorGroupInfo(String processorGroupId) {
+        String processorGroup = "http://localhost:8181/nifi-api/flow/process-groups/" + processorGroupId;
+        return getNifi(processorGroup);
+    }
+
+    /**
+     * Removes a processGroup from the flow given its id
+     * @param processGroupId the id of the processGroup to remove from the flow
+     * @return the response
+     */
+    public Optional<JSONObject> removeProcessGroup(String processGroupId) {
+        // To remove a process group we need two parameters: revisionNumber and groupId.
+        // The revision number is presumably always 0, but I can be wrong
+        String processGroupToRemove = "http://localhost:8181/nifi-api/process-groups/" + processGroupId + "?version=0";
+        return deleteNifi(processGroupToRemove);
     }
 
     private List<String> collectIDs(JSONArray array) {
@@ -129,24 +136,17 @@ public class NifiExecutor {
     }
 
     /**
-     * TODO: maybe prende il processGroup radice
+     * Gets the root Process Group ID of Nifi
      *
-     * @return
+     * @return the root ProcessGroup ID
      */
     public String getRootProcessGroup() {
-        Optional<JSONObject> response = getNifi(GET_ROOT_PROCESS_GROUP);
+        Optional<JSONObject> response = getNifi("http://localhost:8181/nifi-api/process-groups/root/");
         if (response.isPresent()) {
             return response.get().getString("id");
         }
         return "";
     }
-
-    public static String GET_ROOT_PROCESS_GROUP = "http://localhost:8181/nifi-api/process-groups/root/"; // retrieve process group id
-    public static String GET_PROCESS_GROUPS = "http://localhost:8181/nifi-api/process-groups/";
-    // public static String GET_TEMPLATE = "http://localhost:8181/nifi-api/process-groups/root";
-    // http://localhost:8181/nifi-api/process-groups/e030c09e-0180-1000-9d08-2a9c449ff2fa/
-
-    public static String DELETE_TEMPLATE = "http://localhost:8181/nifi-api/templates/";
 
     private static Optional<JSONObject> getNifi(String stringUrl) {
         try {
@@ -160,12 +160,10 @@ public class NifiExecutor {
             System.out.println("GET " + conn.getResponseCode() + ": " + conn.getResponseMessage());
             return Optional.of(new JSONObject(response));
         } catch (IOException e) {
-            //TODO handle exception
             e.printStackTrace();
+            return Optional.empty();
         }
-        return Optional.empty();
     }
-
 
     /**
      * Deletes a resource
@@ -180,9 +178,9 @@ public class NifiExecutor {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod(HttpDelete.METHOD_NAME);
             conn.setRequestProperty("Content-Type", "application/json");
+            System.out.println("DELETE " + conn.getResponseCode() + ": " + conn.getResponseMessage());
             InputStream is = conn.getInputStream();
             String response = IOUtils.toString(is, StandardCharsets.UTF_8);
-            System.out.println("DELETE " + conn.getResponseCode() + ": " + conn.getResponseMessage());
             return Optional.of(new JSONObject(response));
         } catch (IOException e) {
             e.printStackTrace();
@@ -190,31 +188,31 @@ public class NifiExecutor {
         return Optional.empty();
     }
 
-    private static JSONObject putNifi(String stringUrl, String acceptType) {
-        try {
-            URL url = new URL(stringUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Accept", "application/xml");
-            OutputStream out = connection.getOutputStream();
-            String response = out.toString();
-            System.out.println("response put:" + response);
-            int status = connection.getResponseCode();
-            System.out.println(status + ": " + connection.getResponseMessage());
+//    private static JSONObject putNifi(String stringUrl, String acceptType) {
+//        try {
+//            URL url = new URL(stringUrl);
+//            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+//            connection.setDoOutput(true);
+//            connection.setRequestMethod("PUT");
+//            connection.setRequestProperty("Accept", "application/xml");
+//            OutputStream out = connection.getOutputStream();
+//            String response = out.toString();
+//            System.out.println("response put:" + response);
+//            int status = connection.getResponseCode();
+//            System.out.println(status + ": " + connection.getResponseMessage());
 //            return new JSONObject(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
 
     /**
-     * Posts a file
+     * Posts (creates) a file on the NiFi server.
      *
-     * @param stringUrl
-     * @param acceptType
-     * @return FIXME: per ora sempre Optional.empty()
+     * @param stringUrl  url to NiFi
+     * @param acceptType ex. application/json
+     * @return the Optional with response String if all goes well
      */
     private static Optional<String> postNifiFile(String template_file, String stringUrl, String acceptType) {
         try {
@@ -260,9 +258,9 @@ public class NifiExecutor {
     /**
      * Implements the instantiation of a template
      *
-     * @param stringUrl
-     * @param acceptType
-     * @return FIXME: per ora sempre Optional.empty()
+     * @param stringUrl  the complete REST URL
+     * @param acceptType example "application/json"
+     * @return the JSON response ot the method
      */
     private static Optional<JSONObject> postNifiImportTemplate(String templateId, String stringUrl, String acceptType) {
         System.out.println("POST " + stringUrl + " template=" + templateId);
@@ -271,7 +269,7 @@ public class NifiExecutor {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Content-Type", acceptType);
             String jsonInputString = "{\n" +
                                      "    \"originX\": 2.0,\n" +
                                      "    \"originY\": 3.0,\n" +
@@ -281,27 +279,16 @@ public class NifiExecutor {
                 byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
-//            InputStream stream;
-//            if (conn.getResponseCode() >= 400 && conn.getResponseCode() < 500) {
-//                stream = conn.getErrorStream();
-//            } else if (conn.getResponseCode() >= 200 && conn.getResponseCode() < 300) {
-//                stream = conn.getInputStream();
-//            } else {
-//                System.out.println(conn.getResponseCode() + ": " + conn.getResponseMessage());
-//                return Optional.empty();
-//            }
-            InputStream stream = conn.getInputStream();
-            // InputStream streamErr = conn.getErrorStream();
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
             StringBuilder response = new StringBuilder();
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+                System.out.println(response);
+                System.out.println("POST " + conn.getResponseCode() + ": " + conn.getResponseMessage());
             }
-            System.out.println(response);
-            System.out.println("POST " + conn.getResponseCode() + ": " + conn.getResponseMessage());
-            br.close();
             return Optional.of(new JSONObject(response.toString()));
         } catch (IOException e) {
             e.printStackTrace();
