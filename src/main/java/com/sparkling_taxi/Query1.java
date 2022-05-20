@@ -1,21 +1,20 @@
 package com.sparkling_taxi;
 
 
-import org.apache.commons.lang3.time.FastDateParser;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
+import scala.Tuple3;
 
 import java.io.File;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 public class Query1 {
 
@@ -26,7 +25,8 @@ public class Query1 {
     public static final String FILE_CIAO = "hdfs://namenode:9000/home/dataset-batch/ciao.txt";
     public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1/";
     public static final String DIR_TIMESTAMP = "hdfs://namenode:9000/home/dataset-batch/timestamp";
-    public static final int PASSENGER_COUNT_COL = 2;
+//    public static final int PASSENGER_COUNT_COL = 2;
+    public static final int PASSENGER_COUNT_COL = 3;
     public static final int DROP_OUT_COL = 1;
 
     /**
@@ -45,58 +45,55 @@ public class Query1 {
         return true;
     }
 
-    /**
-     * A working example that prints the first row of a parquet file
-     */
-    private static void workingJob() {
-        try (SparkSession spark = SparkSession
-                .builder()
-                .master("spark://spark:7077")
-                .appName("Query1")
-                .getOrCreate();
-        ) {
-            // spark.sparkContext().setLogLevel("WARN");
-            System.out.println("======================= before batch =========================");
-            JavaRDD<Row> batch1 = spark.read().format("parquet").load(FILE_1).toJavaRDD();
-            System.out.println("======================= before map =========================");
-            JavaRDD<String> stringArrRDD = batch1.map(row -> {
-                StringBuilder sb = new StringBuilder();
-                int length = row.length();
-                for (int i = 0; i < length; i++) {
-                    sb.append(row.get(i) != null ? row.get(i).toString() : "null").append("\t");
-                }
-                return sb.toString();
-            });
+//    public static void singleMonthMean(SparkSession spark, String file, List<Tuple2<String, Double>> means) {
+//        System.out.println("======================= before passengers =========================");
+//        JavaRDD<Double> passengers = spark.read().parquet(file)
+//                .toJavaRDD()
+//                .map(row -> {
+//                    try {
+//                        return row.getDouble(PASSENGER_COUNT_COL);
+//                    } catch (NullPointerException e) {
+//                        return 0.0;
+//                    }
+//                })
+//                .persist(StorageLevel.MEMORY_AND_DISK_SER());
+//        //salva in memoria serializzando (occupa meno RAM), ma se manca lo spazio, salva su disco.
+//
+//        System.out.println("======================= before mean =========================");
+//        Double sum = passengers.reduce(Double::sum);
+//        long num = passengers.count();
+//        System.out.println("number of elements: " + num);
+//        System.out.println("number of passengers: " + sum);
+////        Double mean = passengers.reduce(Double::sum)/passengers.count();
+//        Double mean = sum / (double) num;
+//        System.out.println("Mean number of passengers 2021-12 - 2022-02: " + mean);
+//        means.add(new Tuple2<>(Arrays.asList(file.split("/")).get(file.split("/").length - 1), mean));
+//    }
 
-            System.out.println(stringArrRDD.first());
-
-            System.out.println("====<<<>>0>=>=>===>==== Done ======>=>><><>>0<00>>==>=>=");
-        }
-    }
-
-    public static void singleMonthMean(SparkSession spark, String file, List<Tuple2<String, Double>> means) {
+    public static JavaPairRDD<Tuple2<Integer, Integer>, Double> multiMonthMeanV2(SparkSession spark, String file) {
         System.out.println("======================= before passengers =========================");
-        JavaRDD<Double> passengers = spark.read().parquet(file)
+        JavaPairRDD<Timestamp, Double> passengersTS = spark.read().parquet(file)
                 .toJavaRDD()
-                .map(row -> {
-                    try {
-                        return row.getDouble(PASSENGER_COUNT_COL);
-                    } catch (NullPointerException e) {
-                        return 0.0;
-                    }
-                })
-                .persist(StorageLevel.MEMORY_AND_DISK_SER());
-        //salva in memoria serializzando (occupa meno RAM), ma se manca lo spazio, salva su disco.
+                .filter(row -> !(row.isNullAt(DROP_OUT_COL) || row.isNullAt(PASSENGER_COUNT_COL))) //TODO: questo andrebbe fatto su NiFi
+                .mapToPair(row -> new Tuple2<>(row.getTimestamp(DROP_OUT_COL), row.getDouble(PASSENGER_COUNT_COL)));
+        // (timestamp, double)
 
-        System.out.println("======================= before mean =========================");
-        Double sum = passengers.reduce(Double::sum);
-        long num = passengers.count();
-        System.out.println("number of elements: " + num);
-        System.out.println("number of passengers: " + sum);
-//        Double mean = passengers.reduce(Double::sum)/passengers.count();
-        Double mean = sum / (double) num;
-        System.out.println("Mean number of passengers 2021-12 - 2022-02: " + mean);
-        means.add(new Tuple2<>(Arrays.asList(file.split("/")).get(file.split("/").length - 1), mean));
+        System.out.println("instances: "+passengersTS.count());
+
+        JavaPairRDD<Tuple2<Integer, Integer>, Double> tuple2 = passengersTS.mapToPair(tup -> {
+            Date date = new Date(tup._1.getTime());
+            LocalDate ld = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            ld.format(formatter);
+            return new Tuple2<>(new Tuple2<>(ld.getMonthValue(), ld.getYear()), tup._2);
+        }); // ((month, year), passengers)
+        JavaPairRDD<Tuple2<Integer, Integer>, Tuple2<Double, Integer>> aggTuple = tuple2
+                .mapToPair(tup -> new Tuple2<>(tup._1, new Tuple2<>(tup._2, 1))) // ((month, year), (passengers, 1))
+                .reduceByKey((x, y) -> new Tuple2<>(x._1 + y._1, x._2 + y._2)); // ((month, year), (sum_passengers, sum_instances))
+
+        aggTuple.collect().forEach(System.out::println);
+
+        return aggTuple.mapToPair(tup -> new Tuple2<>(tup._1, tup._2._1 / (double) tup._2._2));
     }
 
     public static JavaPairRDD<Integer, Double> multiMonthMean(SparkSession spark, String file) {
@@ -112,12 +109,20 @@ public class Query1 {
         //  leggi dal namenode: hdfs dfs -cat /home/dataset-batch/timestamp/part*.csv
         //  oppure recupera dal namenode: hdfs dfs -get /home/dataset-batch/timestamp/part*.csv /home/result.csv
         //         recupera dall'host: docker cp namenode:/home/result.csv ./result.csv
-        spark.createDataset(JavaRDD.toRDD(passengersTS.keys()), Encoders.TIMESTAMP()).limit(10)
+        spark.createDataset(JavaRDD.toRDD(passengersTS.keys()), Encoders.TIMESTAMP()).limit(4000000)
                 .write().csv(DIR_TIMESTAMP);
+
+
 
         // TODO: Questo può essere sostituito al precedente mapToPair, ma ho separato per salvare i csv su hdfs
         //    L'errore è sicuramente in getMonth(), prova a usare qualcosa tipo SimpleDateParse o FastDateParser
-        JavaPairRDD<Integer, Double> passengers = passengersTS.mapToPair(tup -> new Tuple2<>(tup._1.getMonth(), tup._2))
+        JavaPairRDD<Integer, Double> passengers = passengersTS.mapToPair(tup -> {
+                    Date date = new Date(tup._1.getTime());
+                    LocalDate ld = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    ld.format(formatter);
+                    return new Tuple2<>(ld.getMonthValue(), tup._2);
+                }) //(month, passengers)
                 .persist(StorageLevel.MEMORY_AND_DISK_SER());
         // Saves in-memory serialized (less RAM occupied, more CPU used) and if RAM is full, save the remaining data on disk (serialized)
 
@@ -131,29 +136,6 @@ public class Query1 {
         passengers.keys().distinct().collect().forEach(System.out::println);
 
         return sum.mapToPair(tup -> new Tuple2<>(tup._1, tup._2 / num.get(tup._1)));
-    }
-
-
-    public static void monthMean(SparkSession spark, String file, List<Tuple2<String, Double>> means) {
-        System.out.println("======================= before passengers =========================");
-        JavaRDD<Double> passengers = spark.read().parquet(file)
-                .toJavaRDD()
-                .map(row -> {
-                    try {
-                        return row.getDouble(3);
-                    } catch (NullPointerException e) {
-                        return 0.0;
-                    }
-                }).cache();
-        System.out.println("======================= before mean =========================");
-        Double sum = passengers.reduce(Double::sum);
-        long num = passengers.count();
-        System.out.println("number of elements: " + num);
-        System.out.println("number of passengers: " + sum);
-//        Double mean = passengers.reduce(Double::sum)/passengers.count();
-        Double mean = sum / (double) num;
-        System.out.println("Mean number of passengers 2021-12: " + mean);
-        means.add(new Tuple2<>(Arrays.asList(file.split("/")).get(file.split("/").length - 1), mean));
     }
 
     public static void main(String[] args) {
@@ -189,8 +171,8 @@ public class Query1 {
 //            JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
 //            sc.close();
 
-            JavaPairRDD<Integer, Double> javaPairRDD = Performance.measure("Query4 - file4", () -> multiMonthMean(spark, FILE_Q1));
-            javaPairRDD.collect().forEach(x -> System.out.println("Month: " + x._1 + " mean passengers" + x._2));
+            JavaPairRDD<Tuple2<Integer, Integer>, Double> javaPairRDD = Performance.measure("Query4 - file4", () -> multiMonthMeanV2(spark, FILE_Q1));
+            javaPairRDD.collect().forEach(x -> System.out.println("(Month,Year): " + x._1 + ", mean passengers: " + x._2));
 //
 //            JavaRDD<Tuple2<String, Double>> result = sc.parallelize(means);
 //            result.collect().forEach(System.out::println);
