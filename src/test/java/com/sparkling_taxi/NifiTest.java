@@ -1,7 +1,6 @@
 package com.sparkling_taxi;
 
 import org.json.JSONObject;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -33,13 +32,21 @@ public class NifiTest {
 
     @Test
     public void instantiateTemplateTest(){
+        // upload a template
         Optional<String> templateId = executor.uploadTemplate(EXAMPLE_TEMPLATE);
-
-
+        // if it all goes well
         if (templateId.isPresent()) {
+            System.out.println("templateId = " + templateId.get());
+            // instantiate a processGroup from the template
             Optional<String> s = executor.instantiateTemplate(templateId.get());
-            s.ifPresent(System.out::println);
-
+            if (s.isPresent()){
+                System.out.println(s.get());
+            } else {
+                Optional<JSONObject> jsonObject2 = executor.deleteTemplate(templateId.get());
+                jsonObject2.ifPresent(System.out::println);
+                fail("TEST: Failed to instantiate the template " + EXAMPLE_TEMPLATE);
+            }
+            // Delete the template to make the test repeatable (doesn't remove the process group instance)
             Optional<JSONObject> jsonObject2 = executor.deleteTemplate(templateId.get());
             jsonObject2.ifPresent(System.out::println);
         }
