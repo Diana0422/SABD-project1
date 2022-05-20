@@ -48,25 +48,29 @@ public class Performance {
         try {
             r.run();
         } catch (Exception e) {
-            logger.warning("Failed to compute performance."  + e.getMessage());
+            logger.warning("Failed to compute performance." + e.getMessage());
         }
         long elapsed = elapsed(s);
         printDuration(message, elapsed);
     }
 
-    static void printDuration(String s, long elapsed) {
+    static String printDuration(String s, long elapsed) {
+        String msg;
         if (elapsed < 1000) {
-            System.out.printf("Duration %s: %d milliseconds\n", s, elapsed);
+            msg = String.format("Duration %s: %d milliseconds", s, elapsed);
         } else if (elapsed / 1000 < 60) {
             long seconds = elapsed / 1000;
-            System.out.printf("Duration %s: %d s %d ms\n", s, seconds, elapsed - seconds * 1000);
+            msg = String.format("Duration %s: %d s %d ms", s, seconds, elapsed - seconds * 1000);
         } else if (elapsed / 60000 < 60) {
             long minutes = elapsed / 60000;
             long seconds = (elapsed - minutes * 60000) / 1000;
-            System.out.printf("Duration %s: %d m %d s %d ms\n", s, minutes, seconds, elapsed - minutes * 60000 - seconds * 1000);
+            msg = String.format("Duration %s: %d m %d s %d ms", s, minutes, seconds, elapsed - minutes * 60000 - seconds * 1000);
         } else {
-            System.out.println(s + " is Done! It took more than one hour!");
+            msg = String.format(s + " is Done! It took more than one hour!");
         }
+        System.out.println(msg);
+        return msg;
+
     }
 
 }
