@@ -15,7 +15,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
+// docker cp backup/Query1.parquet namenode:/home/Query1.parquet
+// hdfs dfs -put Query1.parquet /home/dataset-batch/Query1.parquet
 public class Query1 {
 
     public static final String FILE_1 = "hdfs://namenode:9000/home/dataset-batch/yellow_tripdata_2021-12.parquet";
@@ -171,7 +172,7 @@ public class Query1 {
 //            JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
 //            sc.close();
 
-            JavaPairRDD<Tuple2<Integer, Integer>, Double> javaPairRDD = Performance.measure("Query4 - file4", () -> multiMonthMeanV2(spark, FILE_Q1));
+            JavaPairRDD<Tuple2<Integer, Integer>, Double> javaPairRDD = Performance.measure("Query completo", () -> multiMonthMeanV2(spark, FILE_Q1));
             javaPairRDD.collect().forEach(x -> System.out.println("(Month,Year): " + x._1 + ", mean passengers: " + x._2));
 //
 //            JavaRDD<Tuple2<String, Double>> result = sc.parallelize(means);

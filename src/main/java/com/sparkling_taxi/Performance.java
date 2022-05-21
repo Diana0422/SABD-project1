@@ -33,6 +33,7 @@ public class Performance {
             call = r.call();
         } catch (Exception e) {
             System.out.println("Failed to compute performance." + e.getMessage());
+            e.printStackTrace();
         }
         long elapsed = elapsed(start);
         printDuration(message, elapsed);
@@ -48,7 +49,8 @@ public class Performance {
         try {
             r.run();
         } catch (Exception e) {
-            logger.warning("Failed to compute performance." + e.getMessage());
+            logger.warning("Failed to compute performance.");
+            e.printStackTrace();
         }
         long elapsed = elapsed(s);
         printDuration(message, elapsed);
