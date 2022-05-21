@@ -86,6 +86,7 @@ public class Query1 {
             ld.format(formatter);
             return new Tuple2<>(new Tuple2<>(ld.getMonthValue(), ld.getYear()), tup._2);
         }); // ((month, year), passengers)
+
         JavaPairRDD<Tuple2<Integer, Integer>, Tuple2<Double, Integer>> aggTuple = tuple2
                 .mapToPair(tup -> new Tuple2<>(tup._1, new Tuple2<>(tup._2, 1))) // ((month, year), (passengers, 1))
                 .reduceByKey((x, y) -> new Tuple2<>(x._1 + y._1, x._2 + y._2)); // ((month, year), (sum_passengers, sum_instances))
