@@ -105,6 +105,7 @@ public class Query3 {
 
         // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
         // the "1" is used to count the occurrence of the location ???
+        // TODO: vedere se bisogna rimuovere le colonne Dropoff e Pickup (su NiFi)
         List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> take = spark.read().parquet(file)
                 .toJavaRDD()
                 // excluding the rows with at least one null value in the necessary columns
@@ -120,7 +121,7 @@ public class Query3 {
                         new Tuple4<>(tup._1, // location
                                 tup._2._2() / tup._2._1(), // mean_passengers
                                 tup._2._3() / tup._2._1(), // mean_fare_amount
-                                Math.sqrt((tup._2._4() / tup._2._1() - (tup._2._3() / tup._2._1()) * (tup._2._3() / tup._2._1())) / tup._2._1())))) // stdev_fare_amount
+                                Utils.stddev(tup._2()._1(), tup._2._3(), tup._2._4())))) // stdev_fare_amount
                 // Order descending by number of taxi_rides to each location
                 // Keep only top-5 locations
                 .takeOrdered(RANKING_SIZE, MyTupleComparator.INSTANCE);
