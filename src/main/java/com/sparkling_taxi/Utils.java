@@ -62,12 +62,20 @@ public class Utils {
      * @param sumOfPrimesTypes
      * @return prime number with maximum exponent
      */
-    public static int argMax(int sumOfPrimesTypes, List<Integer> primes) {
-        return primes.stream().map(prime -> new Tuple2<>(prime, sumOfPrimesTypes / prime))
+    public static int argMax(final int sumOfPrimesTypes, List<Integer> primes) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (Integer prime : primes) {
+            map.put(prime, sumOfPrimesTypes / prime);
+        }
+
+
+        return primes.stream()
+                .map(prime -> new Tuple2<>(prime, sumOfPrimesTypes))
+                .map(tup -> tup._2 / tup._1)
                 .max((o1, o2) -> {
-                    if (o1._2 > o2._2) return o2._1;
-                    else return o1._1;
-                }).map(t -> t._1)
+                    if (o1 > o2) return o2;
+                    else return o1;
+                }).map(t -> primes.get(t))
                 .orElse(primes.get(0));
     }
 }
