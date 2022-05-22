@@ -40,7 +40,7 @@ public class Query2 {
      * @param file
      */
     private static JavaPairRDD query2PerHour(SparkSession spark, String file) {
-        List<Tuple2<Tuple2<int[], Long>, Integer>> rdd = spark.read().parquet(file)
+        List<Tuple2<Tuple2<BitSet, Long>, Integer>> rdd = spark.read().parquet(file)
                 .toJavaRDD()
                 .filter(row -> {
                     boolean x = true;
@@ -53,7 +53,7 @@ public class Query2 {
                     Timestamp timestamp2 = row.getTimestamp(DROPOFF_COL);
                     int hourStart = Utils.toLocalDateTime(timestamp).getHour();
                     int hourEnd = Utils.toLocalDateTime(timestamp2).getHour();
-                    int[] hours = hourSlots(hourStart, hourEnd);
+                    BitSet hours = hourSlots(hourStart, hourEnd);
 //                    for (int i = 0, integersLength = integers.length; i < integersLength; i++) {
 //                        if (integers[i] == 1) {
 //                            Tuple5<Integer, Integer, Double, Double, Long> tup5 = new Tuple5<>(
@@ -71,7 +71,7 @@ public class Query2 {
                     // OLD tuple2 : (hour, (1, tip_amount, square_tip_amount, payment_tipe))
                 })
                 .mapToPair(tup2 -> new Tuple2<>(new Tuple2<>(tup2._1, tup2._2._2()), 1))
-                .takeOrdered(5);
+                .take(5);
                 // .reduceByKey((a, b) -> a + b)
 
 //                .reduceByKey((v1, v2) -> (v1 > v2) ? v1 : v2)
@@ -79,7 +79,7 @@ public class Query2 {
 
         System.out.println("=============== Im here =============== ");
 
-        rdd.forEach(x -> System.out.println(Arrays.toString(x._1._1) + ": " + x));
+        rdd.forEach(x -> System.out.println(x));
 
         // System.out.println("=================== flatMap done (" + rdd.count() + ") ===================");
 
@@ -112,24 +112,19 @@ public class Query2 {
         return null;
     }
 
-    public static int[] hourSlots(int hourStart, int hourEnd) {
+    public static BitSet hourSlots(int hourStart, int hourEnd) {
         // hour zone are: 0,1,2,3,...,23 where 0 = 00:00-00:59, 23=23:00-23:59
-        int[] list = new int[]{
-                0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0,
-        };
-        // BitSet b = new BitSet(24);
+        BitSet b = new BitSet(24);
         if (hourStart == hourEnd) {
-            list[hourStart] = 1;
-            return list;
+            b.set(hourStart);
+            return b;
         }
         int counter = hourStart;
         while (counter != hourEnd + 1) {
-            list[counter] = 1;
+            b.set(counter);
             counter = (counter + 1) % 24;
         }
-        return list;
+        return b;
     }
 
     private static class PopularPaymentType {

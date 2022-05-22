@@ -2,10 +2,7 @@ package com.sparkling_taxi;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,7 +10,7 @@ public class Query2Test {
 
     @Test
     public void hourSlotTest() {
-        int[] integers = Query2.hourSlots(0, 0);
+        BitSet integers = Query2.hourSlots(0, 0);
 
         List<Integer> list = convertList(integers);
         assertEquals(Collections.singletonList(0), list);
@@ -27,11 +24,11 @@ public class Query2Test {
         assertEquals(Arrays.asList(0, 1, 2, 23), list);
     }
 
-    private List<Integer> convertList(int[] integers) {
+    private List<Integer> convertList(BitSet integers) {
         List<Integer> list = new ArrayList<>();
-        for (int i = 0; i < integers.length; i++) {
+        for (int i = 0; i < integers.size(); i++) {
 
-            if (integers[i] == 1) list.add(i);
+            if (integers.get(i)) list.add(i);
         }
         return list;
     }
