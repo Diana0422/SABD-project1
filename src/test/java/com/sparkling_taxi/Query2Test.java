@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static com.sparkling_taxi.Utils.intRange;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class Query2Test {
@@ -11,9 +12,28 @@ public class Query2Test {
     @Test
     public void hourSlotBitTest() {
         BitSet integers = Query2.hourSlots(0, 0);
-
         List<Integer> list = convertList(integers);
         assertEquals(Collections.singletonList(0), list);
+
+        integers = Query2.hourSlots(0, 1);
+        list = convertList(integers);
+        assertEquals(Arrays.asList(0, 1), list);
+
+        integers = Query2.hourSlots(18, 18);
+        list = convertList(integers);
+        assertEquals(Collections.singletonList(18), list);
+
+        integers = Query2.hourSlots(1, 1);
+        list = convertList(integers);
+        assertEquals(Collections.singletonList(1), list);
+
+        integers = Query2.hourSlots(23, 23);
+        list = convertList(integers);
+        assertEquals(Collections.singletonList(23), list);
+
+//        integers = Query2.hourSlots(0, 23);
+//        list = convertList(integers);
+//        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23), list);
 
         integers = Query2.hourSlots(0, 4);
         list = convertList(integers);
@@ -23,6 +43,10 @@ public class Query2Test {
         list = convertList(integers);
         assertEquals(Arrays.asList(0, 1, 2, 23), list);
 
+        integers = Query2.hourSlots(23, 1);
+        list = convertList(integers);
+        assertEquals(Arrays.asList(0, 1, 23), list);
+
         integers = Query2.hourSlots(23, 0);
         list = convertList(integers);
         assertEquals(Arrays.asList(0, 23), list);
@@ -31,7 +55,9 @@ public class Query2Test {
         list = convertList(integers);
         assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23), list);
 
-
+        integers = Query2.hourSlots(23, 23);
+        list = convertList(integers);
+        assertEquals(Collections.singletonList(23), list);
     }
 
     @Test
@@ -68,10 +94,16 @@ public class Query2Test {
         assertEquals(Arrays.asList(0, 1, 2, 3, 4), list);
 
         list = Query2.hourSlotsList(23, 2);
-        assertEquals(Arrays.asList(23, 0, 1, 2), list);
+        assertEquals(Arrays.asList(0, 1, 2, 23), list);
 
         list = Query2.hourSlotsList(14, 12);
-        assertEquals(Arrays.asList(14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), list);
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23), list);
+
+        list = Query2.hourSlotsList(23, 23);
+        assertEquals(Collections.singletonList(23), list);
+
+        list = Query2.hourSlotsList(0, 23);
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23), list);
     }
 
     private List<Integer> convertList(BitSet integers) {
@@ -88,6 +120,13 @@ public class Query2Test {
             if (integers[i]) list.add(i);
         }
         return list;
+    }
+
+    @Test
+    public void rangeTest() {
+        assertEquals(Arrays.asList(0), intRange(0, 0));
+        assertEquals(Arrays.asList(0, 1), intRange(0, 1));
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22), intRange(0, 23));
     }
 
 //    @Test

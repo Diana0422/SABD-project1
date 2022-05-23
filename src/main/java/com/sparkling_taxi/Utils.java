@@ -78,4 +78,18 @@ public class Utils {
                 }).map(t -> primes.get(t))
                 .orElse(primes.get(0));
     }
+
+    public static List<Integer> intRange(int start, int end){
+        if (start < end){
+            List<Integer> l = new ArrayList<>();
+            for (int i = start; i<end; i++){
+                l.add(i);
+            }
+            return l;
+        } else if (start == end){
+            return Collections.singletonList(start);
+        } else {
+            throw new IllegalStateException("start > end!!!");
+        }
+    }
 }
