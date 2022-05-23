@@ -124,12 +124,21 @@ public class Query2 {
 
         JavaPairRDD<Tuple2<Integer, Long>, TipAndTrips> flattone = reduced1.flatMapToPair(ttt -> {
             List<Tuple2<Tuple2<Integer, Long>, TipAndTrips>> list = new ArrayList();
-
+            int startHour = ttt._1._1();
+            int stopHour = ttt._1._2();
+            int h = startHour;
+            while (h <= stopHour) {
+                Tuple2<Tuple2<Integer, Long>, TipAndTrips> tuple = new Tuple2<>(new Tuple2<>(h, ttt._1._3()), ttt._2);
+                list.add(tuple);
+                h = (h + 1) %24;
+            }
             return list.iterator();
         });
 
+        flattone.groupByKey().take(10).forEach(System.out::println);
 
-        flattone.collect().forEach(System.out::println);
+
+//        flattone.collect().forEach(System.out::println);
         return null;
 
     }
