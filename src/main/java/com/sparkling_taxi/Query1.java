@@ -48,6 +48,7 @@ public class Query1 {
         System.out.println("======================= before passengers =========================");
         JavaPairRDD<Timestamp, Double> passengersTS = spark.read().parquet(file)
                 .toJavaRDD()
+                // TODO: eliminare le date matte
                 .filter(row -> !(row.isNullAt(DROP_OUT_COL) || row.isNullAt(PASSENGER_COUNT_COL))) //TODO: questo andrebbe fatto su NiFi
                 .mapToPair(row -> new Tuple2<>(row.getTimestamp(DROP_OUT_COL), row.getDouble(PASSENGER_COUNT_COL)));
         // (timestamp, double)

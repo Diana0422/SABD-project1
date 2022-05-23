@@ -1,6 +1,8 @@
 package com.sparkling_taxi;
 
-public class TipAndTrips {
+import java.io.Serializable;
+
+public class TipAndTrips implements Serializable {
     private final double tripCount;
     private final double tipAmount;
 
@@ -28,5 +30,14 @@ public class TipAndTrips {
 
     public double getSquareTipAmount() {
         return squareTipAmount;
+    }
+
+    @Override
+    public String toString() {
+        return "TipAndTrips{" +
+               "tripCount=" + tripCount +
+               ", tipAmount=" + tipAmount +
+               ", squareTipAmount=" + squareTipAmount +
+               '}';
     }
 }

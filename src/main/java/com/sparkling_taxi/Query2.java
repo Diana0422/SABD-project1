@@ -72,8 +72,8 @@ public class Query2 {
 //                        return new Struct2(v1);
 //                    }
 //                })
-        // after reduceByKey: ((hourStart, hourEnd), (count, sum_tip_amount, sum_square_tip_amount))
-        //.reduceByKey((a, b) -> new Tuple3<>(a._1() + b._1(), a._2() + a._2(), a._3() + b._3()));
+    // after reduceByKey: ((hourStart, hourEnd), (count, sum_tip_amount, sum_square_tip_amount))
+    //.reduceByKey((a, b) -> new Tuple3<>(a._1() + b._1(), a._2() + a._2(), a._3() + b._3()));
 
 //                .flatMap((FlatMapFunction<Tuple2<Tuple2<Integer,Integer>,Tuple4<Integer, Double, Double, Long>>, Tuple5<Integer, Integer, Double, Double, Long>>) tup -> {
 //
@@ -88,11 +88,10 @@ public class Query2 {
 //                    }
 //                    return list.iterator();
 //                }, Encoders.tuple(INT(), INT(), DOUBLE(), DOUBLE(), LONG()))
-        //.count();
+    //.count();
 
-        //  System.out.println("Conteggio: " + count);
- //   }
-
+    //  System.out.println("Conteggio: " + count);
+    //   }
 
 
     /*
@@ -103,10 +102,10 @@ public class Query2 {
      * - most popular payment method each hour (MAX number of occurrence)
      * TODO: dovremmo raggruppare per ora, quindi avere 24 chiavi diverse.
      */
-    private static JavaPairRDD query2PerHourWithGroupBy(SparkSession spark, String file){
+    private static JavaPairRDD query2PerHourWithGroupBy(SparkSession spark, String file) {
         JavaRDD<Row> rdd = spark.read().parquet(file).toJavaRDD();
-
-        JavaRDD<Row> filter = rdd.filter(row -> !(row.isNullAt(0) || row.isNullAt(1) || row.isNullAt(2) || row.isNullAt(3)));
+        //
+        JavaRDD<Row> filter = rdd.filter(row -> !(row.isNullAt(0) || row.isNullAt(1) || row.isNullAt(2) || row.isNullAt(3) || row.getDouble(TIP_AMOUNT_COL) < 0.0));
 
         JavaPairRDD<Tuple3<Integer, Integer, Long>, Tuple3<Integer, Double, Double>> mappedPair1 = filter.mapToPair(row -> {
             Timestamp timestamp = row.getTimestamp(PICKUP_COL);
@@ -118,10 +117,19 @@ public class Query2 {
             // tuple2 : ((hourStart, hourEnd), (1, tip_amount, square_tip_amount, payment_tipe))
         });
 
-        JavaPairRDD<Tuple3<Integer, Integer, Long>, Tuple3<Integer, Double, Double>> mappedPair2 = mappedPair1.mapValues(tup4 -> new Tuple3<>(tup4._1(), tup4._2(), tup4._3()));
-        JavaPairRDD<Tuple3<Integer, Integer, Long>, Tuple3<Integer, Double, Double>> reduced1 = mappedPair2.reduceByKey((a, b) -> new Tuple3<>(a._1() + b._1(), a._2() + a._2(), a._3() + b._3()));// number of elements in RDD is greatly reduced
+        JavaPairRDD<Tuple3<Integer, Integer, Long>, TipAndTrips> mappedPair2 = mappedPair1.mapValues(tup4 -> new TipAndTrips(tup4._1(), tup4._2(), tup4._3()));
+        JavaPairRDD<Tuple3<Integer, Integer, Long>, TipAndTrips> reduced1 = mappedPair2.reduceByKey((a, b) -> new TipAndTrips(a.getTripCount() + b.getTripCount(), a.getTipAmount() + b.getTipAmount(), a.getSquareTipAmount() + b.getSquareTipAmount()));// number of elements in RDD is greatly reduced
 // .count(): 386, with 8M starting elements. It takes 7 seconds with initial 3000 elements, 1m 46 s with initial 8M elements.
-        System.out.println(reduced1.count());
+        // JavaPairRDD<Tuple3<Integer, Integer, Long>, Iterable<TipAndTrips>> groupByKey = reduced1.groupByKey();
+
+        JavaPairRDD<Tuple2<Integer, Long>, TipAndTrips> flattone = reduced1.flatMapToPair(ttt -> {
+            List<Tuple2<Tuple2<Integer, Long>, TipAndTrips>> list = new ArrayList();
+
+            return list.iterator();
+        });
+
+
+        flattone.collect().forEach(System.out::println);
         return null;
 
     }
