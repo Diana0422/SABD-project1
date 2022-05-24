@@ -73,12 +73,14 @@ public class Query2 {
             return list.iterator();
         });
 
-        flattone.collect().forEach(System.out::println);
+        flattone.reduceByKey(TipAndTrips::sumWith)
+                .mapToPair(d -> new Tuple2<>(d._1.getHour(), d._2.toTipTripsAndPayment(d._1.getPaymentType())))
+                .reduceByKey(TipTripsAndPayment::sumWith)
+                .collect().forEach(System.out::println);
 
         return null;
 
     }
-
 
     /**
      * Returns a bitset with all hour slot between hourStart and hourEnd

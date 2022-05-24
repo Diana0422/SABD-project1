@@ -3,10 +3,10 @@ package com.sparkling_taxi;
 import java.io.Serializable;
 
 public class TipAndTrips implements Serializable {
-    private double tripCount;
-    private double tipAmount;
+    protected double tripCount;
+    protected double tipAmount;
 
-    private double squareTipAmount;
+    protected double squareTipAmount;
 
     public TipAndTrips(double tripCount, double tipAmount, double squareTipAmount) {
         this.tripCount = tripCount;
@@ -18,6 +18,10 @@ public class TipAndTrips implements Serializable {
         this.tripCount = s.getTripCount();
         this.tipAmount = s.getTipAmount();
         this.squareTipAmount = s.getSquareTipAmount();
+    }
+
+    public TipTripsAndPayment toTipTripsAndPayment(Long payment){
+        return new TipTripsAndPayment(this, payment);
     }
 
     public double getTripCount() {
