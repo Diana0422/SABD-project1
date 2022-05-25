@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class NifiTest {
 
     private final NifiExecutor executor = new NifiExecutor();
-    private static final String EXAMPLE_TEMPLATE = ".nifi/templates/multi_file_preprocessing_group.xml";
+    private static final String EXAMPLE_TEMPLATE = ".nifi/templates/preprocessing_query1.xml";
 
     @Test
     public void getRootProcessorGroupTest() {
