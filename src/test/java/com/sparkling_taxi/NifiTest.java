@@ -1,5 +1,6 @@
 package com.sparkling_taxi;
 
+import com.sparkling_taxi.utils.NifiExecutor;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 

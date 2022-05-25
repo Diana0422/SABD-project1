@@ -1,24 +1,18 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.spark;
 
 
+import com.sparkling_taxi.Performance;
+import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
-import scala.Tuple3;
 
 import java.io.File;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 // docker cp backup/Query1.parquet namenode:/home/Query1.parquet
-// hdfs dfs -put Query1.parquet /home/dataset-batch/Query1.parquet
+// hdfs dfs -get Query1.parquet /home/dataset-batch/Query1.parquet /home/Query1.parquet
 public class Query1 {
 
 
@@ -48,21 +42,20 @@ public class Query1 {
         System.out.println("======================= before passengers =========================");
         JavaPairRDD<Timestamp, Double> passengersTS = spark.read().parquet(file)
                 .toJavaRDD()
-                // TODO: eliminare le date matte
-                .filter(row -> !(row.isNullAt(DROP_OUT_COL) || row.isNullAt(PASSENGER_COUNT_COL))) //TODO: questo andrebbe fatto su NiFi
                 .mapToPair(row -> new Tuple2<>(row.getTimestamp(DROP_OUT_COL), row.getDouble(PASSENGER_COUNT_COL)));
         // (timestamp, double)
 
-        System.out.println("instances: " + passengersTS.count());
+        // System.out.println("instances: " + passengersTS.count());
 
         JavaPairRDD<Tuple2<Integer, Integer>, Double> tuple2 = passengersTS.mapToPair(tup -> {
             LocalDateTime ld = Utils.toLocalDateTime(tup._1);
             return new Tuple2<>(new Tuple2<>(ld.getMonthValue(), ld.getYear()), tup._2);
-        }); //.persist(StorageLevel.MEMORY_AND_DISK_SER()); // ((month, year), passengers)
+        }); // ((month, year), passengers)
 
         JavaPairRDD<Tuple2<Integer, Integer>, Tuple2<Double, Integer>> aggTuple = tuple2
                 .mapToPair(tup -> new Tuple2<>(tup._1, new Tuple2<>(tup._2, 1))) // ((month, year), (passengers, 1))
-                .reduceByKey((x, y) -> new Tuple2<>(x._1 + y._1, x._2 + y._2)); // ((month, year), (sum_passengers, sum_instances))
+                .reduceByKey((x, y) -> new Tuple2<>(x._1 + y._1, x._2 + y._2))
+                .cache(); // ((month, year), (sum_passengers, sum_instances))
 
         aggTuple.collect().forEach(System.out::println);
 
@@ -82,7 +75,7 @@ public class Query1 {
                 .getOrCreate();
         spark.sparkContext().setLogLevel("WARN");
 
-        JavaPairRDD<Tuple2<Integer, Integer>, Double> javaPairRDD = Performance.measure("Query completa", () -> multiMonthMeanV2(spark, FILE_Q1));
+        JavaPairRDD<Tuple2<Integer, Integer>, Double> javaPairRDD = Performance.measure("Complete Query 1", () -> multiMonthMeanV2(spark, FILE_Q1));
         javaPairRDD.collect().forEach(x -> System.out.println("(Month,Year): " + x._1 + ", mean passengers: " + x._2));
 //  JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
 //            JavaRDD<Tuple2<String, Double>> result = sc.parallelize(means);

@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.bean;
 
 import java.io.Serializable;
 import java.util.Objects;

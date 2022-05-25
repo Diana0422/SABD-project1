@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.utils;
 
 
 import org.json.JSONException;
@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static com.sparkling_taxi.Utils.LINUX_SEPARATOR;
-import static com.sparkling_taxi.Utils.WINDOWS_SEPARATOR;
+import static com.sparkling_taxi.utils.Utils.LINUX_SEPARATOR;
+import static com.sparkling_taxi.utils.Utils.WINDOWS_SEPARATOR;
 
 public class FileUtils {
     private static final Logger logger = Logger.getLogger(FileUtils.class.getName());

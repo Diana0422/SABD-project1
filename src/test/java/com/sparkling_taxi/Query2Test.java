@@ -1,10 +1,11 @@
 package com.sparkling_taxi;
 
+import com.sparkling_taxi.spark.Query2;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.sparkling_taxi.Utils.intRange;
+import static com.sparkling_taxi.utils.Utils.intRange;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class Query2Test {

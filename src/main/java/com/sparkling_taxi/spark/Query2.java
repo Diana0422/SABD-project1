@@ -1,19 +1,22 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.spark;
 
+import com.sparkling_taxi.Performance;
+import com.sparkling_taxi.bean.DoubleKey;
+import com.sparkling_taxi.bean.TipAndTrips;
+import com.sparkling_taxi.bean.TipTripsAndPayment;
+import com.sparkling_taxi.bean.TripleKey;
+import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 import scala.Tuple4;
-import scala.collection.EvidenceIterableFactory$;
 
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static com.sparkling_taxi.Utils.intRange;
+import static com.sparkling_taxi.utils.Utils.intRange;
 
 // docker cp backup/Query2.parquet namenode:/home/Query2.parquet
 // hdfs dfs -put Query2.parquet /home/dataset-batch/Query2.parquet
@@ -48,10 +51,8 @@ public class Query2 {
      */
     private static JavaPairRDD query2PerHourWithGroupBy(SparkSession spark, String file) {
         JavaRDD<Row> rdd = spark.read().parquet(file).toJavaRDD();
-        //
-        JavaRDD<Row> filter = rdd.filter(row -> !(row.isNullAt(0) || row.isNullAt(1) || row.isNullAt(2) || row.isNullAt(3) || row.getDouble(TIP_AMOUNT_COL) < 0.0));
 
-        JavaPairRDD<TripleKey, TipAndTrips> mappedPair1 = filter.mapToPair(row -> {
+        JavaPairRDD<TripleKey, TipAndTrips> mappedPair1 = rdd.mapToPair(row -> {
             Timestamp timestamp = row.getTimestamp(PICKUP_COL);
             Timestamp timestamp2 = row.getTimestamp(DROPOFF_COL);
             int hourStart = Utils.toLocalDateTime(timestamp).getHour();
@@ -59,7 +60,6 @@ public class Query2 {
             return new Tuple2<>(new TripleKey(hourStart, hourEnd, row.getLong(PAYMENT_TYPE_COL)), new TipAndTrips(1, row.getDouble(TIP_AMOUNT_COL), row.getDouble(TIP_AMOUNT_COL) * row.getDouble(TIP_AMOUNT_COL)));
         });
 
-        // TODO: non salva i risultati parziali
         JavaPairRDD<TripleKey, TipAndTrips> ttt1 = mappedPair1.reduceByKey(TipAndTrips::sumWith);// number of elements in RDD is greatly reduced
         JavaPairRDD<DoubleKey, TipAndTrips> flattone = ttt1.flatMapToPair(ttt -> {
             List<Tuple2<DoubleKey, TipAndTrips>> list = new ArrayList<>();
@@ -82,30 +82,6 @@ public class Query2 {
 
     }
 
-    /**
-     * Returns a bitset with all hour slot between hourStart and hourEnd
-     *
-     * @param hourStart
-     * @param hourEnd
-     * @return
-     */
-    @Deprecated
-    public static BitSet hourSlots(int hourStart, int hourEnd) {
-        // hour zone are: 0,1,2,3,...,23 where 0 = 00:00-00:59, 23=23:00-23:59
-        BitSet b = new BitSet(24);
-        if (hourStart == hourEnd) {
-            b.set(hourStart);
-            return b;
-        }
-        int counter = hourStart;
-        do {
-            b.set(counter);
-            counter = (counter + 1) % 24;
-        } while (counter != hourEnd + 1);
-
-        return b;
-    }
-
     public static List<Integer> hourSlotsList(int hourStart, int hourEnd) {
         // hour zone are: 0,1,2,3,...,23 where 0 = 00:00-00:59, 23=23:00-23:59
         if (hourStart == hourEnd) {
@@ -117,17 +93,6 @@ public class Query2 {
             integers.addAll(intRange(0, hourEnd + 1));
             return new ArrayList<>(new HashSet<>(integers));
         }
-    }
-
-    @Deprecated
-    public static boolean[] hourSlotsBoolArray(int hourStart, int hourEnd) {
-        int counter = hourStart;
-        boolean[] b = new boolean[24];
-        while (counter != hourEnd + 1) {
-            b[counter] = true;
-            counter = (counter + 1) % 24;
-        }
-        return b;
     }
 
     private static class PopularPaymentType {

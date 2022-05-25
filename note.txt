@@ -22,7 +22,7 @@ UNSURE: VendorID, RatecodeID, congestion_surcharge, airport_fee
 
 
 ./bin/spark-submit \
---class  com.sparkling_taxi.Query1           \   #entry point dell’applicazione (esempio classe Main)
+--class  com.sparkling_taxi.spark.Query1           \   #entry point dell’applicazione (esempio classe Main)
 --master localhost:7077          \   # URL del master del cluster (default: local, esempio spark://23.195.26.187:7077)
 # --deploy-mode      \   # cluster se distribuire il driver sui worker node o client solo localmente come client esterno. Di default è client.
 # --conf             \   # proprietà di configurazione Spark come sequenza di coppie key-value
@@ -35,4 +35,4 @@ UNSURE: VendorID, RatecodeID, congestion_surcharge, airport_fee
 
 
 docker cp .\sabd1-1.0.jar spark-master:/opt/bitnami/spark/sabd1-1.0.jar
-bin/spark-submit --class com.sparkling_taxi.Query1 --master local ./sabd1-1.0.jar ciao.txt
+bin/spark-submit --class com.sparkling_taxi.spark.Query1 --master local ./sabd1-1.0.jar ciao.txt

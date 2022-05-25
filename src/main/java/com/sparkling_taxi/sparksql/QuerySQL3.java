@@ -1,0 +1,4 @@
+package com.sparkling_taxi.sparksql;
+
+public class QuerySQL3 {
+}

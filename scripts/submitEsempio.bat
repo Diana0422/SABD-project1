@@ -1,1 +1,0 @@
-docker exec -it spark-master /bin/bash /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.Esempio --master local ./taxi-app/sabd1-1.0.jar ./taxi-app/ciao.txt

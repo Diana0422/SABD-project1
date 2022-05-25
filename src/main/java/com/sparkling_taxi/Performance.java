@@ -1,7 +1,5 @@
 package com.sparkling_taxi;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 

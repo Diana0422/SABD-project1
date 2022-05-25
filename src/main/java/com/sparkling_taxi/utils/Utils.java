@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.utils;
 
 import scala.Tuple2;
 

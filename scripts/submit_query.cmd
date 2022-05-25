@@ -20,17 +20,17 @@ GOTO done
 
 :q1
 echo query1
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.Query1 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.spark.Query1 ./taxi-app/sabd1-1.0.jar
 goto done
 
 :q2
 echo query2
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.Query2 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.spark.Query2 ./taxi-app/sabd1-1.0.jar
 goto done
 
 :q3
 echo query3
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.Query3 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.spark.Query3 ./taxi-app/sabd1-1.0.jar
 
 :done
 exit

@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.utils;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpDelete;

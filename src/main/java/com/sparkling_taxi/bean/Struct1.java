@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.bean;
 
 public final class Struct1 {
     private final int hourStart;
