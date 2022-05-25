@@ -1,6 +1,6 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.nifi;
 
-import com.sparkling_taxi.utils.NifiExecutor;
+import com.sparkling_taxi.nifi.NifiExecutor;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 

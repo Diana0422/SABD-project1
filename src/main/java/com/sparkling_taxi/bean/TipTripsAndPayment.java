@@ -10,6 +10,14 @@ public class TipTripsAndPayment extends TipAndTrips {
         this.payment = payment;
     }
 
+    /**
+     * Sums values of this instance with values of another instance,
+     * then returns this instance with summed values instead of creating a new one.
+     *
+     * Used in reduceByKey.
+     * @param other another instance of this class
+     * @return this instance with summed values.
+     */
     public TipTripsAndPayment sumWith(TipTripsAndPayment other){
         // TODO: watch out forse è sbagliata!!!
         if (this.tripCount < other.tripCount){

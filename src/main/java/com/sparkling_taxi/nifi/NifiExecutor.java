@@ -1,4 +1,4 @@
-package com.sparkling_taxi.utils;
+package com.sparkling_taxi.nifi;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpDelete;

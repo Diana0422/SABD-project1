@@ -1,6 +1,6 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.Performance;
+import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.util.StatCounter;

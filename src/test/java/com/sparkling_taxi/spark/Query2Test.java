@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.spark;
 
 import com.sparkling_taxi.spark.Query2;
 import org.junit.jupiter.api.Test;

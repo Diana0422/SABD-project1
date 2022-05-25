@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.spark;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;

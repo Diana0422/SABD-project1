@@ -1,8 +1,11 @@
 package com.sparkling_taxi.bean;
 
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Objects;
 
+@Data
 public class DoubleKey implements Serializable {
     private final Integer hour;
 
@@ -11,14 +14,6 @@ public class DoubleKey implements Serializable {
     public DoubleKey(Integer keyA, Long paymentType) {
         this.hour = keyA;
         this.paymentType = paymentType;
-    }
-
-    public Integer getHour() {
-        return hour;
-    }
-
-    public Long getPaymentType() {
-        return paymentType;
     }
 
     @Override

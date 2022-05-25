@@ -1,6 +1,6 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.Performance;
+import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.bean.DoubleKey;
 import com.sparkling_taxi.bean.TipAndTrips;
 import com.sparkling_taxi.bean.TipTripsAndPayment;

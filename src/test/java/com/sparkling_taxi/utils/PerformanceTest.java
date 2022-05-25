@@ -1,4 +1,4 @@
-package com.sparkling_taxi;
+package com.sparkling_taxi.utils;
 
 import org.junit.jupiter.api.Test;
 

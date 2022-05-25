@@ -1,15 +1,19 @@
 package com.sparkling_taxi.spark;
 
 
-import com.sparkling_taxi.Performance;
-import com.sparkling_taxi.utils.Utils;
-import org.apache.spark.api.java.JavaPairRDD;
+import com.sparkling_taxi.bean.Query1Bean;
+import com.sparkling_taxi.bean.Query1Calc;
+import com.sparkling_taxi.bean.Query1Result;
+import com.sparkling_taxi.bean.YearMonth;
+import com.sparkling_taxi.utils.Performance;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 
 import java.io.File;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.util.List;
 
 // docker cp backup/Query1.parquet namenode:/home/Query1.parquet
 // hdfs dfs -get Query1.parquet /home/dataset-batch/Query1.parquet /home/Query1.parquet
@@ -17,7 +21,7 @@ public class Query1 {
 
 
     public static final String FILE_Q1 = "hdfs://namenode:9000/home/dataset-batch/Query1.parquet";
-    public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1/";
+    public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1";
     public static final String DIR_TIMESTAMP = "hdfs://namenode:9000/home/dataset-batch/timestamp";
     public static final int PASSENGER_COUNT_COL = 2;
     public static final int DROP_OUT_COL = 1;
@@ -38,35 +42,36 @@ public class Query1 {
         return true;
     }
 
-    public static JavaPairRDD<Tuple2<Integer, Integer>, Double> multiMonthMeanV2(SparkSession spark, String file) {
-        System.out.println("======================= before passengers =========================");
-        JavaPairRDD<Timestamp, Double> passengersTS = spark.read().parquet(file)
+    /**
+     * Spark Query1:
+     * Average calculation on a monthly basis and on a subset of values:
+     * - avg passengers
+     * - avg tip/(total amount -toll amount)
+     * @param spark the initialized SparkSession
+     * @param file the input file
+     * @return List of computed means
+     */
+    public static List<Tuple2<YearMonth, Query1Result>> multiMonthMeans(SparkSession spark, String file) {
+        System.out.println("======================= Query 1 =========================");
+        return spark.read().parquet(file)
+                // Converts the typed Dataset<Row> to Dataset<Query1Bean>
+                .as(Encoders.bean(Query1Bean.class))
                 .toJavaRDD()
-                .mapToPair(row -> new Tuple2<>(row.getTimestamp(DROP_OUT_COL), row.getDouble(PASSENGER_COUNT_COL)));
-        // (timestamp, double)
-
-        // System.out.println("instances: " + passengersTS.count());
-
-        JavaPairRDD<Tuple2<Integer, Integer>, Double> tuple2 = passengersTS.mapToPair(tup -> {
-            LocalDateTime ld = Utils.toLocalDateTime(tup._1);
-            return new Tuple2<>(new Tuple2<>(ld.getMonthValue(), ld.getYear()), tup._2);
-        }); // ((month, year), passengers)
-
-        JavaPairRDD<Tuple2<Integer, Integer>, Tuple2<Double, Integer>> aggTuple = tuple2
-                .mapToPair(tup -> new Tuple2<>(tup._1, new Tuple2<>(tup._2, 1))) // ((month, year), (passengers, 1))
-                .reduceByKey((x, y) -> new Tuple2<>(x._1 + y._1, x._2 + y._2))
-                .cache(); // ((month, year), (sum_passengers, sum_instances))
-
-        aggTuple.collect().forEach(System.out::println);
-
-        return aggTuple.mapToPair(tup -> new Tuple2<>(tup._1, tup._2._1 / (double) tup._2._2));
+                .mapToPair(q1 -> new Tuple2<>(new YearMonth(q1.getTpep_dropoff_datetime()), new Query1Calc(1, q1)))
+                /* after mapToPair: ((month, year), (1, passengers, ...)) */
+                .reduceByKey(Query1Calc::sumWith)
+                /* after reduceByKey: ((month, year), (count, sum_passengers, ...)) */
+                .mapValues(Query1Result::new)// Query1Result computes means inside the constructor
+                /* after mapValues: ((month, year), (passengers_mean, other_mean...)) */
+                .sortByKey(true)
+                .collect();
     }
 
     public static void main(String[] args) {
         // TODO: chiamare NiFi da qui
 
         // Must install WINUTILS.EXE for Windows.
-        // windowsCheck();
+        windowsCheck();
 
         SparkSession spark = SparkSession
                 .builder()
@@ -75,11 +80,20 @@ public class Query1 {
                 .getOrCreate();
         spark.sparkContext().setLogLevel("WARN");
 
-        JavaPairRDD<Tuple2<Integer, Integer>, Double> javaPairRDD = Performance.measure("Complete Query 1", () -> multiMonthMeanV2(spark, FILE_Q1));
-        javaPairRDD.collect().forEach(x -> System.out.println("(Month,Year): " + x._1 + ", mean passengers: " + x._2));
-//  JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
-//            JavaRDD<Tuple2<String, Double>> result = sc.parallelize(means);
-//            result.collect().forEach(System.out::println);
+        List<Tuple2<YearMonth, Query1Result>> query1 = Performance.measure("Complete Query 1", () -> multiMonthMeans(spark, FILE_Q1));
+
+        JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
+        JavaRDD<Tuple2<YearMonth, Query1Result>> result = sc.parallelize(query1)
+                // sometimes spark produces two partitions but the output file is small,
+                // so we force it to use only 1 partition
+                .repartition(1)
+                .cache();
+        result.saveAsTextFile(OUT_DIR);
+        System.out.println("================== written to HDFS =================");
+
+        result.collect().forEach(System.out::println);
+
+        sc.close();
         spark.close();
     }
 }

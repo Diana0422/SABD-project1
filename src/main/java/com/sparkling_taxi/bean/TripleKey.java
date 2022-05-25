@@ -1,31 +1,18 @@
 package com.sparkling_taxi.bean;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Objects;
 
+@Data
+@AllArgsConstructor
 public class TripleKey implements Serializable {
     private final Integer hourStart;
     private final Integer hourEnd;
 
     private final Long paymentType;
-
-    public TripleKey(Integer keyA, Integer  keyB, Long paymentType) {
-        this.hourStart = keyA;
-        this.hourEnd = keyB;
-        this.paymentType = paymentType;
-    }
-
-    public Integer getHourStart() {
-        return hourStart;
-    }
-
-    public Integer getHourEnd() {
-        return hourEnd;
-    }
-
-    public Long getPaymentType() {
-        return paymentType;
-    }
 
     @Override
     public String toString() {
