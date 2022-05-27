@@ -1,14 +1,13 @@
 package com.sparkling_taxi.nifi;
 
-import com.sparkling_taxi.nifi.NifiExecutor;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
-
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * These tests requires the NiFi Docker container to be running
+ */
 public class NifiTest {
 
     private final NifiExecutor executor = new NifiExecutor();
@@ -22,35 +21,14 @@ public class NifiTest {
     }
 
     @Test
-    public void uploadTemplateTest() {
-        Optional<String> templateId = executor.uploadTemplate(EXAMPLE_TEMPLATE);
-
-        if (templateId.isPresent()) {
-            Optional<JSONObject> jsonObject2 = executor.deleteTemplate(templateId.get());
-            jsonObject2.ifPresent(System.out::println);
-        }
-    }
-
-    @Test
     public void instantiateTemplateTest() {
         // upload a template
-        Optional<String> templateId = executor.uploadTemplate(EXAMPLE_TEMPLATE);
-        // if it all goes well
-        if (templateId.isPresent()) {
-            System.out.println("templateId = " + templateId.get());
-            // instantiate a processGroup from the template
-            Optional<String> s = executor.instantiateTemplate(templateId.get());
-            if (s.isPresent()) {
-                System.out.println(s.get());
-            } else {
-                Optional<JSONObject> jsonObject2 = executor.deleteTemplate(templateId.get());
-                jsonObject2.ifPresent(System.out::println);
-                fail("TEST: Failed to instantiate the template " + EXAMPLE_TEMPLATE);
-            }
-            // Delete the template to make the test repeatable (doesn't remove the process group instance)
-            Optional<JSONObject> jsonObject2 = executor.deleteTemplate(templateId.get());
-            jsonObject2.ifPresent(System.out::println);
-        }
+        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE);
+        boolean b = n.uploadAndInstantiateTemplate();
+        assertTrue(b, "TEST: Failed to instantiate the template " + EXAMPLE_TEMPLATE);
+        // Delete the template, groups and controller services to make the test repeatable
+        boolean d = n.removeAll();
+        assertTrue(d, "TEST: failed to delete template " + EXAMPLE_TEMPLATE);
     }
 
     /**
@@ -74,5 +52,59 @@ public class NifiTest {
         for (String processorGroup : processorGroupsNew) {
             executor.removeProcessGroup(processorGroup);
         }
+    }
+
+    @Test
+    public void controllerServicesTest() {
+        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE);
+        assertTrue(n.uploadAndInstantiateTemplate());
+        List<NifiControllerService> controllerServices = n.getControllerServices();
+        assertFalse(controllerServices.isEmpty());
+
+        // assertFalse(n.areAllControllerServicesRunning());
+
+        assertTrue(n.runAllControllerServices(), "Not all running...");
+
+        // assertTrue(n.areAllControllerServicesRunning());
+        n.stopAllControllerServices();
+
+        // removes template, process group in the flow and controller services
+        assertTrue(n.removeAll());
+    }
+
+    @Test
+    public void runProcessorGroup() throws InterruptedException {
+        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE);
+        assertTrue(n.uploadAndInstantiateTemplate());
+
+        assertTrue(n.runAll());
+
+        Thread.sleep(2000);
+
+        assertTrue(n.stopAll());
+
+        Thread.sleep(12000); //TODO: attendere che gli InvokeHttp finiscano di eseguire...
+
+        assertTrue(n.removeAll());
+    }
+
+    @Test
+    public void clearAllControllerServices(){
+        List<NifiControllerService> controllerServices = executor.getControllerServices();
+        int size = controllerServices.size();
+        int done = 0;
+        for (NifiControllerService controllerService : controllerServices) {
+            executor.stopControllerService(controllerService);
+            executor.removeControllerService(controllerService);
+            done++;
+        }
+        assertEquals(done, size);
+    }
+
+    public static void main(String[] args) {
+        NifiExecutor nifiExecutor = new NifiExecutor();
+        List<String> processorGroups = nifiExecutor.getProcessorGroups();
+        String s = processorGroups.get(0);
+        nifiExecutor.emptyQueues(s);
     }
 }
