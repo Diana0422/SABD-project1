@@ -15,7 +15,6 @@ import static com.sparkling_taxi.nifi.NifiREST.*;
 public class NifiExecutor {
 
     private String rootProcessGroupCache = "";
-    private final static String HARDCODED_CLIENT_ID = "065cf772-0181-1000-fcc1-70d8e5866ef6";
     private final static String NIFI_API_URL = "http://localhost:8181/nifi-api/";
 
     /**
@@ -146,7 +145,7 @@ public class NifiExecutor {
     /**
      * Use only during instantiation!!!
      *
-     * @return
+     * @return a list of NifiControllerService objects
      */
     public List<NifiControllerService> getControllerServices() {
         String rootProcessGroup = getRootProcessGroup();
@@ -163,19 +162,6 @@ public class NifiExecutor {
             }
         }
         return ids;
-    }
-
-    /**
-     * Checks if the controller service is running
-     *
-     * @param n the controller service object
-     * @return TODO: dopo se c'è tempo
-     */
-    public boolean isControllerServiceRunning(NifiControllerService n) {
-        String s = NIFI_API_URL + "controller-services/" + n.getId() + "/state";
-        Optional<JSONObject> nifi = getNifi(s);
-
-        return false;
     }
 
     public boolean removeControllerService(NifiControllerService ncs) {
@@ -221,21 +207,16 @@ public class NifiExecutor {
     }
 
     /**
+     * Used to RUN or STOP an entire processor group
      * @param pgid    process group id
-     * @param version version of the process group, use NifiTemplateInstance.getProcessorGroupVersion()
      * @param state   STOPPED or RUNNING
      * @return
      */
-    public boolean setRunStatusOfProcessorGroup(String pgid, int version, String state) {
+    public boolean setRunStatusOfProcessorGroup(String pgid, String state) {
         String s = NIFI_API_URL + "flow/process-groups/" + pgid;
         String json = "{\n" +
                       "    \"id\": \"" + pgid + "\",\n" +
                       "    \"state\": \"" + state + "\",\n" +
-//                      "    \"components\": {\n" +
-//                      "        \"preprocessing_query1\": {\n" + // TODO ricordati
-//                      "           \"version\": "+version+"\n" +
-//                      "        }\n" +
-//                      "    },\n" +
                       "    \"disconnectedNodeAcknowledged\": true\n" +
                       "}";
         return putNifi(s, json);
@@ -259,7 +240,18 @@ public class NifiExecutor {
         return false;
     }
 
-    public boolean hasFinished(String processor) {
-        return false;
+    public boolean terminateThreadsOfProcessorGroup(String processorGroupId) {
+        List<String> processors = getProcessors(processorGroupId);
+        boolean ok = true;
+        for (String processor : processors) {
+            ok = ok && terminateProcessor(processor);
+            System.out.println("Terminated threads of processor " + processor);
+        }
+        return ok;
+    }
+
+    private boolean terminateProcessor(String processorId) {
+        String url = NIFI_API_URL + "processors/" + processorId + "/threads";
+        return deleteNifi(url, false);
     }
 }

@@ -1,7 +1,10 @@
 package com.sparkling_taxi.nifi;
 
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -73,23 +76,16 @@ public class NifiTest {
     }
 
     @Test
-    public void runProcessorGroup() throws InterruptedException {
+    public void runProcessorGroup() {
         NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE);
-        assertTrue(n.uploadAndInstantiateTemplate());
-
-        assertTrue(n.runAll());
-
-        Thread.sleep(2000);
-
-        assertTrue(n.stopAll());
-
-        Thread.sleep(12000); //TODO: attendere che gli InvokeHttp finiscano di eseguire...
-
-        assertTrue(n.removeAll());
+        assertTrue(n.uploadAndInstantiateTemplate(), "Failed to instantiate");
+        assertTrue(n.runAll(), "Failed to run");
+        assertTrue(n.stopAll(), "Failed to stop");
+        assertTrue(n.removeAll(), "Failed to remove");
     }
 
     @Test
-    public void clearAllControllerServices(){
+    public void clearAllControllerServices() {
         List<NifiControllerService> controllerServices = executor.getControllerServices();
         int size = controllerServices.size();
         int done = 0;
@@ -101,10 +97,4 @@ public class NifiTest {
         assertEquals(done, size);
     }
 
-    public static void main(String[] args) {
-        NifiExecutor nifiExecutor = new NifiExecutor();
-        List<String> processorGroups = nifiExecutor.getProcessorGroups();
-        String s = processorGroups.get(0);
-        nifiExecutor.emptyQueues(s);
-    }
 }

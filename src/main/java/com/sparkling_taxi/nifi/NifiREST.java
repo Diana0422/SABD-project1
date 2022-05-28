@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 public class NifiREST {
+    private static final boolean VERBOSE = false;
 
     static boolean putNifi(String stringUrl, String body) {
         try {
@@ -29,22 +30,23 @@ public class NifiREST {
                 byte[] input = body.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
-            StringBuilder response = new StringBuilder();
-
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-                // System.out.println(response);
-            } catch (IOException io) {
-                io.printStackTrace();
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {
+            if (VERBOSE) {
+                StringBuilder response = new StringBuilder();
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
                     String responseLine;
                     while ((responseLine = br.readLine()) != null) {
                         response.append(responseLine.trim());
                     }
                     System.out.println(response);
+                } catch (IOException io) {
+                    io.printStackTrace();
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {
+                        String responseLine;
+                        while ((responseLine = br.readLine()) != null) {
+                            response.append(responseLine.trim());
+                        }
+                        System.out.println(response);
+                    }
                 }
             }
             int status = conn.getResponseCode();
@@ -88,11 +90,19 @@ public class NifiREST {
             conn.setRequestMethod(HttpDelete.METHOD_NAME);
             if (withJson)
                 conn.setRequestProperty("Content-Type", "application/json");
-            System.out.println("DELETE " + conn.getResponseCode() + ": " + conn.getResponseMessage());
-            InputStream is = conn.getInputStream();
-            String response = IOUtils.toString(is, StandardCharsets.UTF_8);
-            System.out.println(response);
-            return conn.getResponseCode() == 200;
+            int code = conn.getResponseCode();
+            System.out.println("DELETE " + code + ": " + conn.getResponseMessage());
+            if (VERBOSE) {
+                InputStream is;
+                if (code == 200) {
+                    is = conn.getInputStream();
+                } else {
+                    is = conn.getErrorStream();
+                }
+                String response = IOUtils.toString(is, StandardCharsets.UTF_8);
+                System.out.println(response);
+            }
+            return code == 200;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -170,9 +180,11 @@ public class NifiREST {
                 while ((responseLine = br.readLine()) != null) {
                     response.append(responseLine.trim());
                 }
-//                System.out.println(response);
-                System.out.println("POST " + conn.getResponseCode() + ": " + conn.getResponseMessage());
+                if (VERBOSE) {
+                    System.out.println(response);
+                }
             }
+            System.out.println("POST " + conn.getResponseCode() + ": " + conn.getResponseMessage());
             return Optional.of(new JSONObject(response.toString()));
         } catch (IOException e) {
             e.printStackTrace();

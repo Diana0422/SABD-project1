@@ -1,5 +1,7 @@
 package com.sparkling_taxi.nifi;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,29 +39,20 @@ public class NifiTemplateInstance {
         processorGroupVersion++;
     }
 
-    // TODO: dopo se c'è tempo
     public boolean areAllControllerServicesRunning() {
         return controllerServiceIds.stream().allMatch(executor::isControllerServiceRunning);
     }
 
-    public boolean isRunning() {
-        return false;
+    public int numberProcessRunning() {
+        Optional<JSONObject> info = executor.getProcessorGroupInfo(processorGroupId);
+        return info.map(jsonObject -> jsonObject.getJSONObject("processGroupFlow"))
+                .map(j -> j.getJSONObject("flow"))
+                .map(j -> j.getJSONArray("processGroups"))
+                .filter(a -> !a.isEmpty())
+                .map(a -> a.getJSONObject(0))
+                .map(p -> p.getInt("runningCount"))
+                .orElse(0);
     }
-
-//    private Optional<String> uploadAndInstantiateTemplate(String template) {
-//        Optional<String> templateId = executor.uploadTemplate(template);
-//        // if it all goes well
-//        if (templateId.isPresent()) {
-//            System.out.println("templateId = " + templateId.get());
-//            // instantiate a processGroup from the template
-//            Optional<String> s = executor.instantiateTemplate(templateId.get());
-//            if (s.isPresent()) {
-//                System.out.println(s.get());
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 
     /**
      * This method:
@@ -93,7 +86,7 @@ public class NifiTemplateInstance {
      */
     public boolean runAll() {
         runAllControllerServices();
-        boolean running = executor.setRunStatusOfProcessorGroup(processorGroupId, processorGroupVersion, "RUNNING");
+        boolean running = executor.setRunStatusOfProcessorGroup(processorGroupId, "RUNNING");
         incrementProcessGroupVersion();
         return running;
     }
@@ -102,14 +95,16 @@ public class NifiTemplateInstance {
      * This method:
      * - stop controller services
      * - stop all processors
+     * - terminates all running threads
      * - empties all queues
      */
     public boolean stopAll() {
         boolean stoppedServices = stopAllControllerServices();
-        boolean stoppedProcessGroups = executor.setRunStatusOfProcessorGroup(processorGroupId, processorGroupVersion, "STOPPED");
+        boolean stoppedProcessGroups = executor.setRunStatusOfProcessorGroup(processorGroupId, "STOPPED");
+        boolean terminatedThreads = executor.terminateThreadsOfProcessorGroup(processorGroupId);
         incrementProcessGroupVersion();
         boolean emptied = executor.emptyQueues(processorGroupId);
-        return stoppedServices && stoppedProcessGroups && emptied;
+        return terminatedThreads && stoppedServices && stoppedProcessGroups && emptied;
     }
 
     /**
@@ -126,10 +121,10 @@ public class NifiTemplateInstance {
 
         // remove the process group of the template
         List<String> theProcessGroup = executor.getProcessorGroups();
-        System.out.println("removed process groups: " + theProcessGroup.size());
         boolean emptied = theProcessGroup.stream().allMatch(executor::emptyQueues);
         // remove all processGroups
         boolean allGroupsDeleted = theProcessGroup.stream().allMatch(executor::removeProcessGroup);
+        System.out.println("removed process groups: " + theProcessGroup.size());
         // remove all controllers services
         boolean allServicesDeleted = controllerServiceIds.stream().allMatch(executor::removeControllerService);
         System.out.println("allServicesDeleted = " + allServicesDeleted);
@@ -156,7 +151,13 @@ public class NifiTemplateInstance {
         return ss;
     }
 
-    public String getProcessorGroup() {
-        return processorGroupId;
+    /**
+     * Gets the processor Group of the instantiated Template.
+     * If it is not instantiated return null
+     *
+     * @return the id of the processor group or null
+     */
+    public Optional<String> getProcessorGroup() {
+        return Optional.ofNullable(processorGroupId);
     }
 }
