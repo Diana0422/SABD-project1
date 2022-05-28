@@ -39,10 +39,6 @@ public class NifiTemplateInstance {
         processorGroupVersion++;
     }
 
-    public boolean areAllControllerServicesRunning() {
-        return controllerServiceIds.stream().allMatch(executor::isControllerServiceRunning);
-    }
-
     public int numberProcessRunning() {
         Optional<JSONObject> info = executor.getProcessorGroupInfo(processorGroupId);
         return info.map(jsonObject -> jsonObject.getJSONObject("processGroupFlow"))
