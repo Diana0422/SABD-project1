@@ -15,15 +15,18 @@ import static com.sparkling_taxi.nifi.NifiREST.*;
 public class NifiExecutor {
 
     private String rootProcessGroupCache = "";
-    private final static String NIFI_API_URL = "http://localhost:8181/nifi-api/";
+    private String nifiApiUrl;
 
+    public NifiExecutor(String apiUrl){
+        this.nifiApiUrl = apiUrl;
+    }
     /**
      * [TESTED] Uploads a template in the form of a ProcessGroup
      *
      * @return If successful returns the template id, otherwise Optional.empty()
      */
     public Optional<String> uploadTemplate(String file) {
-        String url = NIFI_API_URL + "process-groups/root/templates/upload";
+        String url = nifiApiUrl + "process-groups/root/templates/upload";
         Optional<String> s = NifiREST.postNifiFile(file, url);
         if (s.isPresent()) {
             Matcher m = Pattern.compile("<id>(.*)</id>").matcher(s.get());
@@ -40,7 +43,7 @@ public class NifiExecutor {
      * @return if succesful returns the response
      */
     public boolean deleteTemplate(String templateId) {
-        String templateToRemove = NIFI_API_URL + "templates/" + templateId;
+        String templateToRemove = nifiApiUrl + "templates/" + templateId;
         return deleteNifi(templateToRemove, true);
     }
 
@@ -53,7 +56,8 @@ public class NifiExecutor {
         if (!rootProcessGroupCache.isEmpty()) {
             return rootProcessGroupCache;
         }
-        Optional<JSONObject> response = getNifi(NIFI_API_URL + "process-groups/root/");
+        // http://localhost:8181/nifi-api/process-groups/root/
+        Optional<JSONObject> response = getNifi(nifiApiUrl + "process-groups/root/");
         response.ifPresent(jsonObject -> rootProcessGroupCache = jsonObject.getString("id"));
         return rootProcessGroupCache;
     }
@@ -66,7 +70,7 @@ public class NifiExecutor {
      */
     public Optional<String> instantiateTemplate(String templateId) {
         String rootProcessGroup = getRootProcessGroup();
-        String url = NIFI_API_URL + "process-groups/" + rootProcessGroup + "/template-instance";
+        String url = nifiApiUrl + "process-groups/" + rootProcessGroup + "/template-instance";
         String jsonInputString = "{\n" +
                                  "    \"originX\": 2.0,\n" +
                                  "    \"originY\": 3.0,\n" +
@@ -95,7 +99,7 @@ public class NifiExecutor {
      * @return the list of processor groups in NiFi.
      */
     public List<String> getProcessorGroups() {
-        String url = NIFI_API_URL + "process-groups/" + getRootProcessGroup() + "/process-groups";
+        String url = nifiApiUrl + "process-groups/" + getRootProcessGroup() + "/process-groups";
         Optional<JSONObject> response = getNifi(url);
         Optional<JSONArray> groups = response.map(r -> r.getJSONArray("processGroups"));
         return collectIDs(groups.orElse(new JSONArray()));
@@ -110,7 +114,7 @@ public class NifiExecutor {
      * @return the list of processor ids
      */
     public List<String> getProcessors(String processGroup) {
-        String url = NIFI_API_URL + "process-groups/" + processGroup + "/processors";
+        String url = nifiApiUrl + "process-groups/" + processGroup + "/processors";
         Optional<JSONObject> response = getNifi(url);
         Optional<JSONArray> processes = response.map(r -> r.getJSONArray("processors"));
         return collectIDs(processes.orElse(new JSONArray()));
@@ -125,7 +129,7 @@ public class NifiExecutor {
      * @return the json object in an Optional
      */
     public Optional<JSONObject> getProcessorGroupInfo(String processorGroupId) {
-        String processorGroup = NIFI_API_URL + "flow/process-groups/" + processorGroupId;
+        String processorGroup = nifiApiUrl + "flow/process-groups/" + processorGroupId;
         return getNifi(processorGroup);
     }
 
@@ -138,7 +142,7 @@ public class NifiExecutor {
     public boolean removeProcessGroup(String processGroupId) {
         // To remove a process group we need two parameters: revisionNumber and groupId.
         // The revision number is presumably always 0, but I can be wrong
-        String processGroupToRemove = NIFI_API_URL + "process-groups/" + processGroupId + "?version=0";
+        String processGroupToRemove = nifiApiUrl + "process-groups/" + processGroupId + "?version=0";
         return deleteNifi(processGroupToRemove, true);
     }
 
@@ -149,7 +153,7 @@ public class NifiExecutor {
      */
     public List<NifiControllerService> getControllerServices() {
         String rootProcessGroup = getRootProcessGroup();
-        String s = NIFI_API_URL + "flow/process-groups/" + rootProcessGroup + "/controller-services";
+        String s = nifiApiUrl + "flow/process-groups/" + rootProcessGroup + "/controller-services";
         System.out.println(s);
         List<NifiControllerService> ids = new ArrayList<>();
         Optional<JSONObject> controllerServicesJSON = getNifi(s);
@@ -165,7 +169,7 @@ public class NifiExecutor {
     }
 
     public boolean removeControllerService(NifiControllerService ncs) {
-        String remove = NIFI_API_URL + "controller-services/" + ncs.getId() + "?version=" + ncs.getVersion() + "&disconnectedNodeAcknowledged=false";
+        String remove = nifiApiUrl + "controller-services/" + ncs.getId() + "?version=" + ncs.getVersion() + "&disconnectedNodeAcknowledged=false";
         return deleteNifi(remove, false);
     }
 
@@ -179,7 +183,7 @@ public class NifiExecutor {
     }
 
     public boolean runControllerService(NifiControllerService cs) {
-        String url = NIFI_API_URL + "controller-services/" + cs.getId() + "/run-status";
+        String url = nifiApiUrl + "controller-services/" + cs.getId() + "/run-status";
         String json = "{\n" +
                       "  \"revision\": {\n" +
                       "    \"version\": " + cs.getVersion() + "\n" +
@@ -193,7 +197,7 @@ public class NifiExecutor {
     }
 
     public boolean stopControllerService(NifiControllerService cd) {
-        String url = NIFI_API_URL + "controller-services/" + cd.getId() + "/run-status";
+        String url = nifiApiUrl + "controller-services/" + cd.getId() + "/run-status";
         String json = "{\n" +
                       "  \"revision\": {\n" +
                       "    \"version\": " + cd.getVersion() + "\n" +
@@ -213,7 +217,7 @@ public class NifiExecutor {
      * @return
      */
     public boolean setRunStatusOfProcessorGroup(String pgid, String state) {
-        String s = NIFI_API_URL + "flow/process-groups/" + pgid;
+        String s = nifiApiUrl + "flow/process-groups/" + pgid;
         String json = "{\n" +
                       "    \"id\": \"" + pgid + "\",\n" +
                       "    \"state\": \"" + state + "\",\n" +
@@ -224,7 +228,7 @@ public class NifiExecutor {
 
     public boolean emptyQueues(String processingGroup) {
         // first we need to get the connection (e.g. the queue id)
-        String url = NIFI_API_URL + "process-groups/" + processingGroup + "/connections";
+        String url = nifiApiUrl + "process-groups/" + processingGroup + "/connections";
         Optional<JSONObject> connJSON = getNifi(url);
         if (connJSON.isPresent()) {
             JSONArray connections = connJSON.get().getJSONArray("connections");
@@ -232,7 +236,7 @@ public class NifiExecutor {
                 JSONObject conn = (JSONObject) o;
                 String connId = conn.getString("id");
                 // then we drop all flow files
-                String dropURL = NIFI_API_URL + "flowfile-queues/" + connId + "/drop-requests";
+                String dropURL = nifiApiUrl + "flowfile-queues/" + connId + "/drop-requests";
                 postNifiImportTemplate(dropURL, null);
             }
             return true;
@@ -251,7 +255,7 @@ public class NifiExecutor {
     }
 
     private boolean terminateProcessor(String processorId) {
-        String url = NIFI_API_URL + "processors/" + processorId + "/threads";
+        String url = nifiApiUrl + "processors/" + processorId + "/threads";
         return deleteNifi(url, false);
     }
 }

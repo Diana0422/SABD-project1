@@ -1,10 +1,8 @@
 package com.sparkling_taxi.nifi;
 
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,7 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class NifiTest {
 
-    private final NifiExecutor executor = new NifiExecutor();
+    public static final String TEST_NIFI_API_URL = "http://localhost:8181/nifi-api/";
+    private final NifiExecutor executor = new NifiExecutor(TEST_NIFI_API_URL);
     private static final String EXAMPLE_TEMPLATE = ".nifi/templates/preprocessing_query1.xml";
 
     @Test
@@ -26,7 +25,7 @@ public class NifiTest {
     @Test
     public void instantiateTemplateTest() {
         // upload a template
-        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE);
+        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE, TEST_NIFI_API_URL);
         boolean b = n.uploadAndInstantiateTemplate();
         assertTrue(b, "TEST: Failed to instantiate the template " + EXAMPLE_TEMPLATE);
         // Delete the template, groups and controller services to make the test repeatable
@@ -59,7 +58,7 @@ public class NifiTest {
 
     @Test
     public void controllerServicesTest() {
-        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE);
+        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE, TEST_NIFI_API_URL);
         assertTrue(n.uploadAndInstantiateTemplate());
         List<NifiControllerService> controllerServices = n.getControllerServices();
         assertFalse(controllerServices.isEmpty());
@@ -77,7 +76,7 @@ public class NifiTest {
 
     @Test
     public void runProcessorGroup() {
-        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE);
+        NifiTemplateInstance n = new NifiTemplateInstance(EXAMPLE_TEMPLATE, TEST_NIFI_API_URL);
         assertTrue(n.uploadAndInstantiateTemplate(), "Failed to instantiate");
         assertTrue(n.runAll(), "Failed to run");
         assertTrue(n.stopAll(), "Failed to stop");
@@ -96,5 +95,4 @@ public class NifiTest {
         }
         assertEquals(done, size);
     }
-
 }

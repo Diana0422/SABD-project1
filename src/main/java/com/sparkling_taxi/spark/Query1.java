@@ -5,6 +5,7 @@ import com.sparkling_taxi.bean.Query1Bean;
 import com.sparkling_taxi.bean.Query1Calc;
 import com.sparkling_taxi.bean.Query1Result;
 import com.sparkling_taxi.bean.YearMonth;
+import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import com.sparkling_taxi.utils.Performance;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -19,12 +20,13 @@ import java.util.List;
 // hdfs dfs -get Query1.parquet /home/dataset-batch/Query1.parquet /home/Query1.parquet
 public class Query1 {
 
-
+    //TODO: crea un volume in comune con nifi e salva questo file...
+    public static final String PRE_PROCESSING_TEMPLATE_Q1 = "/opt/nifi/nifi-current/ls-target/templates/preprocessing_query1.xml";
     public static final String FILE_Q1 = "hdfs://namenode:9000/home/dataset-batch/Query1.parquet";
     public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1";
     public static final String DIR_TIMESTAMP = "hdfs://namenode:9000/home/dataset-batch/timestamp";
-    public static final int PASSENGER_COUNT_COL = 2;
-    public static final int DROP_OUT_COL = 1;
+
+    private NifiTemplateInstance n;
 
     /**
      * @return true if on windows is installed C:\\Hadoop\\hadoop-2.8.1\\bin\\WINUTILS.EXE
@@ -51,7 +53,7 @@ public class Query1 {
      * @param file the input file
      * @return List of computed means
      */
-    public static List<Tuple2<YearMonth, Query1Result>> multiMonthMeans(SparkSession spark, String file) {
+    public List<Tuple2<YearMonth, Query1Result>> multiMonthMeans(SparkSession spark, String file) {
         System.out.println("======================= Query 1 =========================");
         return spark.read().parquet(file)
                 // Converts the typed Dataset<Row> to Dataset<Query1Bean>
@@ -68,11 +70,13 @@ public class Query1 {
     }
 
     public static void main(String[] args) {
-        // TODO: chiamare NiFi da qui
+        Query1 q = new Query1();
+        q.preProcessing();
+        q.runQuery();
+        q.postProcessing();
+    }
 
-        // Must install WINUTILS.EXE for Windows.
-        windowsCheck();
-
+    private void runQuery() {
         SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -88,12 +92,29 @@ public class Query1 {
                 // so we force it to use only 1 partition
                 .repartition(1)
                 .cache();
-        result.saveAsTextFile(OUT_DIR);
+
+        spark.createDataset(JavaRDD.toRDD(result), Encoders.tuple(Encoders.bean(YearMonth.class), Encoders.bean(Query1Result.class)))
+                .write()
+                .mode("overwrite")
+                .csv(OUT_DIR);
+
+        // result.saveAsTextFile(OUT_DIR);
         System.out.println("================== written to HDFS =================");
 
-        result.collect().forEach(System.out::println);
+        query1.forEach(System.out::println);
 
         sc.close();
         spark.close();
+    }
+
+    public void preProcessing(){
+        n = new NifiTemplateInstance(PRE_PROCESSING_TEMPLATE_Q1, "http://nifi:8181/nifi-api/");
+        n.uploadAndInstantiateTemplate();
+        n.runAll();
+    }
+
+    public void postProcessing(){
+        n.stopAll();
+        n.removeAll();
     }
 }

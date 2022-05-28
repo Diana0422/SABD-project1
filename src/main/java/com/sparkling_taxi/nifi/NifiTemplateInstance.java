@@ -21,9 +21,9 @@ public class NifiTemplateInstance {
 
     private List<NifiControllerService> controllerServiceIds;
 
-    public NifiTemplateInstance(String file) {
+    public NifiTemplateInstance(String file, String apiUrl) {
         this.templateFile = file;
-        this.executor = new NifiExecutor();
+        this.executor = new NifiExecutor(apiUrl);
         controllerServiceIds = new ArrayList<>();
     }
 
