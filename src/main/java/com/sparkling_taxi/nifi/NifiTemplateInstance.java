@@ -68,7 +68,7 @@ public class NifiTemplateInstance {
             if (s.isPresent()) {
                 System.out.println("processorGroupId = " + s.get());
                 processorGroupId = s.get();
-                controllerServiceIds = executor.getControllerServices();
+                controllerServiceIds = executor.getControllerServices(processorGroupId);
                 return true;
             }
         }
@@ -95,8 +95,18 @@ public class NifiTemplateInstance {
      * - empties all queues
      */
     public boolean stopAll() {
-        boolean stoppedServices = stopAllControllerServices();
         boolean stoppedProcessGroups = executor.setRunStatusOfProcessorGroup(processorGroupId, "STOPPED");
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        boolean stoppedServices = stopAllControllerServices();
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         boolean terminatedThreads = executor.terminateThreadsOfProcessorGroup(processorGroupId);
         incrementProcessGroupVersion();
         boolean emptied = executor.emptyQueues(processorGroupId);
@@ -112,19 +122,27 @@ public class NifiTemplateInstance {
      * @return true if all goes well
      */
     public boolean removeAll() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         boolean templateDeleted = executor.deleteTemplate(templateId);
 
         // remove the process group of the template
         List<String> theProcessGroup = executor.getProcessorGroups();
-        boolean emptied = theProcessGroup.stream().allMatch(executor::emptyQueues);
+//        boolean emptied = theProcessGroup.stream().allMatch(executor::emptyQueues);
+//        // remove all controllers services
+//        controllerServiceIds = executor.getControllerServices(processorGroupId);
+//        boolean allServicesDeleted = controllerServiceIds.stream().allMatch(executor::removeControllerService);
+//        System.out.println("allServicesDeleted = " + allServicesDeleted);
+        boolean emptied = executor.emptyQueues(processorGroupId);
         // remove all processGroups
         boolean allGroupsDeleted = theProcessGroup.stream().allMatch(executor::removeProcessGroup);
         System.out.println("removed process groups: " + theProcessGroup.size());
-        // remove all controllers services
-        boolean allServicesDeleted = controllerServiceIds.stream().allMatch(executor::removeControllerService);
-        System.out.println("allServicesDeleted = " + allServicesDeleted);
-        return templateDeleted && emptied && allGroupsDeleted && allServicesDeleted;
+//        return templateDeleted && emptied && allGroupsDeleted && allServicesDeleted;
+        return templateDeleted && emptied && allGroupsDeleted;
     }
 
     public List<NifiControllerService> getControllerServices() {
@@ -135,6 +153,7 @@ public class NifiTemplateInstance {
         boolean ss = true;
         for (NifiControllerService id : controllerServiceIds) {
             ss = ss && executor.runControllerService(id);
+            System.out.println("Eseguito running: "+id.getId());
         }
         return ss;
     }

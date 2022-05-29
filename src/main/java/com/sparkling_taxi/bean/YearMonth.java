@@ -11,8 +11,10 @@ import java.util.Objects;
 
 @Data
 public class YearMonth implements Serializable, Comparable<YearMonth> {
-    private final int year;
-    private final int month;
+    private int year;
+    private int month;
+
+    public YearMonth() {}
 
     public YearMonth(Timestamp ts){
         LocalDateTime ld = Utils.toLocalDateTime(ts);

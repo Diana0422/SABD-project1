@@ -1,5 +1,6 @@
 package com.sparkling_taxi.spark;
 
+import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.bean.DoubleKey;
 import com.sparkling_taxi.bean.TipAndTrips;
@@ -16,12 +17,14 @@ import scala.Tuple4;
 import java.sql.Timestamp;
 import java.util.*;
 
+import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
 import static com.sparkling_taxi.utils.Utils.intRange;
 
 // docker cp backup/Query2.parquet namenode:/home/Query2.parquet
 // hdfs dfs -put Query2.parquet /home/dataset-batch/Query2.parquet
 public class Query2 {
 
+    public static final String PRE_PROCESSING_TEMPLATE_Q2 = "/home/templates/preprocessing_query2.xml";
     public static final String FILE_Q2 = "hdfs://namenode:9000/home/dataset-batch/Query2.parquet";
     // public static final String FILE_Q2 = "hdfs://namenode:9000/home/dataset-batch/LittleQuery2.parquet";
     public static final String PARTIAL_OUTPUT = "hdfs://namenode:9000/home/dataset-batch/partOutputQ2";
@@ -30,7 +33,35 @@ public class Query2 {
     public static final int TIP_AMOUNT_COL = 2;
     public static final int PAYMENT_TYPE_COL = 3;
 
+    private NifiTemplateInstance n;
+
     public static void main(String[] args) {
+        Query2 q = new Query2();
+        q.preProcessing();
+        q.runQuery();
+        q.postProcessing();
+    }
+
+    private void preProcessing() {
+        if (!hasFileHDFS(FILE_Q2)) {
+            n = new NifiTemplateInstance(PRE_PROCESSING_TEMPLATE_Q2, "http://nifi:8181/nifi-api/");
+            n.uploadAndInstantiateTemplate();
+            n.runAll();
+            while (true) {
+                System.out.println("Waiting for preprocessing to complete...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (hasFileHDFS(FILE_Q2)) break;
+            }
+            n.stopAll();
+            n.removeAll();
+        }
+    }
+
+    private void runQuery() {
         SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -39,6 +70,10 @@ public class Query2 {
         spark.sparkContext().setLogLevel("WARN");
 
         Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
+    }
+
+    private void postProcessing() {
+        //TODO grafana redis interaction
     }
 
     /*

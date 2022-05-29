@@ -7,7 +7,7 @@ if NOT exist %directory% (
     echo "target directory does not exists - packaging app "
     CALL mvn -f %~dp0..\pom.xml clean compile jar:jar
 ) else (
-    CALL mvn compile jar:jar
+    CALL mvn package
 )
 
 @rem if argument 1 is number in 1-3, then execute the query
@@ -28,24 +28,24 @@ goto done
 
 :q2
 echo query2
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.spark.Query2 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.spark.Query2 ./taxi-app/sabd1-1.0-jar-with-dependencies.jar
 goto done
 
 :q3
 echo query3
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.spark.Query3 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.spark.Query3 ./taxi-app/sabd1-1.0-jar-with-dependencies.jar
 goto done
 
 :q4
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.sparksql.QuerySQL1 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.sparksql.QuerySQL1 ./taxi-app/sabd1-1.0-jar-with-dependencies.jar
 goto done
 
 :q5
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.sparksql.QuerySQL2 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.sparksql.QuerySQL2 ./taxi-app/sabd1-1.0-jar-with-dependencies.jar
 goto done
 
 :q6
-docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.sparksql.QuerySQL3 ./taxi-app/sabd1-1.0.jar
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.sparksql.QuerySQL3 ./taxi-app/sabd1-1.0-jar-with-dependencies.jar
 goto done
 
 :done

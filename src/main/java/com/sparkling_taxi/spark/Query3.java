@@ -1,5 +1,6 @@
 package com.sparkling_taxi.spark;
 
+import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.sql.SparkSession;
@@ -13,6 +14,8 @@ import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
+
 // docker cp backup/Query3.parquet namenode:/home/Query3.parquet
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
 public class Query3 {
@@ -22,13 +25,43 @@ public class Query3 {
      * - the mean and standard deviation of fare_amount
      * @param args
      */
+
+    public static final String PRE_PROCESSING_TEMPLATE_Q3 = "/home/templates/preprocessing_query3.xml";
     public static final String FILE_Q3 = "hdfs://namenode:9000/home/dataset-batch/Query3.parquet";
     public static final int DO_LOC_COL = 3;
     public static final int PASSENGER_COUNT_COL = 2;
     public static final int FARE_AMOUNT_COL = 5;
     private static final int RANKING_SIZE = 5;
 
+    private NifiTemplateInstance n;
+
     public static void main(String[] args) {
+        Query3 q = new Query3();
+        q.preProcessing();
+        q.runQuery();
+        q.postProcessing();
+    }
+
+    private void preProcessing() {
+        if (!hasFileHDFS(FILE_Q3)) {
+            n = new NifiTemplateInstance(PRE_PROCESSING_TEMPLATE_Q3, "http://nifi:8181/nifi-api/");
+            n.uploadAndInstantiateTemplate();
+            n.runAll();
+            while (true) {
+                System.out.println("Waiting for preprocessing to complete...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (hasFileHDFS(FILE_Q3)) break;
+            }
+            n.stopAll();
+            n.removeAll();
+        }
+    }
+
+    private void runQuery() {
         try (SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -40,6 +73,10 @@ public class Query3 {
             // Performance.measure("Query3 - file4", () -> mostPopularDestinationWithStdDev(spark, FILE_Q3));
             Performance.measure("Query3 - file4", () -> mostPopularDestinationWithTrueStdDev(spark, FILE_Q3));
         }
+    }
+
+    private void postProcessing() {
+
     }
 
     private static void mostPopularDestination(SparkSession spark, String file) {

@@ -84,11 +84,13 @@ public class NifiExecutor {
         try {
             return response.map(r -> r.getJSONObject("flow"))
                     .map(f -> f.getJSONArray("processGroups"))
-                    .filter(p -> !p.isEmpty())
+//                    .filter(p -> !p.isEmpty())
+                    .filter(p -> p.length() > 0)
                     .map(p -> p.getJSONObject(0))
                     .map(p -> p.getString("id"));
         } catch (JSONException j) {
             System.err.println(j.getMessage());
+            JSONArray x = new JSONArray();
             return Optional.empty();
         }
     }
@@ -150,17 +152,18 @@ public class NifiExecutor {
      * Use only during instantiation!!!
      *
      * @return a list of NifiControllerService objects
+     * @param processGroup
      */
-    public List<NifiControllerService> getControllerServices() {
-        String rootProcessGroup = getRootProcessGroup();
-        String s = nifiApiUrl + "flow/process-groups/" + rootProcessGroup + "/controller-services";
+    public List<NifiControllerService> getControllerServices(String processGroup) {
+
+        String s = nifiApiUrl + "flow/process-groups/" + processGroup + "/controller-services";
         System.out.println(s);
         List<NifiControllerService> ids = new ArrayList<>();
         Optional<JSONObject> controllerServicesJSON = getNifi(s);
         if (controllerServicesJSON.isPresent()) {
             JSONArray controllerServices = controllerServicesJSON.get().getJSONArray("controllerServices");
-            for (Object o : controllerServices) {
-                JSONObject jo = (JSONObject) o;
+            for (int i=0, size=controllerServices.length(); i<size; i++) {
+                JSONObject jo = (JSONObject) controllerServices.get(i);
                 String state = jo.getJSONObject("component").getString("state");
                 ids.add(new NifiControllerService(jo.getString("id"), state, 0));
             }

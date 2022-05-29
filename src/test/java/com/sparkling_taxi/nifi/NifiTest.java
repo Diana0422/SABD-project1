@@ -85,14 +85,18 @@ public class NifiTest {
 
     @Test
     public void clearAllControllerServices() {
-        List<NifiControllerService> controllerServices = executor.getControllerServices();
-        int size = controllerServices.size();
-        int done = 0;
-        for (NifiControllerService controllerService : controllerServices) {
-            executor.stopControllerService(controllerService);
-            executor.removeControllerService(controllerService);
-            done++;
+        List<String> processorGroups = executor.getProcessorGroups();
+        for (String processorGroup : processorGroups) {
+            List<NifiControllerService> controllerServices = executor.getControllerServices(processorGroup);
+            int size = controllerServices.size();
+            int done = 0;
+            for (NifiControllerService controllerService : controllerServices) {
+                executor.stopControllerService(controllerService);
+                executor.removeControllerService(controllerService);
+                done++;
+            }
+            assertEquals(done, size);
         }
-        assertEquals(done, size);
+
     }
 }

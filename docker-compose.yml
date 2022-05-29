@@ -1,5 +1,25 @@
 version: '3'
 services:
+
+  ## SERVICE3: NIFI ----------------------------------------------
+  nifi:
+    image: apache/nifi:latest
+    restart: always
+    container_name: nifi
+    ports:
+      - '8181:8181'   # http://localhost:8181 web ui NiFi
+    #      - '9000:9000' # serve per connettersi al namenode hdfs
+    environment:
+      NIFI_WEB_HTTP_PORT: '8181'
+    volumes:
+      - .nifi:/opt/nifi/nifi-current/ls-target
+      - type: bind
+        source: .nifi/security/cacerts
+        target: /opt/nifi/nifi-current/cacerts
+      - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # Todo: serve davvero? montiamo il volume nifi-hdfs nella cartella hdfs-conf, che è collegata anche in .nifi/hdfs-conf
+
+  # nifi salva su HDFS, per vedere il file usa: "hdfs dfs -ls /home/dataset-batch"
+
   ## SERVICE1: APACHE SPARK -------------------------------------
   spark:
     image: docker.io/bitnami/spark:3
@@ -17,6 +37,7 @@ services:
       - '4040:4040'
     volumes:
       - ./target:/opt/bitnami/spark/taxi-app/
+      - .nifi/templates:/home/templates
 
   spark-worker:
     image: docker.io/bitnami/spark:3
@@ -66,26 +87,6 @@ services:
       - namenode
 
 
-  #  # SERVICE3: NIFI ----------------------------------------------
-  nifi:
-    image: apache/nifi:latest
-    restart: always
-    container_name: nifi
-    ports:
-      - '8181:8181'   # http://localhost:8181 web ui NiFi
-#      - '9000:9000' # serve per connettersi al namenode hdfs
-    environment:
-      NIFI_WEB_HTTP_PORT: '8181'
-    volumes:
-      - .nifi:/opt/nifi/nifi-current/ls-target
-      - type: bind
-        source: .nifi/security/cacerts
-        target: /opt/nifi/nifi-current/cacerts
-      - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # Todo: serve davvero? montiamo il volume nifi-hdfs nella cartella hdfs-conf, che è collegata anche in .nifi/hdfs-conf
-
-# nifi salva su HDFS, per vedere il file usa: "hdfs dfs -ls /home/dataset-batch"
-
-
 # SERVICE4: REDIS ---------------------------------------------
 #  redis:
 #    image: redis
@@ -95,6 +96,7 @@ services:
 
 volumes:
   nifi-hdfs: # volume in comune tra hdfs
+  nifi-spark: #volume in comune tra nifi e spark
   hadoop_datanode:
     driver: local # Dove salvare i dati? Di default è local
     external: false # Il container è stato definito fuori da docker-compose? Di default è false.

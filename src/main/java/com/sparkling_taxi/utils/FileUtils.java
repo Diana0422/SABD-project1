@@ -1,11 +1,14 @@
 package com.sparkling_taxi.utils;
 
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -172,6 +175,25 @@ public class FileUtils {
         String substring = listString.substring(1, listString.length() - 1); // Tolgo le [ ]
         String[] split = substring.split(", ");
         return Arrays.asList(split);
+    }
+
+    /**
+     * HDFS
+     * @param fileQuery
+     * @return
+     */
+    public static boolean hasFileHDFS(String fileQuery) {
+        try {
+            Configuration conf = new Configuration();
+            conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+            conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+            //Get the filesystem - HDFS//Get the filesystem - HDFS
+            FileSystem hdfs = FileSystem.get(URI.create(fileQuery), conf);
+            if (hdfs.exists(new org.apache.hadoop.fs.Path(fileQuery))) return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
 }

@@ -1,10 +1,7 @@
 package com.sparkling_taxi.spark;
 
 
-import com.sparkling_taxi.bean.Query1Bean;
-import com.sparkling_taxi.bean.Query1Calc;
-import com.sparkling_taxi.bean.Query1Result;
-import com.sparkling_taxi.bean.YearMonth;
+import com.sparkling_taxi.bean.*;
 import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import com.sparkling_taxi.utils.Performance;
 import org.apache.spark.api.java.JavaRDD;
@@ -16,12 +13,13 @@ import scala.Tuple2;
 import java.io.File;
 import java.util.List;
 
+import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
+
 // docker cp backup/Query1.parquet namenode:/home/Query1.parquet
 // hdfs dfs -get Query1.parquet /home/dataset-batch/Query1.parquet /home/Query1.parquet
 public class Query1 {
 
-    //TODO: crea un volume in comune con nifi e salva questo file...
-    public static final String PRE_PROCESSING_TEMPLATE_Q1 = "/opt/nifi/nifi-current/ls-target/templates/preprocessing_query1.xml";
+    public static final String PRE_PROCESSING_TEMPLATE_Q1 = "/home/templates/preprocessing_query1.xml";
     public static final String FILE_Q1 = "hdfs://namenode:9000/home/dataset-batch/Query1.parquet";
     public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1";
     public static final String DIR_TIMESTAMP = "hdfs://namenode:9000/home/dataset-batch/timestamp";
@@ -93,10 +91,15 @@ public class Query1 {
                 .repartition(1)
                 .cache();
 
-        spark.createDataset(JavaRDD.toRDD(result), Encoders.tuple(Encoders.bean(YearMonth.class), Encoders.bean(Query1Result.class)))
-                .write()
-                .mode("overwrite")
-                .csv(OUT_DIR);
+//        spark.createDataFrame(result, CSVQuery1.class) FIXME not working
+//                .write()
+//                .mode("overwrite")
+//                .csv(OUT_DIR);
+
+//        spark.createDataset(JavaRDD.toRDD(result), Encoders.tuple(Encoders.bean(YearMonth.class), Encoders.bean(Query1Result.class)))
+//                .write()
+//                .mode("overwrite")
+//                .csv(OUT_DIR);
 
         // result.saveAsTextFile(OUT_DIR);
         System.out.println("================== written to HDFS =================");
@@ -107,14 +110,28 @@ public class Query1 {
         spark.close();
     }
 
-    public void preProcessing(){
-        n = new NifiTemplateInstance(PRE_PROCESSING_TEMPLATE_Q1, "http://nifi:8181/nifi-api/");
-        n.uploadAndInstantiateTemplate();
-        n.runAll();
+    public void preProcessing() {
+        if (!hasFileHDFS(FILE_Q1)) {
+            n = new NifiTemplateInstance(PRE_PROCESSING_TEMPLATE_Q1, "http://nifi:8181/nifi-api/");
+            n.uploadAndInstantiateTemplate();
+            n.runAll();
+            while (true) {
+                System.out.println("Waiting for preprocessing to complete...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (hasFileHDFS(FILE_Q1)) break;
+            }
+            n.stopAll();
+            n.removeAll();
+        }
     }
 
+
+
     public void postProcessing(){
-        n.stopAll();
-        n.removeAll();
+        //TODO: grafana redis interaction
     }
 }
