@@ -3,6 +3,7 @@ package com.sparkling_taxi.nifi;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +18,32 @@ public class NifiExecutor {
     private String rootProcessGroupCache = "";
     private String nifiApiUrl;
 
-    public NifiExecutor(String apiUrl){
+    public NifiExecutor(String apiUrl) {
         this.nifiApiUrl = apiUrl;
     }
+
+    /**
+     * Gets all template names and ids
+     *
+     * @return
+     */
+    public boolean removeAllTemplates() {
+        String url = nifiApiUrl + "flow/templates";
+        Optional<JSONObject> templates = getNifi(url);
+        boolean ok = true;
+        if (templates.isPresent()) {
+            JSONArray templateList = templates.get().getJSONArray("templates");
+            for (int i = 0, size = templateList.length(); i < size; i++) {
+                JSONObject o = (JSONObject) templateList.get(i);
+                String id = o.getString("id");
+                String deleteUrl = nifiApiUrl + "templates/" + id;
+                ok = ok && deleteNifi(deleteUrl, false);
+            }
+
+        }
+        return ok;
+    }
+
     /**
      * [TESTED] Uploads a template in the form of a ProcessGroup
      *
@@ -151,8 +175,8 @@ public class NifiExecutor {
     /**
      * Use only during instantiation!!!
      *
-     * @return a list of NifiControllerService objects
      * @param processGroup
+     * @return a list of NifiControllerService objects
      */
     public List<NifiControllerService> getControllerServices(String processGroup) {
 
@@ -162,7 +186,7 @@ public class NifiExecutor {
         Optional<JSONObject> controllerServicesJSON = getNifi(s);
         if (controllerServicesJSON.isPresent()) {
             JSONArray controllerServices = controllerServicesJSON.get().getJSONArray("controllerServices");
-            for (int i=0, size=controllerServices.length(); i<size; i++) {
+            for (int i = 0, size = controllerServices.length(); i < size; i++) {
                 JSONObject jo = (JSONObject) controllerServices.get(i);
                 String state = jo.getJSONObject("component").getString("state");
                 ids.add(new NifiControllerService(jo.getString("id"), state, 0));
@@ -215,8 +239,9 @@ public class NifiExecutor {
 
     /**
      * Used to RUN or STOP an entire processor group
-     * @param pgid    process group id
-     * @param state   STOPPED or RUNNING
+     *
+     * @param pgid  process group id
+     * @param state STOPPED or RUNNING
      * @return
      */
     public boolean setRunStatusOfProcessorGroup(String pgid, String state) {
@@ -224,7 +249,7 @@ public class NifiExecutor {
         String json = "{\n" +
                       "    \"id\": \"" + pgid + "\",\n" +
                       "    \"state\": \"" + state + "\",\n" +
-                      "    \"disconnectedNodeAcknowledged\": true\n" +
+                      "    \"disconnectedNodeAcknowledged\": false\n" +
                       "}";
         return putNifi(s, json);
     }
@@ -235,8 +260,8 @@ public class NifiExecutor {
         Optional<JSONObject> connJSON = getNifi(url);
         if (connJSON.isPresent()) {
             JSONArray connections = connJSON.get().getJSONArray("connections");
-            for (Object o : connections) {
-                JSONObject conn = (JSONObject) o;
+            for (int i = 0, size = connections.length(); i < size; i++) {
+                JSONObject conn = (JSONObject) connections.get(i);
                 String connId = conn.getString("id");
                 // then we drop all flow files
                 String dropURL = nifiApiUrl + "flowfile-queues/" + connId + "/drop-requests";

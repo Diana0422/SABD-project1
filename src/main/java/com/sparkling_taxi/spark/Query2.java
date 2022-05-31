@@ -1,11 +1,10 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.nifi.NifiTemplateInstance;
-import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.bean.DoubleKey;
 import com.sparkling_taxi.bean.TipAndTrips;
 import com.sparkling_taxi.bean.TipTripsAndPayment;
 import com.sparkling_taxi.bean.TripleKey;
+import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -17,7 +16,6 @@ import scala.Tuple4;
 import java.sql.Timestamp;
 import java.util.*;
 
-import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
 import static com.sparkling_taxi.utils.Utils.intRange;
 
 // docker cp backup/Query2.parquet namenode:/home/Query2.parquet
@@ -33,8 +31,6 @@ public class Query2 {
     public static final int TIP_AMOUNT_COL = 2;
     public static final int PAYMENT_TYPE_COL = 3;
 
-    private NifiTemplateInstance n;
-
     public static void main(String[] args) {
         Query2 q = new Query2();
         q.preProcessing();
@@ -42,26 +38,11 @@ public class Query2 {
         q.postProcessing();
     }
 
-    private void preProcessing() {
-        if (!hasFileHDFS(FILE_Q2)) {
-            n = new NifiTemplateInstance(PRE_PROCESSING_TEMPLATE_Q2, "http://nifi:8181/nifi-api/");
-            n.uploadAndInstantiateTemplate();
-            n.runAll();
-            while (true) {
-                System.out.println("Waiting for preprocessing to complete...");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if (hasFileHDFS(FILE_Q2)) break;
-            }
-            n.stopAll();
-            n.removeAll();
-        }
+    public void preProcessing() {
+        Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2);
     }
 
-    private void runQuery() {
+    public void runQuery() {
         SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -72,19 +53,18 @@ public class Query2 {
         Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
     }
 
-    private void postProcessing() {
+    public void postProcessing() {
         //TODO grafana redis interaction
     }
 
-    /*
+    /**
      * Hourly distribution of
      * - mean number of trips each hour
      * - mean of tips each hour
      * - standard deviation of tips each hour
      * - most popular payment method each hour (MAX number of occurrence)
-     * TODO: dovremmo raggruppare per ora, quindi avere 24 chiavi diverse.
      */
-    private static JavaPairRDD query2PerHourWithGroupBy(SparkSession spark, String file) {
+    public static JavaPairRDD query2PerHourWithGroupBy(SparkSession spark, String file) {
         JavaRDD<Row> rdd = spark.read().parquet(file).toJavaRDD();
 
         JavaPairRDD<TripleKey, TipAndTrips> mappedPair1 = rdd.mapToPair(row -> {

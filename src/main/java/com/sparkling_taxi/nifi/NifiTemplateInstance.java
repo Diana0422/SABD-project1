@@ -58,6 +58,12 @@ public class NifiTemplateInstance {
      * @return true if all goes well
      */
     public boolean uploadAndInstantiateTemplate() {
+        // preemptively remove all template to avoid conflicts...
+        if(!executor.removeAllTemplates()){
+            System.out.println("Impossible to remove templates");
+            return false;
+        }
+        // upload the template
         Optional<String> templateId = executor.uploadTemplate(templateFile);
         // if it all goes well
         if (templateId.isPresent()) {
@@ -82,6 +88,8 @@ public class NifiTemplateInstance {
      */
     public boolean runAll() {
         runAllControllerServices();
+        waitABit();
+        waitABit();
         boolean running = executor.setRunStatusOfProcessorGroup(processorGroupId, "RUNNING");
         incrementProcessGroupVersion();
         return running;
@@ -96,17 +104,9 @@ public class NifiTemplateInstance {
      */
     public boolean stopAll() {
         boolean stoppedProcessGroups = executor.setRunStatusOfProcessorGroup(processorGroupId, "STOPPED");
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        waitABit();
         boolean stoppedServices = stopAllControllerServices();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        waitABit();
         boolean terminatedThreads = executor.terminateThreadsOfProcessorGroup(processorGroupId);
         incrementProcessGroupVersion();
         boolean emptied = executor.emptyQueues(processorGroupId);
@@ -122,26 +122,14 @@ public class NifiTemplateInstance {
      * @return true if all goes well
      */
     public boolean removeAll() {
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+        waitABit();
         boolean templateDeleted = executor.deleteTemplate(templateId);
-
         // remove the process group of the template
         List<String> theProcessGroup = executor.getProcessorGroups();
-//        boolean emptied = theProcessGroup.stream().allMatch(executor::emptyQueues);
-//        // remove all controllers services
-//        controllerServiceIds = executor.getControllerServices(processorGroupId);
-//        boolean allServicesDeleted = controllerServiceIds.stream().allMatch(executor::removeControllerService);
-//        System.out.println("allServicesDeleted = " + allServicesDeleted);
         boolean emptied = executor.emptyQueues(processorGroupId);
         // remove all processGroups
         boolean allGroupsDeleted = theProcessGroup.stream().allMatch(executor::removeProcessGroup);
         System.out.println("removed process groups: " + theProcessGroup.size());
-//        return templateDeleted && emptied && allGroupsDeleted && allServicesDeleted;
         return templateDeleted && emptied && allGroupsDeleted;
     }
 
@@ -174,5 +162,13 @@ public class NifiTemplateInstance {
      */
     public Optional<String> getProcessorGroup() {
         return Optional.ofNullable(processorGroupId);
+    }
+
+    private void waitABit(){
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

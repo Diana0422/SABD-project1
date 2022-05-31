@@ -1,5 +1,6 @@
 package com.sparkling_taxi.utils;
 
+import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import scala.Tuple2;
 
 import java.sql.Timestamp;
@@ -9,6 +10,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
 
 public class Utils {
 
@@ -90,6 +93,24 @@ public class Utils {
             return Collections.singletonList(start);
         } else {
             throw new IllegalStateException("start > end!!!");
+        }
+    }
+
+    public static void doPreProcessing(String file_for_query, String preprocessing_template_for_query){
+        if (!hasFileHDFS(file_for_query)) {
+            NifiTemplateInstance n = new NifiTemplateInstance(preprocessing_template_for_query, "http://nifi:8181/nifi-api/");
+            n.uploadAndInstantiateTemplate();
+            n.runAll();
+            do {
+                System.out.println("Waiting for preprocessing to complete...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } while (!hasFileHDFS(file_for_query));
+            n.stopAll();
+            n.removeAll();
         }
     }
 }

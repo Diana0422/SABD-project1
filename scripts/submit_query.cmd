@@ -3,12 +3,14 @@
 @rem the current dir is %~dp0
 
 set directory=%~dp0..\target
-if NOT exist %directory% (
-    echo "target directory does not exists - packaging app "
-    CALL mvn -f %~dp0..\pom.xml clean compile jar:jar
-) else (
-    CALL mvn package
-)
+@REM if NOT exist %directory% (
+@REM     echo "target directory does not exists - packaging app "
+@REM     CALL mvn -f %~dp0..\pom.xml clean package
+@REM ) else (
+@REM     CALL mvn package
+@REM )
+CALL mvn package
+
 
 @rem if argument 1 is number in 1-3, then execute the query
 if "%1" == "1" GOTO q1
