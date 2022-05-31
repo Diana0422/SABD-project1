@@ -88,11 +88,21 @@ services:
 
 
 # SERVICE4: REDIS ---------------------------------------------
-#  redis:
-#    image: redis
-#    container_name: redis-cache
-#    ports:
-#      - #to be defined
+  redis:
+    image: redis
+    container_name: redis-cache
+    ports:
+      - '6379:6379'
+
+# SERVICE5: GRAFANA -------------------------------------------
+  grafana:
+    build:
+      context: ./grafana
+    container_name: grafana
+    ports:
+      - '8000:3000'
+    volumes:
+      - grafana-data:/var/lib/grafana
 
 volumes:
   nifi-hdfs: # volume in comune tra hdfs
@@ -106,3 +116,5 @@ volumes:
 #  spark-volume:
 #    driver: local # Dove salvare i dati? Di default è local
 #    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
+  grafana-data:
+    external: false

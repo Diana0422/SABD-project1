@@ -36,7 +36,6 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.12.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-network-common_2.13:3.2.1" level="project" />
     <orderEntry type="library" name="Maven: com.google.crypto.tink:tink:1.6.0" level="project" />
-    <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-network-shuffle_2.13:3.2.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-unsafe_2.13:3.2.1" level="project" />
     <orderEntry type="library" name="Maven: javax.activation:activation:1.1.1" level="project" />
@@ -146,6 +145,9 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-engine:5.8.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.platform:junit-platform-engine:1.8.2" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20201115" level="project" />
+    <orderEntry type="library" name="Maven: redis.clients:jedis:4.2.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.commons:commons-pool2:2.11.1" level="project" />
+    <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.9" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.4.14" level="project" />
     <orderEntry type="library" name="Maven: com.github.docker-java:docker-java-transport-zerodep:3.2.7" level="project" />
     <orderEntry type="library" name="Maven: com.github.docker-java:docker-java-transport:3.2.7" level="project" />
