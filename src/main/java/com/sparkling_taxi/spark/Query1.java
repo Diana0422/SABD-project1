@@ -9,9 +9,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
+import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 // docker cp backup/Query1.parquet namenode:/home/Query1.parquet
@@ -69,11 +71,11 @@ public class Query1 {
     public static void main(String[] args) {
         Query1 q = new Query1();
         q.preProcessing();
-        q.runQuery();
-        q.postProcessing();
+        List<Tuple2<YearMonth, Query1Result>> query1 = q.runQuery();
+        q.postProcessing(query1);
     }
 
-    public void runQuery() {
+    public List<Tuple2<YearMonth, Query1Result>> runQuery() {
         SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -101,6 +103,9 @@ public class Query1 {
                 .option("delimiter", ";")
                 .csv(OUT_DIR);
 
+        postProcessing(query1);
+
+
         // result.saveAsTextFile(OUT_DIR);
         System.out.println("================== written to HDFS =================");
 
@@ -108,6 +113,8 @@ public class Query1 {
 
         sc.close();
         spark.close();
+
+        return query1;
     }
 
     public void preProcessing() {
@@ -115,7 +122,15 @@ public class Query1 {
     }
 
 
-    public void postProcessing() {
+    public void postProcessing(List<Tuple2<YearMonth, Query1Result>> query1) {
         //TODO: grafana redis interaction
+        Jedis jedis = new Jedis("redis://redis:6379");
+        for (Tuple2<YearMonth, Query1Result> t : query1) {
+            HashMap<String, String> m = new HashMap<>();
+            m.put("Year / Month",t._1().toString());
+            m.put("Avg Passengers", String.valueOf(t._2.getAvgPassengers()));
+            m.put("Avg Ratio", String.valueOf(t._2.getAvgRatio()));
+            jedis.hset(t._1().toString(), m);
+        }
     }
 }

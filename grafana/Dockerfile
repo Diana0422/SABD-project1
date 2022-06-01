@@ -7,7 +7,7 @@ ENV GF_AUTH_ANONYMOUS_ENABLED "true"
 # Role of anonymous user
 ENV GF_AUTH_ANONYMOUS_ORG_ROLE "Admin"
 # Install plugins here our in your own config file
-ENV GF_INSTALL_PLUGINS="redis-datasource"
+ENV GF_INSTALL_PLUGINS="redis-datasource, grafana-piechart-panel, grafana-worldmap-panel"
 
 # Add provisioning
 COPY ./provisioning /etc/grafana/provisioning

@@ -1,10 +1,12 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.nifi.NifiTemplateInstance;
+import com.sparkling_taxi.bean.Query1Result;
+import com.sparkling_taxi.bean.YearMonth;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.util.StatCounter;
+import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.Tuple4;
@@ -12,9 +14,8 @@ import scala.Tuple4;
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-
-import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
 
 // docker cp backup/Query3.parquet namenode:/home/Query3.parquet
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
@@ -29,8 +30,8 @@ public class Query3 {
     public static void main(String[] args) {
         Query3 q = new Query3();
         q.preProcessing();
-        q.runQuery();
-        q.postProcessing();
+        List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> query3 = q.runQuery();
+        q.postProcessing(query3);
     }
 
     private void preProcessing() {
@@ -41,8 +42,9 @@ public class Query3 {
      * Identify the top-5 most popular DOLocationIDs, indicating for each one:
      * - the average number of passengers,
      * - the mean and standard deviation of fare_amount
+     * @return
      */
-    public void runQuery() {
+    public List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> runQuery() {
         try (SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -50,15 +52,28 @@ public class Query3 {
                 .getOrCreate()
         ) {
             spark.sparkContext().setLogLevel("WARN");
-            // Performance.measure("Query3 - file4", () -> mostPopularDestinationWithStdDev(spark, FILE_Q3));
-            Performance.measure("Query3 - file4", () -> mostPopularDestinationWithTrueStdDev(spark, FILE_Q3));
+            List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> query3 = Performance.measure("Query3 - file4", () -> mostPopularDestinationWithTrueStdDev(spark, FILE_Q3));
+
+            System.out.println("=========== Ranking =============");
+            for (int i = 0, collectSize = query3.size(); i < collectSize; i++) {
+                Tuple2<Integer, Tuple4<Long, Double, Double, Double>> res = query3.get(i);
+                System.out.printf("%d) taxi_rides = %d, locationID = %d, mean_passengers = %g, mean_fare_amount = %s $ stdev_fare_amount %s $\n",
+                        i + 1, // rank
+                        res._1, //taxi_rides
+                        res._2._1(), // location
+                        res._2._2(), // mean_passengers
+                        new DecimalFormat("#.##").format(res._2._3()), // mean_fare_amount
+                        new DecimalFormat("#.##").format(res._2._4()) // stdev_fare_amount
+                );
+            }
+            return query3;
         }
     }
 
-    private static void mostPopularDestinationWithTrueStdDev(SparkSession spark, String file) {
+    private static List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> mostPopularDestinationWithTrueStdDev(SparkSession spark, String file) {
         // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
         // the "1" is used to count the occurrence of the location ???
-        List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> take = spark.read().parquet(file)
+        return spark.read().parquet(file)
                 .toJavaRDD()
                 // excluding the rows with at least one null value in the necessary columns
                 .filter(row -> !(row.isNullAt(DO_LOC_COL) || row.isNullAt(PASSENGER_COUNT_COL) || row.isNullAt(FARE_AMOUNT_COL)))
@@ -78,23 +93,18 @@ public class Query3 {
                 // Keep only top-5 locations
                 .takeOrdered(RANKING_SIZE, MyTupleComparator.INSTANCE);
 
-
-        System.out.println("=========== Ranking =============");
-        for (int i = 0, collectSize = take.size(); i < collectSize; i++) {
-            Tuple2<Integer, Tuple4<Long, Double, Double, Double>> res = take.get(i);
-            System.out.printf("%d) taxi_rides = %d, locationID = %d, mean_passengers = %g, mean_fare_amount = %s $ stdev_fare_amount %s $\n",
-                    i + 1, // rank
-                    res._1, //taxi_rides
-                    res._2._1(), // location
-                    res._2._2(), // mean_passengers
-                    new DecimalFormat("#.##").format(res._2._3()), // mean_fare_amount
-                    new DecimalFormat("#.##").format(res._2._4()) // stdev_fare_amount
-            );
-        }
     }
 
-    public void postProcessing() {
-
+    public void postProcessing(List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> query3) {
+        //TODO: grafana redis interaction
+        Jedis jedis = new Jedis("redis://redis:6379");
+        for (Tuple2<Integer, Tuple4<Long, Double, Double, Double>> t: query3) {
+            HashMap<String, String> m = new HashMap<>();
+            m.put("Rank",t._1().toString());
+//            m.put("Taxi Rides", String.valueOf(t._2.));
+//            m.put("Avg Ratio", String.valueOf(t._2.getAvgRatio()));
+            jedis.hset(t._1().toString(), m);
+        }
     }
 
     private static void mostPopularDestinationWithStdDev(SparkSession spark, String file) {
