@@ -1,7 +1,7 @@
 package com.sparkling_taxi.spark;
 
 
-import com.sparkling_taxi.bean.*;
+import com.sparkling_taxi.bean.query1.*;
 import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;

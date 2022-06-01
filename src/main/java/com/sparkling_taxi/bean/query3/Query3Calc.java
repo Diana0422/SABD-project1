@@ -1,8 +1,7 @@
-package com.sparkling_taxi.bean;
+package com.sparkling_taxi.bean.query3;
 
 import com.sparkling_taxi.utils.Utils;
 import lombok.Data;
-import scala.Tuple4;
 
 import java.io.Serializable;
 

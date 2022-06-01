@@ -1,9 +1,9 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.bean.DoubleKey;
-import com.sparkling_taxi.bean.TipAndTrips;
-import com.sparkling_taxi.bean.TipTripsAndPayment;
-import com.sparkling_taxi.bean.TripleKey;
+import com.sparkling_taxi.bean.query2.DoubleKey;
+import com.sparkling_taxi.bean.query2.TipAndTrips;
+import com.sparkling_taxi.bean.query2.TipTripsAndPayment;
+import com.sparkling_taxi.bean.query2.TripleKey;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;

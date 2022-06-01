@@ -1,6 +1,9 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.bean.*;
+import com.sparkling_taxi.bean.query3.CSVQuery3;
+import com.sparkling_taxi.bean.query3.Query3Bean;
+import com.sparkling_taxi.bean.query3.Query3Calc;
+import com.sparkling_taxi.bean.query3.Query3Result;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaRDD;

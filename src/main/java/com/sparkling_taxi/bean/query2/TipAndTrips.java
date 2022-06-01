@@ -1,13 +1,20 @@
-package com.sparkling_taxi.bean;
+package com.sparkling_taxi.bean.query2;
 
-public class TipTripsAndPayment extends TipAndTrips {
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
+import java.io.Serializable;
 
-    private Long payment;
+@Data
+@AllArgsConstructor
+public class TipAndTrips implements Serializable {
+    protected double tripCount;
+    protected double tipAmount;
 
-    public TipTripsAndPayment(TipAndTrips s, Long payment){
-        super(s.tripCount, s.tipAmount, s.squareTipAmount);
-        this.payment = payment;
+    protected double squareTipAmount;
+
+    public TipTripsAndPayment toTipTripsAndPayment(Long payment){
+        return new TipTripsAndPayment(this, payment);
     }
 
     /**
@@ -18,16 +25,10 @@ public class TipTripsAndPayment extends TipAndTrips {
      * @param other another instance of this class
      * @return this instance with summed values.
      */
-    public TipTripsAndPayment sumWith(TipTripsAndPayment other){
-        // TODO: watch out forse è sbagliata!!!
-        if (this.tripCount < other.tripCount){
-            this.payment = other.payment;
-        }
-
+    public TipAndTrips sumWith(TipAndTrips other){
         this.tripCount += other.tripCount;
         this.tipAmount += other.tipAmount;
         this.squareTipAmount += other.squareTipAmount;
-
         return this;
     }
 
@@ -39,9 +40,5 @@ public class TipTripsAndPayment extends TipAndTrips {
                ", tipAmount=" + tipAmount +
                ", squareTipAmount=" + squareTipAmount +
                '}';
-    }
-
-    public Long getPayment() {
-        return payment;
     }
 }

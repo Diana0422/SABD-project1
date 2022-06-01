@@ -1,4 +1,4 @@
-package com.sparkling_taxi.bean;
+package com.sparkling_taxi.bean.query2;
 
 public class Struct2 {
     private final int hourStart;

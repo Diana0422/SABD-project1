@@ -1,4 +1,4 @@
-package com.sparkling_taxi.bean;
+package com.sparkling_taxi.bean.query1;
 
 import lombok.Data;
 

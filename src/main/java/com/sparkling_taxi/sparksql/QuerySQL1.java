@@ -23,11 +23,10 @@ public class QuerySQL1 {
         Dataset<Row> rowDataset = preprocessing(parquet);
         rowDataset.createOrReplaceTempView("query1");
 
-        Dataset<Row> sql = Performance.measure("SQL Query 1", () -> {
-            return spark.sql("SELECT dropoff_month, avg(passengers) as avg_passengers, avg(tip_toll_ratio) as avg_ratio " +
-                                         "FROM query1 " +
-                                         "GROUP BY dropoff_month ");
-        });
+        Dataset<Row> sql = Performance.measure("SQL Query 1", () -> spark.sql(
+                "SELECT dropoff_month, avg(passengers) as avg_passengers, avg(tip_toll_ratio) as avg_ratio " +
+                        "FROM query1 " +
+                        "GROUP BY dropoff_month "));
         sql.show();
 //
 //        RelationalGroupedDataset relationalGroupedDataset = rowDataset.withColumn("dropoff_hour", month(col("dropoff")))

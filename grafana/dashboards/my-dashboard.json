@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1654016158421,
+  "iteration": 1654087121598,
   "links": [
     {
       "icon": "external link",
@@ -42,7 +42,8 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": null
+            "align": null,
+            "displayMode": "auto"
           },
           "mappings": [],
           "thresholds": {
@@ -59,15 +60,28 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Avg.*"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 7,
+        "w": 14,
         "x": 0,
         "y": 0
       },
-      "id": 68,
+      "id": 70,
       "options": {
         "showHeader": true
       },
@@ -75,26 +89,77 @@
       "targets": [
         {
           "command": "hgetall",
-          "keyName": "01-2022",
+          "keyName": "1",
           "query": "",
           "refId": "A",
           "type": "command"
         },
         {
           "command": "hgetall",
-          "keyName": "12-2021",
+          "keyName": "2",
           "query": "",
           "refId": "B",
+          "type": "command"
+        },
+        {
+          "command": "hgetall",
+          "keyName": "3",
+          "query": "",
+          "refId": "C",
+          "type": "command"
+        },
+        {
+          "command": "hgetall",
+          "keyName": "4",
+          "query": "",
+          "refId": "D",
+          "type": "command"
+        },
+        {
+          "command": "hgetall",
+          "keyName": "5",
+          "query": "",
+          "refId": "E",
           "type": "command"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Panel Title",
+      "title": "Query 3 - Table",
       "transformations": [
         {
           "id": "merge",
           "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "Avg Fare Amount": 4,
+              "Avg Passengers": 3,
+              "LocationID": 2,
+              "Rank": 0,
+              "Stdev Fare Amount": 5,
+              "Trips Count": 1
+            },
+            "renameByName": {}
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Rank",
+                "Trips Count",
+                "LocationID",
+                "Avg Passengers",
+                "Avg Fare Amount",
+                "Stdev Fare Amount"
+              ]
+            }
+          }
         }
       ],
       "type": "table"
@@ -235,6 +300,7 @@
           "custom": {
             "align": null
           },
+          "decimals": 3,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -253,37 +319,60 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 7
       },
-      "id": 66,
+      "id": 68,
       "options": {
-        "frameIndex": 0,
         "showHeader": true
       },
       "pluginVersion": "7.1.5",
       "targets": [
         {
           "command": "hgetall",
-          "keyName": "12-2021",
+          "keyName": "2021/12",
           "query": "",
           "refId": "A",
-          "streaming": false,
           "type": "command"
         },
         {
           "command": "hgetall",
-          "keyName": "01-2022",
+          "keyName": "2022/01",
           "query": "",
           "refId": "B",
+          "type": "command"
+        },
+        {
+          "command": "hgetall",
+          "keyName": "2022/02",
+          "query": "",
+          "refId": "C",
           "type": "command"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Panel Title",
+      "title": "Query 1 - Table",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "Avg Passengers": 2,
+              "Avg Ratio": 1,
+              "Year / Month": 0
+            },
+            "renameByName": {}
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -293,7 +382,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 12
       },
       "id": 56,
       "panels": [],
@@ -340,7 +429,7 @@
         "h": 3,
         "w": 3,
         "x": 0,
-        "y": 17
+        "y": 13
       },
       "id": 24,
       "options": {
@@ -426,7 +515,7 @@
         "h": 6,
         "w": 8,
         "x": 3,
-        "y": 17
+        "y": 13
       },
       "id": 25,
       "options": {
@@ -570,7 +659,7 @@
         "h": 6,
         "w": 10,
         "x": 11,
-        "y": 17
+        "y": 13
       },
       "id": 8,
       "options": {
@@ -668,7 +757,7 @@
         "h": 3,
         "w": 3,
         "x": 21,
-        "y": 17
+        "y": 13
       },
       "id": 19,
       "options": {
@@ -744,7 +833,7 @@
         "h": 3,
         "w": 3,
         "x": 0,
-        "y": 20
+        "y": 16
       },
       "id": 22,
       "options": {
@@ -819,7 +908,7 @@
         "h": 3,
         "w": 3,
         "x": 0,
-        "y": 23
+        "y": 19
       },
       "id": 2,
       "options": {
@@ -882,7 +971,7 @@
         "h": 3,
         "w": 8,
         "x": 3,
-        "y": 23
+        "y": 19
       },
       "id": 36,
       "options": {
@@ -966,7 +1055,7 @@
         "h": 3,
         "w": 10,
         "x": 11,
-        "y": 23
+        "y": 19
       },
       "id": 38,
       "options": {
@@ -1032,7 +1121,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 22
       },
       "id": 32,
       "panels": [],
@@ -1126,7 +1215,7 @@
         "h": 15,
         "w": 6,
         "x": 0,
-        "y": 27
+        "y": 23
       },
       "id": 4,
       "options": {
@@ -1291,7 +1380,7 @@
         "h": 15,
         "w": 7,
         "x": 6,
-        "y": 27
+        "y": 23
       },
       "id": 41,
       "options": {
@@ -1428,7 +1517,7 @@
         "h": 15,
         "w": 11,
         "x": 13,
-        "y": 27
+        "y": 23
       },
       "id": 11,
       "options": {
@@ -1486,7 +1575,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 38
       },
       "id": 58,
       "panels": [],
@@ -1515,7 +1604,7 @@
         "h": 3,
         "w": 3,
         "x": 0,
-        "y": 43
+        "y": 39
       },
       "id": 60,
       "options": {
@@ -1581,7 +1670,7 @@
         "h": 3,
         "w": 3,
         "x": 3,
-        "y": 43
+        "y": 39
       },
       "id": 64,
       "options": {
@@ -1650,7 +1739,7 @@
         "h": 3,
         "w": 18,
         "x": 6,
-        "y": 43
+        "y": 39
       },
       "id": 61,
       "options": {
@@ -1807,7 +1896,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 42
       },
       "id": 62,
       "options": {
