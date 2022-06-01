@@ -123,14 +123,14 @@ public class Query1 {
 
 
     public void postProcessing(List<Tuple2<YearMonth, Query1Result>> query1) {
-        //TODO: grafana redis interaction
-        Jedis jedis = new Jedis("redis://redis:6379");
-        for (Tuple2<YearMonth, Query1Result> t : query1) {
-            HashMap<String, String> m = new HashMap<>();
-            m.put("Year / Month",t._1().toString());
-            m.put("Avg Passengers", String.valueOf(t._2.getAvgPassengers()));
-            m.put("Avg Ratio", String.valueOf(t._2.getAvgRatio()));
-            jedis.hset(t._1().toString(), m);
+        try (Jedis jedis = new Jedis("redis://redis:6379")) {
+            for (Tuple2<YearMonth, Query1Result> t : query1) {
+                HashMap<String, String> m = new HashMap<>();
+                m.put("Year / Month", t._1().toString());
+                m.put("Avg Passengers", String.valueOf(t._2.getAvgPassengers()));
+                m.put("Avg Ratio", String.valueOf(t._2.getAvgRatio()));
+                jedis.hset(t._1().toString(), m);
+            }
         }
     }
 }
