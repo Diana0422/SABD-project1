@@ -15,7 +15,7 @@ public class QuerySQL1 {
         SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
-                .appName("Query1")
+                .appName("QuerySQL1")
                 .getOrCreate();
         spark.sparkContext().setLogLevel("WARN");
 
