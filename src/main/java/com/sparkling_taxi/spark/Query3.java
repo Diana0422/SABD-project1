@@ -12,26 +12,22 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.util.StatCounter;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
-import scala.Tuple3;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.sparkling_taxi.utils.Const.*;
+
 // docker cp backup/Query3.parquet namenode:/home/Query3.parquet
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
 public class Query3 {
-    public static final String PRE_PROCESSING_TEMPLATE_Q3 = "/home/templates/preprocessing_query3.xml";
-    public static final String FILE_Q3 = "hdfs://namenode:9000/home/dataset-batch/Query3.parquet";
 
-    public static final String OUT_DIR_Q3 = "hdfs://namenode:9000/home/dataset-batch/output-query3";
-    public static final int DO_LOC_COL = 3;
-    public static final int PASSENGER_COUNT_COL = 2;
-    public static final int FARE_AMOUNT_COL = 5;
+//    public static final int DO_LOC_COL = 3;
+//    public static final int PASSENGER_COUNT_COL = 2;
+//    public static final int FARE_AMOUNT_COL = 5;
     private static final int RANKING_SIZE = 5;
 
     public static void main(String[] args) {
@@ -136,28 +132,28 @@ public class Query3 {
         }
     }
 
-    private static void mostPopularDestinationWithStdDev(SparkSession spark, String file) {
-        // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
-        // the "1" is used to count the occurrence of the taxi_rides to a specific destination
-        List<Tuple2<Long, Tuple3<Long, Double, Double>>> take = spark.read().parquet(file)
-                .toJavaRDD()
-                // excluding the rows with at least one null value in the necessary columns
-                .filter(row -> !(row.isNullAt(DO_LOC_COL) || row.isNullAt(PASSENGER_COUNT_COL) || row.isNullAt(FARE_AMOUNT_COL)))
-                // mapping the entire row to a new tuple with only the useful fields (and a 1 to count)
-                .mapToPair(row -> new Tuple2<>(row.getLong(DO_LOC_COL), row.getDouble(FARE_AMOUNT_COL)))
-                .aggregateByKey(new StatCounter(), StatCounter::merge, StatCounter::merge)
-                // reduceByKey sums the counter, the passengers and the fare_amount in order to compute the mean in the next method in the chain
-                // (total_taxi_rides, (DOLocationID, fare_amount_mean, fare_amount_stdev))
-                .mapToPair(tup -> new Tuple2<>(tup._2.count(), new Tuple3<>(tup._1, tup._2.mean(), tup._2.stdev())))
-                // Order descending by number of taxi_rides to each location
-                // Keep only top-5 locations
-                .takeOrdered(RANKING_SIZE, (tup1, tup2) -> tup2._1.compareTo(tup1._1));
-
-
-        System.out.println("=========== Ranking =============");
-        for (int i = 0, collectSize = take.size(); i < collectSize; i++) {
-            Tuple2<Long, Tuple3<Long, Double, Double>> res = take.get(i);
-            System.out.printf("%d) taxi_rides = %d, locationID = %d, mean_fare_amount = %g $, stdev_fare_amount = %s $\n", i + 1, res._1, res._2._1(), res._2._2(), new DecimalFormat("#.##").format(res._2._3()));
-        }
-    }
+//    private static void mostPopularDestinationWithStdDev(SparkSession spark, String file) {
+//        // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
+//        // the "1" is used to count the occurrence of the taxi_rides to a specific destination
+//        List<Tuple2<Long, Tuple3<Long, Double, Double>>> take = spark.read().parquet(file)
+//                .toJavaRDD()
+//                // excluding the rows with at least one null value in the necessary columns
+//                .filter(row -> !(row.isNullAt(DO_LOC_COL) || row.isNullAt(PASSENGER_COUNT_COL) || row.isNullAt(FARE_AMOUNT_COL)))
+//                // mapping the entire row to a new tuple with only the useful fields (and a 1 to count)
+//                .mapToPair(row -> new Tuple2<>(row.getLong(DO_LOC_COL), row.getDouble(FARE_AMOUNT_COL)))
+//                .aggregateByKey(new StatCounter(), StatCounter::merge, StatCounter::merge)
+//                // reduceByKey sums the counter, the passengers and the fare_amount in order to compute the mean in the next method in the chain
+//                // (total_taxi_rides, (DOLocationID, fare_amount_mean, fare_amount_stdev))
+//                .mapToPair(tup -> new Tuple2<>(tup._2.count(), new Tuple3<>(tup._1, tup._2.mean(), tup._2.stdev())))
+//                // Order descending by number of taxi_rides to each location
+//                // Keep only top-5 locations
+//                .takeOrdered(RANKING_SIZE, (tup1, tup2) -> tup2._1.compareTo(tup1._1));
+//
+//
+//        System.out.println("=========== Ranking =============");
+//        for (int i = 0, collectSize = take.size(); i < collectSize; i++) {
+//            Tuple2<Long, Tuple3<Long, Double, Double>> res = take.get(i);
+//            System.out.printf("%d) taxi_rides = %d, locationID = %d, mean_fare_amount = %g $, stdev_fare_amount = %s $\n", i + 1, res._1, res._2._1(), res._2._2(), new DecimalFormat("#.##").format(res._2._3()));
+//        }
+//    }
 }

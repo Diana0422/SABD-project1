@@ -13,7 +13,7 @@ public class NifiTest {
 
     public static final String TEST_NIFI_API_URL = "http://localhost:8181/nifi-api/";
     private final NifiExecutor executor = new NifiExecutor(TEST_NIFI_API_URL);
-    private static final String EXAMPLE_TEMPLATE = ".nifi/templates/preprocessing_query1.xml";
+    private static final String EXAMPLE_TEMPLATE = ".nifi/templates/simple_preprocessing_query1.xml";
 
     @Test
     public void getRootProcessorGroupTest() {
@@ -97,6 +97,20 @@ public class NifiTest {
             }
             assertEquals(done, size);
         }
+    }
 
+    @Test
+    public void numberProcessorsRunningTest(){
+        NifiTemplateInstance nifi = new NifiTemplateInstance(EXAMPLE_TEMPLATE, TEST_NIFI_API_URL);
+        int n = nifi.numberProcessRunning();
+        assertEquals(0, n, "There are more than 0 processors running at the start!!!");
+
+        nifi.uploadAndInstantiateTemplate();
+        nifi.runAll();
+        int n1 = nifi.numberProcessRunning();
+        assertEquals(5, n1, "Not all processors are running...");
+
+        nifi.stopAll();
+        nifi.removeAll();
     }
 }

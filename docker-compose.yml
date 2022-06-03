@@ -8,7 +8,6 @@ services:
     container_name: nifi
     ports:
       - '8181:8181'   # http://localhost:8181 web ui NiFi
-    #      - '9000:9000' # serve per connettersi al namenode hdfs
     environment:
       NIFI_WEB_HTTP_PORT: '8181'
     volumes:
@@ -16,7 +15,7 @@ services:
       - type: bind
         source: .nifi/security/cacerts
         target: /opt/nifi/nifi-current/cacerts
-      - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # Todo: serve davvero? montiamo il volume nifi-hdfs nella cartella hdfs-conf, che è collegata anche in .nifi/hdfs-conf
+      - nifi-hdfs:/opt/nifi/nifi-current/ls-target/hdfs-conf # loads configuration files from hdfs to nifi, even if are not copied in the local fs
 
   # nifi salva su HDFS, per vedere il file usa: "hdfs dfs -ls /home/dataset-batch"
 
@@ -64,10 +63,10 @@ services:
     restart: always
     ports:
       - '9870:9870' # http://localhost:9870 web ui HDFS.
-      - '9000:9000' #
+      - '9000:9000' # HDFS master
     volumes:
       - hadoop_namenode:/hadoop/dfs/name # volume di hdfs namenode
-      - nifi-hdfs:/etc/hadoop # TODO: serve davvero? volume in comune con nifi
+      - nifi-hdfs:/etc/hadoop # shared with nifi
     environment:
       - CLUSTER_NAME=test
       - HDFS_CONF_dfs_replication=1
@@ -105,16 +104,13 @@ services:
       - grafana-data:/var/lib/grafana
 
 volumes:
-  nifi-hdfs: # volume in comune tra hdfs
-  nifi-spark: #volume in comune tra nifi e spark
+  nifi-hdfs: # volume shared by nifi and hdfs
+  nifi-spark: #volume shared by nifi and spark
   hadoop_datanode:
-    driver: local # Dove salvare i dati? Di default è local
-    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
+    driver: local # where to save data. Default is local
+    external: false # volume defined outside this docker-compose? Default is false.
   hadoop_namenode:
-    driver: local # Dove salvare i dati? Di default è local
-    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
-#  spark-volume:
-#    driver: local # Dove salvare i dati? Di default è local
-#    external: false # Il container è stato definito fuori da docker-compose? Di default è false.
+    driver: local
+    external: false
   grafana-data:
     external: false

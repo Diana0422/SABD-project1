@@ -2,7 +2,6 @@ package com.sparkling_taxi.spark;
 
 
 import com.sparkling_taxi.bean.query1.*;
-import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaRDD;
@@ -16,15 +15,12 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.sparkling_taxi.utils.Const.*;
+
 // docker cp backup/Query1.parquet namenode:/home/Query1.parquet
 // hdfs dfs -get Query1.parquet /home/dataset-batch/Query1.parquet /home/Query1.parquet
 public class Query1 {
 
-    public static final String PRE_PROCESSING_TEMPLATE_Q1 = "/home/templates/preprocessing_query1.xml";
-    public static final String FILE_Q1 = "hdfs://namenode:9000/home/dataset-batch/Query1.parquet";
-    public static final String OUT_DIR = "hdfs://namenode:9000/home/dataset-batch/output-query1";
-
-    private NifiTemplateInstance n;
 
     /**
      * @return true if on windows is installed C:\\Hadoop\\hadoop-2.8.1\\bin\\WINUTILS.EXE
@@ -54,6 +50,8 @@ public class Query1 {
      */
     public List<Tuple2<YearMonth, Query1Result>> multiMonthMeans(SparkSession spark, String file) {
         System.out.println("======================= Query 1 =========================");
+        // TODO: per migliorare le performance, su NiFi unire le tre colonne toll_amount, tip_amount, total_amount
+        //  in una sola colonna ratio con il calcolo già effettuato!
         return spark.read().parquet(file)
                 // Converts the typed Dataset<Row> to Dataset<Query1Bean>
                 .as(Encoders.bean(Query1Bean.class))
@@ -87,21 +85,20 @@ public class Query1 {
 
         JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
         JavaRDD<CSVQuery1> result = sc.parallelize(query1)
-                // sometimes spark produces two partitions but the output file is small,
+                // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
                 // so we force it to use only 1 partition
-                .repartition(1)
+                .repartition(1) // TODO: forse questo rallenta le cose..
                 .map(v1 -> new CSVQuery1(v1._1, v1._2))
                 .cache();
 
-
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
         spark.createDataFrame(result, CSVQuery1.class)
-                .select("year", "month", "avgPassengers", "avgRatio") // to set the correct order of columns!
+                .select("year",new String[]{"month", "avgPassengers", "avgRatio"}) // to set the correct order of columns!
                 .write()
                 .mode("overwrite")
                 .option("header", true)
                 .option("delimiter", ";")
-                .csv(OUT_DIR);
+                .csv(OUT_DIR_Q1);
 
         postProcessing(query1);
 

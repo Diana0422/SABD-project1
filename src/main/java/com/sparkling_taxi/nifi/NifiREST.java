@@ -50,7 +50,6 @@ public class NifiREST {
                 }
             }
             int status = conn.getResponseCode();
-            System.out.println("PUT: " + status + ": " + conn.getResponseCode() + " - " + conn.getResponseMessage());
             return conn.getResponseCode() == 200;
         } catch (IOException e) {
             e.printStackTrace();
@@ -68,7 +67,6 @@ public class NifiREST {
             conn.setRequestProperty("Accept", "application/json");
             InputStream is = conn.getInputStream();
             String response = IOUtils.toString(is, StandardCharsets.UTF_8);
-            System.out.println("GET " + conn.getResponseCode() + ": " + conn.getResponseMessage());
             return Optional.of(new JSONObject(response));
         } catch (IOException e) {
             e.printStackTrace();
@@ -91,7 +89,6 @@ public class NifiREST {
             if (withJson)
                 conn.setRequestProperty("Content-Type", "application/json");
             int code = conn.getResponseCode();
-            System.out.println("DELETE " + code + ": " + conn.getResponseMessage());
             if (VERBOSE) {
                 InputStream is;
                 if (code == 200) {
@@ -133,9 +130,6 @@ public class NifiREST {
             try (OutputStream out = conn.getOutputStream()) {
                 httpEntity.writeTo(out);
             }
-
-            System.out.println("POST " + conn.getResponseCode() + ": " + conn.getResponseMessage());
-
             BufferedReader inputReader = new BufferedReader(
                     new InputStreamReader(conn.getInputStream()));
             String inputLine;
@@ -184,7 +178,6 @@ public class NifiREST {
                     System.out.println(response);
                 }
             }
-            System.out.println("POST " + conn.getResponseCode() + ": " + conn.getResponseMessage());
             return Optional.of(new JSONObject(response.toString()));
         } catch (IOException e) {
             e.printStackTrace();

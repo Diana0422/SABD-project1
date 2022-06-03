@@ -21,12 +21,11 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static com.sparkling_taxi.utils.Utils.LINUX_SEPARATOR;
-import static com.sparkling_taxi.utils.Utils.WINDOWS_SEPARATOR;
+import static com.sparkling_taxi.utils.Const.LINUX_SEPARATOR;
+import static com.sparkling_taxi.utils.Const.WINDOWS_SEPARATOR;
 
 public class FileUtils {
     private static final Logger logger = Logger.getLogger(FileUtils.class.getName());
-    public static final char CSV_SEPARATOR = ';';
 
     private FileUtils() {
     }
@@ -178,18 +177,18 @@ public class FileUtils {
     }
 
     /**
-     * HDFS
-     * @param fileQuery
-     * @return
+     * Check if a HDFS file exists
+     * @param file hdfs path of the file
+     * @return true if file exists
      */
-    public static boolean hasFileHDFS(String fileQuery) {
+    public static boolean hasFileHDFS(String file) {
         try {
             Configuration conf = new Configuration();
             conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
             conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
             //Get the filesystem - HDFS//Get the filesystem - HDFS
-            FileSystem hdfs = FileSystem.get(URI.create(fileQuery), conf);
-            if (hdfs.exists(new org.apache.hadoop.fs.Path(fileQuery))) return true;
+            FileSystem hdfs = FileSystem.get(URI.create(file), conf);
+            if (hdfs.exists(new org.apache.hadoop.fs.Path(file))) return true;
         } catch (IOException e) {
             e.printStackTrace();
         }

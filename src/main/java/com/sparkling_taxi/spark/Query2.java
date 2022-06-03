@@ -16,16 +16,14 @@ import scala.Tuple4;
 import java.sql.Timestamp;
 import java.util.*;
 
+import static com.sparkling_taxi.utils.Const.*;
 import static com.sparkling_taxi.utils.Utils.intRange;
 
 // docker cp backup/Query2.parquet namenode:/home/Query2.parquet
 // hdfs dfs -put Query2.parquet /home/dataset-batch/Query2.parquet
 public class Query2 {
-
-    public static final String PRE_PROCESSING_TEMPLATE_Q2 = "/home/templates/preprocessing_query2.xml";
-    public static final String FILE_Q2 = "hdfs://namenode:9000/home/dataset-batch/Query2.parquet";
     // public static final String FILE_Q2 = "hdfs://namenode:9000/home/dataset-batch/LittleQuery2.parquet";
-    public static final String PARTIAL_OUTPUT = "hdfs://namenode:9000/home/dataset-batch/partOutputQ2";
+    // public static final String PARTIAL_OUTPUT = "hdfs://namenode:9000/home/dataset-batch/partOutputQ2";
     public static final int PICKUP_COL = 0;
     public static final int DROPOFF_COL = 1;
     public static final int TIP_AMOUNT_COL = 2;

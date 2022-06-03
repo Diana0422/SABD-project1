@@ -1,10 +1,12 @@
 package com.sparkling_taxi.nifi;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 /**
  * Utility class to get a template running
@@ -40,14 +42,27 @@ public class NifiTemplateInstance {
     }
 
     public int numberProcessRunning() {
+        if (executor.getProcessorGroups().isEmpty()) {
+            return 0;
+        }
         Optional<JSONObject> info = executor.getProcessorGroupInfo(processorGroupId);
-        return info.map(jsonObject -> jsonObject.getJSONObject("processGroupFlow"))
-                .map(j -> j.getJSONObject("flow"))
-                .map(j -> j.getJSONArray("processGroups"))
-                .filter(a -> !a.isEmpty())
-                .map(a -> a.getJSONObject(0))
-                .map(p -> p.getInt("runningCount"))
-                .orElse(0);
+        if (info.isPresent()) {
+            JSONArray jsonArray = info.get().getJSONObject("processGroupFlow")
+                    .getJSONObject("flow")
+                    .getJSONArray("processors");
+            return (int) IntStream.range(0, jsonArray.length())
+                    .mapToObj(jsonArray::getJSONObject)
+                    .map(processor -> processor.getJSONObject("component"))
+                    .map(c -> c.getString("state"))
+                    .filter(s -> s.equals("RUNNING"))
+                    .count();
+        }
+        return 0;
+    }
+
+    public int numberControllerServicesRunning() {
+        List<NifiControllerService> info = executor.getControllerServices(processorGroupId);
+        return (int) info.stream().filter(n -> n.getState().equals("ENABLED")).count();
     }
 
     /**
@@ -59,21 +74,24 @@ public class NifiTemplateInstance {
      */
     public boolean uploadAndInstantiateTemplate() {
         // preemptively remove all template to avoid conflicts...
-        if(!executor.removeAllTemplates()){
+        if (!executor.removeAllTemplates()) {
             System.out.println("Impossible to remove templates");
             return false;
         }
         // upload the template
+        System.out.println("Uploading template " + this.templateFile);
         Optional<String> templateId = executor.uploadTemplate(templateFile);
         // if it all goes well
         if (templateId.isPresent()) {
             this.templateId = templateId.get();
             System.out.println("templateId = " + this.templateId);
             // instantiate a processGroup from the template
+            System.out.println("Instantiating template " + this.templateFile);
             Optional<String> s = executor.instantiateTemplate(templateId.get());
             if (s.isPresent()) {
                 System.out.println("processorGroupId = " + s.get());
                 processorGroupId = s.get();
+                System.out.println("Getting controller services");
                 controllerServiceIds = executor.getControllerServices(processorGroupId);
                 return true;
             }
@@ -88,12 +106,13 @@ public class NifiTemplateInstance {
      */
     public boolean runAll() {
         runAllControllerServices();
-        waitABit();
-        waitABit();
+        waitUntilAllControllerServicesRunning();
         boolean running = executor.setRunStatusOfProcessorGroup(processorGroupId, "RUNNING");
+        waitUntilAllProcessRunning();
         incrementProcessGroupVersion();
         return running;
     }
+
 
     /**
      * This method:
@@ -104,9 +123,9 @@ public class NifiTemplateInstance {
      */
     public boolean stopAll() {
         boolean stoppedProcessGroups = executor.setRunStatusOfProcessorGroup(processorGroupId, "STOPPED");
-        waitABit();
+        waitUntilAllProcessStopped();
         boolean stoppedServices = stopAllControllerServices();
-        waitABit();
+        waitUntilAllControllerServicesStopped();
         boolean terminatedThreads = executor.terminateThreadsOfProcessorGroup(processorGroupId);
         incrementProcessGroupVersion();
         boolean emptied = executor.emptyQueues(processorGroupId);
@@ -122,7 +141,7 @@ public class NifiTemplateInstance {
      * @return true if all goes well
      */
     public boolean removeAll() {
-        waitABit();
+        waitABit("Waiting before removing"); // wait for the queue to empty
         boolean templateDeleted = executor.deleteTemplate(templateId);
         // remove the process group of the template
         List<String> theProcessGroup = executor.getProcessorGroups();
@@ -139,17 +158,18 @@ public class NifiTemplateInstance {
 
     public boolean runAllControllerServices() {
         boolean ss = true;
-        for (NifiControllerService id : controllerServiceIds) {
-            ss = ss && executor.runControllerService(id);
-            System.out.println("Eseguito running: "+id.getId());
+        for (NifiControllerService ncs : controllerServiceIds) {
+            System.out.println("Running controller service: " + ncs.getId());
+            ss = ss && executor.runControllerService(ncs);
         }
         return ss;
     }
 
     public boolean stopAllControllerServices() {
         boolean ss = true;
-        for (NifiControllerService id : controllerServiceIds) {
-            ss = ss && executor.stopControllerService(id);
+        for (NifiControllerService ncs : controllerServiceIds) {
+            System.out.println("Stopping controller service: " + ncs.getId());
+            ss = ss && executor.stopControllerService(ncs);
         }
         return ss;
     }
@@ -164,11 +184,54 @@ public class NifiTemplateInstance {
         return Optional.ofNullable(processorGroupId);
     }
 
-    private void waitABit(){
+    private void waitABit(String message) {
         try {
             Thread.sleep(500);
+            System.out.println(message);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private void waitUntilAllProcessRunning() {
+        int totalProcessors = getProcessorGroup().map(executor::getProcessors).map(List::size).orElse(0);
+        int n;
+        do {
+            n = numberProcessRunning();
+            if (n != totalProcessors) {
+                waitABit("Waiting until all " + n + "/" + totalProcessors + " processors are running...");
+            }
+        } while (n != totalProcessors);
+    }
+
+    private void waitUntilAllProcessStopped() {
+        int n;
+        do {
+            n = numberProcessRunning();
+            if (n != 0) {
+                waitABit("Waiting until all processors are stopped...");
+            }
+        } while (n != 0);
+    }
+
+    private void waitUntilAllControllerServicesRunning() {
+        int totalControllerServices = getProcessorGroup().map(executor::getControllerServices).map(List::size).orElse(0);
+        int n;
+        do {
+            n = numberControllerServicesRunning();
+            if (n != totalControllerServices) {
+                waitABit("Waiting until all controller services are enabled...");
+            }
+        } while (n != totalControllerServices);
+    }
+
+    private void waitUntilAllControllerServicesStopped() {
+        int n;
+        do {
+            n = numberControllerServicesRunning();
+            if (n != 0) {
+                waitABit("Waiting until all controller services are disabled...");
+            }
+        } while (n != 0);
     }
 }

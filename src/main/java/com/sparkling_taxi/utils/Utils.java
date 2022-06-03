@@ -12,12 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
+import static com.sparkling_taxi.utils.Const.*;
 
 public class Utils {
-
-    public static final String LINUX_SEPARATOR = "/";
-    public static final String WINDOWS_SEPARATOR = "\\";
-
 
     public static boolean isWindows() {
         return System.getProperty("os.name").equals("windows");
@@ -78,7 +75,7 @@ public class Utils {
                 .max((o1, o2) -> {
                     if (o1 > o2) return o2;
                     else return o1;
-                }).map(t -> primes.get(t))
+                }).map(primes::get)
                 .orElse(primes.get(0));
     }
 
@@ -96,9 +93,43 @@ public class Utils {
         }
     }
 
+    public static void downloadFilesIfNeeded(){
+        // check if input dataset are already downloaded
+        boolean allDownloaded = true;
+        for (int i = 0; i < FILE_TO_DOWNLOAD.length; i++) {
+            allDownloaded = allDownloaded && FileUtils.hasFileHDFS(FILE_TO_DOWNLOAD[i]);
+        }
+        if (!allDownloaded){
+            // if not, start downloading them
+            NifiTemplateInstance n = new NifiTemplateInstance(Const.DOWNLOAD_TEMPLATE, NIFI_URL);
+            n.uploadAndInstantiateTemplate();
+            n.runAll();
+            // wait until all files are downloaded
+            do{
+                try {
+                    Thread.sleep(5000);
+                    System.out.println("Waiting for files to download");
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                allDownloaded = true;
+                for (int i = 0; i < FILE_TO_DOWNLOAD.length; i++) {
+                    allDownloaded = allDownloaded && FileUtils.hasFileHDFS(FILE_TO_DOWNLOAD[i]);
+                }
+            } while (!allDownloaded);
+            // now cleanup nifi
+            n.stopAll();
+            n.removeAll();
+            System.out.println("All 3 input files downloaded!");
+        } else {
+            System.out.println("The datasets are already downloaded!");
+        }
+    }
+
     public static void doPreProcessing(String file_for_query, String preprocessing_template_for_query){
+        downloadFilesIfNeeded();
         if (!hasFileHDFS(file_for_query)) {
-            NifiTemplateInstance n = new NifiTemplateInstance(preprocessing_template_for_query, "http://nifi:8181/nifi-api/");
+            NifiTemplateInstance n = new NifiTemplateInstance(preprocessing_template_for_query, NIFI_URL);
             n.uploadAndInstantiateTemplate();
             n.runAll();
             do {
