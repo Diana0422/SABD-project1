@@ -37,6 +37,7 @@ services:
     volumes:
       - ./target:/opt/bitnami/spark/taxi-app/
       - .nifi/templates:/home/templates
+      - ./Results:/home/results
 
   spark-worker:
     image: docker.io/bitnami/spark:3

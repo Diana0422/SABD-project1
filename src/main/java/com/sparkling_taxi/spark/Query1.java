@@ -48,7 +48,7 @@ public class Query1 {
      * @param file  the input file
      * @return List of computed means
      */
-    public List<Tuple2<YearMonth, Query1Result>> multiMonthMeans(SparkSession spark, String file) {
+    public List<Tuple2<YearMonthKey, Query1Result>> multiMonthMeans(SparkSession spark, String file) {
         System.out.println("======================= Query 1 =========================");
         // TODO: per migliorare le performance, su NiFi unire le tre colonne toll_amount, tip_amount, total_amount
         //  in una sola colonna ratio con il calcolo già effettuato!
@@ -56,7 +56,7 @@ public class Query1 {
                 // Converts the typed Dataset<Row> to Dataset<Query1Bean>
                 .as(Encoders.bean(Query1Bean.class))
                 .toJavaRDD()
-                .mapToPair(q1 -> new Tuple2<>(new YearMonth(q1.getTpep_dropoff_datetime()), new Query1Calc(1, q1)))
+                .mapToPair(q1 -> new Tuple2<>(new YearMonthKey(q1.getTpep_dropoff_datetime()), new Query1Calc(1, q1)))
                 /* after mapToPair: ((month, year), (1, passengers, ...)) */
                 .reduceByKey(Query1Calc::sumWith)
                 /* after reduceByKey: ((month, year), (count, sum_passengers, ...)) */
@@ -69,11 +69,11 @@ public class Query1 {
     public static void main(String[] args) {
         Query1 q = new Query1();
         q.preProcessing();
-        List<Tuple2<YearMonth, Query1Result>> query1 = q.runQuery();
+        List<Tuple2<YearMonthKey, Query1Result>> query1 = q.runQuery();
         q.postProcessing(query1);
     }
 
-    public List<Tuple2<YearMonth, Query1Result>> runQuery() {
+    public List<Tuple2<YearMonthKey, Query1Result>> runQuery() {
         SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -81,7 +81,7 @@ public class Query1 {
                 .getOrCreate();
         spark.sparkContext().setLogLevel("WARN");
 
-        List<Tuple2<YearMonth, Query1Result>> query1 = Performance.measure("Complete Query 1", () -> multiMonthMeans(spark, FILE_Q1));
+        List<Tuple2<YearMonthKey, Query1Result>> query1 = Performance.measure("Complete Query 1", () -> multiMonthMeans(spark, FILE_Q1));
 
         JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
         JavaRDD<CSVQuery1> result = sc.parallelize(query1)
@@ -119,9 +119,9 @@ public class Query1 {
     }
 
 
-    public void postProcessing(List<Tuple2<YearMonth, Query1Result>> query1) {
+    public void postProcessing(List<Tuple2<YearMonthKey, Query1Result>> query1) {
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
-            for (Tuple2<YearMonth, Query1Result> t : query1) {
+            for (Tuple2<YearMonthKey, Query1Result> t : query1) {
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Year / Month", t._1().toString());
                 m.put("Avg Ratio", String.valueOf(t._2.getAvgRatio()));

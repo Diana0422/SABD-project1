@@ -10,19 +10,19 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Data
-public class YearMonth implements Serializable, Comparable<YearMonth> {
+public class YearMonthKey implements Serializable, Comparable<YearMonthKey> {
     private int year;
     private int month;
 
-    public YearMonth() {}
+    public YearMonthKey() {}
 
-    public YearMonth(Timestamp ts){
+    public YearMonthKey(Timestamp ts){
         LocalDateTime ld = Utils.toLocalDateTime(ts);
         this.year = ld.getYear();
         this.month = ld.getMonthValue();
     }
 
-    public int compareTo(@NotNull YearMonth o) {
+    public int compareTo(@NotNull YearMonthKey o) {
         // the smallest year first
         if (this.year < o.year) {
             return -1; // this yearmonth is smaller than the other
@@ -35,7 +35,7 @@ public class YearMonth implements Serializable, Comparable<YearMonth> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        YearMonth yearMonth = (YearMonth) o;
+        YearMonthKey yearMonth = (YearMonthKey) o;
         return year == yearMonth.year && month == yearMonth.month;
     }
 

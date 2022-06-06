@@ -9,24 +9,29 @@ import java.util.Comparator;
 @Data
 public class Query3Result implements Serializable {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.####");
-    private final Double trips;
-    private Long location;
+
+    private DayLocationKey dayLocationKey ;
+    private Double trips;
     private Double meanPassengers;
     private Double meanFareAmount;
     private Double stDevFareAmount;
 
-    public Query3Result(Double count, Long location, Double meanPassengers, Double meanFareAmount, Double stDevFareAmount) {
-        this.trips = count;
-        this.location = location;
-        this.meanPassengers = meanPassengers;
-        this.meanFareAmount = meanFareAmount;
-        this.stDevFareAmount = stDevFareAmount;
+    public Query3Result(DayLocationKey dayLocation, Query3Calc q3){
+        this.dayLocationKey = dayLocation;
+        this.meanPassengers = q3.computePassengerMean();
+        this.meanFareAmount = q3.computeFareAmountMean();
+        this.stDevFareAmount = q3.computeFareAmountStdev();
     }
 
     @Override
     public String toString() {
-        return String.format("taxi_rides = %g, locationID = %d, mean_passengers = %g, mean_fare_amount = %s $ stdev_fare_amount %s $\n",
-                trips, location, meanPassengers, meanFareAmount, stDevFareAmount);
+        return "Query3Result{" +
+               "dayLocationKey=" + dayLocationKey +
+               ", trips=" + trips +
+               ", meanPassengers=" + meanPassengers +
+               ", meanFareAmount=" + meanFareAmount +
+               ", stDevFareAmount=" + stDevFareAmount +
+               '}';
     }
 
     public static final class Query3Comparator implements Comparator<Query3Result>, Serializable {

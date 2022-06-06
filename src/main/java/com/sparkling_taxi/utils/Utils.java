@@ -4,6 +4,7 @@ import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import scala.Tuple2;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -49,6 +50,13 @@ public class Utils {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd.HH");
         ld.format(formatter);
         return ld;
+    }
+
+    public static String getDay(Timestamp t){
+        Date date = new Date(t.getTime());
+        LocalDate ld = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return ld.format(formatter);
     }
 
     public static double stddev(double count, double valueSum, double squareSum) {

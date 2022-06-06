@@ -1,9 +1,6 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.bean.query3.CSVQuery3;
-import com.sparkling_taxi.bean.query3.Query3Bean;
-import com.sparkling_taxi.bean.query3.Query3Calc;
-import com.sparkling_taxi.bean.query3.Query3Result;
+import com.sparkling_taxi.bean.query3.*;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaRDD;
@@ -37,7 +34,7 @@ public class Query3 {
         q.postProcessing(query3);
     }
 
-    private void preProcessing() {
+    public void preProcessing() {
         Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3);
     }
 
@@ -92,7 +89,7 @@ public class Query3 {
         }
     }
 
-    private static List<Query3Result> mostPopularDestinationWithTrueStdDev(SparkSession spark, String file) {
+    public static List<Query3Result> mostPopularDestinationWithTrueStdDev(SparkSession spark, String file) {
         // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
         // the "1" is used to count the occurrence of trips in the location
         Dataset<Row> parquet = spark.read().parquet(file);
@@ -100,16 +97,12 @@ public class Query3 {
                 .as(Encoders.bean(Query3Bean.class))
                 .toJavaRDD()
                 // mapping the entire row to a new tuple with only the useful fields (and a 1 to count)
-                .mapToPair(bean -> new Tuple2<>(bean.getDOLocationID(), new Query3Calc(1, bean)))
+                .mapToPair(bean -> new Tuple2<>(new DayLocationKey(bean.getTpep_dropoff_datetime(), bean.getDOLocationID()), new Query3Calc(1, bean)))
                 // reduceByKey sums the counter, the passengers, the fare_amount and square_fare_amount in order to compute the mean and stdev in the next method in the chain
                 // Tuple2: (DOLocationID, Query3Calc[total_taxi_trips, passengers_sum, fare_amount_sum, fare_amount_square_sum])
                 .reduceByKey(Query3Calc::sumWith)
                 // Query3Result: trips, location, avgPassengers, avgFareAmount, stdevFareAmount
-                .map(tup -> new Query3Result(tup._2.getCount(), // count
-                        tup._1, // location
-                        tup._2.computePassengerMean(),
-                        tup._2.computeFareAmountMean(),
-                        tup._2.computeFareAmountStdev()))
+                .map(tup -> new Query3Result(tup._1, tup._2))
                 // Order descending by number of taxi_rides to each location
                 // Keep only top-5 locations.
                 .takeOrdered(RANKING_SIZE, Query3Result.Query3Comparator.INSTANCE);
@@ -122,8 +115,9 @@ public class Query3 {
                 Query3Result q = query3.get(i);
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Rank", String.valueOf(i + 1));
+                m.put("Day", q.getDayLocationKey().getDay());
+                m.put("LocationID", q.getDayLocationKey().getDestination().toString()); // TODO: mappare con location string
                 m.put("Trips Count", q.getTrips().toString());
-                m.put("LocationID", q.getLocation().toString()); // TODO: mappare con location string
                 m.put("Avg Passengers", q.getMeanPassengers().toString());
                 m.put("Avg Fare Amount", q.getMeanFareAmount().toString());
                 m.put("Stdev Fare Amount", q.getStDevFareAmount().toString());
@@ -131,29 +125,4 @@ public class Query3 {
             }
         }
     }
-
-//    private static void mostPopularDestinationWithStdDev(SparkSession spark, String file) {
-//        // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
-//        // the "1" is used to count the occurrence of the taxi_rides to a specific destination
-//        List<Tuple2<Long, Tuple3<Long, Double, Double>>> take = spark.read().parquet(file)
-//                .toJavaRDD()
-//                // excluding the rows with at least one null value in the necessary columns
-//                .filter(row -> !(row.isNullAt(DO_LOC_COL) || row.isNullAt(PASSENGER_COUNT_COL) || row.isNullAt(FARE_AMOUNT_COL)))
-//                // mapping the entire row to a new tuple with only the useful fields (and a 1 to count)
-//                .mapToPair(row -> new Tuple2<>(row.getLong(DO_LOC_COL), row.getDouble(FARE_AMOUNT_COL)))
-//                .aggregateByKey(new StatCounter(), StatCounter::merge, StatCounter::merge)
-//                // reduceByKey sums the counter, the passengers and the fare_amount in order to compute the mean in the next method in the chain
-//                // (total_taxi_rides, (DOLocationID, fare_amount_mean, fare_amount_stdev))
-//                .mapToPair(tup -> new Tuple2<>(tup._2.count(), new Tuple3<>(tup._1, tup._2.mean(), tup._2.stdev())))
-//                // Order descending by number of taxi_rides to each location
-//                // Keep only top-5 locations
-//                .takeOrdered(RANKING_SIZE, (tup1, tup2) -> tup2._1.compareTo(tup1._1));
-//
-//
-//        System.out.println("=========== Ranking =============");
-//        for (int i = 0, collectSize = take.size(); i < collectSize; i++) {
-//            Tuple2<Long, Tuple3<Long, Double, Double>> res = take.get(i);
-//            System.out.printf("%d) taxi_rides = %d, locationID = %d, mean_fare_amount = %g $, stdev_fare_amount = %s $\n", i + 1, res._1, res._2._1(), res._2._2(), new DecimalFormat("#.##").format(res._2._3()));
-//        }
-//    }
 }

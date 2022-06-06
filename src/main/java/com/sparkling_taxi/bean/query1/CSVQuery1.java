@@ -17,7 +17,7 @@ public class CSVQuery1 implements Serializable {
     public CSVQuery1() {
     }
 
-    public CSVQuery1(YearMonth yearMonth, Query1Result query1Result) {
+    public CSVQuery1(YearMonthKey yearMonth, Query1Result query1Result) {
         this.year = yearMonth.getYear();
         this.month = String.format("%02d", yearMonth.getMonth());
         this.avgRatio = DECIMAL_FORMAT.format(query1Result.getAvgRatio());
