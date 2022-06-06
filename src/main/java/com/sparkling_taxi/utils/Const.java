@@ -3,7 +3,7 @@ package com.sparkling_taxi.utils;
 public class Const {
     public static final String DOWNLOAD_TEMPLATE = "/home/templates/download_to_hdfs.xml";
     // ================ QUERY 1 =========================
-    public static final String PRE_PROCESSING_TEMPLATE_Q1 = "/home/templates/simple_preprocessing_query1.xml";
+    public static final String PRE_PROCESSING_TEMPLATE_Q1 = "/home/templates/template_query1.xml";
     public static final String FILE_Q1 = "hdfs://namenode:9000/home/dataset-batch/Query1.parquet";
     public static final String OUT_DIR_Q1 = "hdfs://namenode:9000/home/dataset-batch/output-query1";
     // ================ QUERY 2 =========================

@@ -93,7 +93,7 @@ public class Query1 {
 
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
         spark.createDataFrame(result, CSVQuery1.class)
-                .select("year",new String[]{"month", "avgPassengers", "avgRatio"}) // to set the correct order of columns!
+                .select("year",new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
                 .write()
                 .mode("overwrite")
                 .option("header", true)
@@ -124,8 +124,8 @@ public class Query1 {
             for (Tuple2<YearMonth, Query1Result> t : query1) {
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Year / Month", t._1().toString());
-                m.put("Avg Passengers", String.valueOf(t._2.getAvgPassengers()));
                 m.put("Avg Ratio", String.valueOf(t._2.getAvgRatio()));
+                m.put("Count", String.valueOf(t._2.getCount()));
                 jedis.hset(t._1().toString(), m);
             }
         }

@@ -37,13 +37,13 @@ public class QuerySQL1 {
         spark.sparkContext().setLogLevel("WARN");
 
         spark.read().parquet(FILE_Q1)
-                .toDF("pickup", "dropoff", "passengers", "tip", "toll", "total")
+                .toDF("dropoff", "tip", "toll", "total")
                 .withColumn("month", month(col("dropoff")))
                 .withColumn("year", year(col("dropoff")))
                 .withColumn("tip_toll_ratio", expr("tip / (total - toll) "))
                 .createOrReplaceTempView("query1");
 
-        String query1 = "SELECT year, month, avg(passengers) as avgPassengers, avg(tip_toll_ratio) as avgRatio " +
+        String query1 = "SELECT year, month, avg(tip_toll_ratio) as avgRatio, count(tip_toll_ratio) " +
                         "FROM query1 " +
                         "GROUP BY year, month " +
                         "ORDER BY year, month ";
@@ -62,8 +62,8 @@ public class QuerySQL1 {
             for (CSVQuery1 b : result) {
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Year / Month", b.getYearMonth());
-                m.put("Avg Passengers", String.valueOf(b.getAvgPassengers()));
                 m.put("Avg Ratio", String.valueOf(b.getAvgRatio()));
+                m.put("Count", String.valueOf(b.getCount()));
                 jedis.hset(b.getYearMonth(), m);
             }
         }
