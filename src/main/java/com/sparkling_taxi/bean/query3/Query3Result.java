@@ -10,14 +10,15 @@ import java.util.Comparator;
 public class Query3Result implements Serializable {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.####");
 
-    private DayLocationKey dayLocationKey ;
+//    private DayLocationKey dayLocationKey ;
     private Double trips;
     private Double meanPassengers;
     private Double meanFareAmount;
     private Double stDevFareAmount;
 
-    public Query3Result(DayLocationKey dayLocation, Query3Calc q3){
-        this.dayLocationKey = dayLocation;
+    public Query3Result(Query3Calc q3){
+//        this.dayLocationKey = dayLocation;
+        this.trips = q3.getCount();
         this.meanPassengers = q3.computePassengerMean();
         this.meanFareAmount = q3.computeFareAmountMean();
         this.stDevFareAmount = q3.computeFareAmountStdev();
@@ -26,7 +27,7 @@ public class Query3Result implements Serializable {
     @Override
     public String toString() {
         return "Query3Result{" +
-               "dayLocationKey=" + dayLocationKey +
+//               "dayLocationKey=" + dayLocationKey +
                ", trips=" + trips +
                ", meanPassengers=" + meanPassengers +
                ", meanFareAmount=" + meanFareAmount +

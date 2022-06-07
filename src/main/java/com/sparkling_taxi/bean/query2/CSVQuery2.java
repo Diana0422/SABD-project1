@@ -1,7 +1,5 @@
 package com.sparkling_taxi.bean.query2;
 
-import com.sparkling_taxi.bean.query1.Query1Result;
-import com.sparkling_taxi.bean.query1.YearMonth;
 import lombok.Data;
 
 import java.io.Serializable;
