@@ -20,10 +20,22 @@ public class Performance {
         return System.currentTimeMillis() - start;
     }
 
+    /**
+     * Measures time to compute a callable and returns the result of the callable to the caller
+     * @param r   a lambda function or class that implements Callable<V>
+     * @param <V> the return type of the Callable
+     */
     public static <V> V measure(Callable<V> r) {
         return measure("", r);
     }
 
+    /**
+     * Measures time to compute a callable and returns the result of the callable to the caller
+     * It also prints a custom message.
+     * @param message a custom message to print
+     * @param r   a lambda function or class that implements Callable<V>
+     * @param <V> the return type of the Callable
+     */
     public static <V> V measure(String message, Callable<V> r) {
         long start = start();
         V call = null;
@@ -38,10 +50,21 @@ public class Performance {
         return call;
     }
 
+    /**
+     * Measures time to compute a runnable r and does not return anything
+     *
+     * @param r a lambda function or class that implements Runnable
+     */
     public static void measure(Runnable r) {
         measure("", r);
     }
 
+    /**
+     * Measures time to compute a runnable r and does not return anything
+     * It also prints a custom message
+     * @param message a custom message to print
+     * @param r a lambda function or class that implements Runnable
+     */
     public static void measure(String message, Runnable r) {
         long s = start();
         try {
@@ -52,6 +75,24 @@ public class Performance {
         }
         long elapsed = elapsed(s);
         printDuration(message, elapsed);
+    }
+    /**
+     * Measures time to compute a runnable r and returns a Time object
+     * that contains the time spent in the runnable.
+     *
+     * @param r a lambda function or class that implements Runnable
+     * @return a time object
+     */
+    public static Time measureTime(Runnable r) {
+        long s = start();
+        try {
+            r.run();
+        } catch (Exception e) {
+            logger.warning("Failed to compute performance.");
+            e.printStackTrace();
+        }
+        long elapsed = elapsed(s);
+        return new Time(elapsed);
     }
 
     static String printDuration(String s, long elapsed) {

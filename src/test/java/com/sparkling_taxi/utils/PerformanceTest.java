@@ -3,6 +3,7 @@ package com.sparkling_taxi.utils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PerformanceTest {
 
@@ -16,4 +17,18 @@ public class PerformanceTest {
         assertEquals("Duration Test 2246526: 37 m 26 s 526 ms", Performance.printDuration("Test 2246526", 2246526));
         assertEquals("Duration Test 10215: 10 s 215 ms", Performance.printDuration("Test 10215", 10215));
     }
+
+    @Test
+    public void measureTimeTest() {
+        Time time = Performance.measureTime(() -> {
+            int j = 0;
+            for (int i = 0; i < 100000; i++) {
+                j += i % (i+1);
+            }
+        });
+        System.out.println(time);
+        assertTrue(time.toMillis() > 0L);
+    }
+
+
 }

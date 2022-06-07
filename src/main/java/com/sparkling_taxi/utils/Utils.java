@@ -59,8 +59,39 @@ public class Utils {
         return ld.format(formatter);
     }
 
+    /**
+     * Calculates stdev using the formula
+     *            sqrt(E[X^2] - E^2[X])
+     * where:
+     *   E[X] = valueSum / count
+     *   E[X^2] = squareSum / count
+     *   E^2[X] = (valueSum / count)^2
+     *   Var(X) = E[X^2] - E^2[X]
+     *   stdev(X) = sqrt(Var(X))
+     * @param count the number of elements in the sample
+     * @param valueSum the sum of values of the sample
+     * @param squareSum the sum of square values of the sample
+     * @return the standard deviation of the sample
+     */
     public static double stddev(double count, double valueSum, double squareSum) {
-        return Math.sqrt((squareSum / count - (valueSum / squareSum) * (valueSum / squareSum)) / count);
+        return Math.sqrt((squareSum / count - (valueSum / count) * (valueSum / count)));
+    }
+
+    public static Tuple2<Time, Time> calculateMeanStdev(List<Time> t){
+        long count = 0;
+        long totalMillis = 0;
+        long squareTotalMillis = 0;
+        for (Time time : t) {
+            long millis = time.toMillis();
+            totalMillis += millis;
+            squareTotalMillis += millis * millis;
+            count++;
+        }
+
+        double mean = (double) totalMillis / count;
+        double stdev = Utils.stddev((double) count, (double) totalMillis, (double) squareTotalMillis);
+
+        return new Tuple2<>(new Time((long) mean), new Time((long) stdev));
     }
 
     /**
@@ -101,6 +132,10 @@ public class Utils {
         }
     }
 
+    /**
+     * Downloads all files of the dataset to HDFS, if they not exists, using Nifi.
+     * Also downloads the file with mappings between Zone Ids and Names.
+     */
     public static void downloadFilesIfNeeded(){
         // check if input dataset are already downloaded
         boolean allDownloaded = true;
