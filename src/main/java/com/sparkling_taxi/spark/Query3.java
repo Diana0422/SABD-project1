@@ -3,17 +3,22 @@ package com.sparkling_taxi.spark;
 import com.sparkling_taxi.bean.query3.*;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
+import lombok.var;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.sparkling_taxi.utils.Const.*;
 
@@ -25,7 +30,7 @@ public class Query3 {
     public static void main(String[] args) {
         Query3 q = new Query3();
         q.preProcessing();
-        List<Tuple2<DayLocationKey, Query3Result>> query3 = q.runQuery();
+        List<CSVQuery3> query3 = q.runQuery();
         q.postProcessing(query3);
     }
 
@@ -40,7 +45,7 @@ public class Query3 {
      *
      * @return the query3 result list
      */
-    public List<Tuple2<DayLocationKey, Query3Result>> runQuery() {
+    public List<CSVQuery3> runQuery() {
         try (SparkSession spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -49,85 +54,137 @@ public class Query3 {
              JavaSparkContext jc = JavaSparkContext.fromSparkContext(spark.sparkContext())
         ) {
             spark.sparkContext().setLogLevel("WARN");
-            List<Tuple2<DayLocationKey, Query3Result>> query3 = Performance.measure("Query3 - file4", () -> mostPopularDestinationWithTrueStdDev(spark, FILE_Q3));
+            List<Query3Result> query3 = Performance.measure("Query3 - file4", () -> mostPopularDestinationWithStdDev(spark, FILE_Q3));
 
-            List<Tuple2<Integer, Tuple2<DayLocationKey, Query3Result>>> query3WithRank = new ArrayList<>();
-            int j = 1;
-            for (Tuple2<DayLocationKey, Query3Result> query3Result : query3) {
-                query3WithRank.add(new Tuple2<>(j, query3Result));
+            List<CSVQuery3> query3WithRank = new ArrayList<>();
+            int j = 0;
+            List<String> locations = new ArrayList<>();
+            List<String> trips = new ArrayList<>();
+            List<Double> meanPassengers = new ArrayList<>();
+            List<Double> meanFareAmounts = new ArrayList<>();
+            List<Double> stdDevFareAmounts = new ArrayList<>();
+
+            for (var query3Result : query3) {
+                if (j % RANKING_SIZE == 0 && j != 0) {
+                    query3WithRank.add(new CSVQuery3(query3Result.getDay(), locations, trips, meanPassengers, meanFareAmounts, stdDevFareAmounts));
+                    locations = new ArrayList<>();
+                    trips = new ArrayList<>();
+                    meanPassengers = new ArrayList<>();
+                    meanFareAmounts = new ArrayList<>();
+                    stdDevFareAmounts = new ArrayList<>();
+                }
+                locations.add(query3Result.getLocation().toString());
+                trips.add(query3Result.getTrips().toString());
+                meanPassengers.add(query3Result.getMeanPassengers());
+                meanFareAmounts.add(query3Result.getMeanFareAmount());
+                stdDevFareAmounts.add(query3Result.getStDevFareAmount());
                 j++;
             }
 
             JavaRDD<CSVQuery3> result = jc.parallelize(query3WithRank)
-                    // sometimes spark produces two partitions but the output file is small,
-                    // so we force it to use only 1 partition
-                    .repartition(1)
-                    .map(v1 -> new CSVQuery3(v1._1, v1._2._1, v1._2._2)) // The rank is automatically incremented...: cambiare rank
-                    .cache();
+                    .repartition(1);
 
-            // save to csv
             spark.createDataFrame(result, CSVQuery3.class)
-                    .select("rank", "trips", "location", "meanPassengers", "meanFareAmount", "stDevFareAmount") // to set the correct order of columns!
+                    .select("day",
+                            "location1",
+                            "location2",
+                            "location3",
+                            "location4",
+                            "location5",
+                            "trips1",
+                            "trips2",
+                            "trips3",
+                            "trips4",
+                            "trips5",
+                            "meanPassengers1",
+                            "meanPassengers2",
+                            "meanPassengers3",
+                            "meanPassengers4",
+                            "meanPassengers5",
+                            "meanFareAmount1",
+                            "meanFareAmount2",
+                            "meanFareAmount3",
+                            "meanFareAmount4",
+                            "meanFareAmount5",
+                            "stDevFareAmount1",
+                            "stDevFareAmount2",
+                            "stDevFareAmount3",
+                            "stDevFareAmount4",
+                            "stDevFareAmount5")
                     .write()
                     .mode("overwrite")
                     .option("header", true)
                     .option("delimiter", ";")
                     .csv(OUT_DIR_Q3);
-
-
-            System.out.println("=========== Ranking =============");
-            for (int i = 0, collectSize = query3.size(); i < collectSize; i++) {
-                Tuple2<DayLocationKey, Query3Result> res = query3.get(i);
-                System.out.println((i + 1) + ") " + res.toString());
-            }
-            return query3;
+            return query3WithRank;
         }
     }
 
-    public static List<Tuple2<DayLocationKey, Query3Result>> mostPopularDestinationWithTrueStdDev(SparkSession spark, String file) {
+    public static List<Query3Result> mostPopularDestinationWithStdDev(SparkSession spark, String file) {
         // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
         // the "1" is used to count the occurrence of trips in the location
         Dataset<Row> parquet = spark.read().parquet(file);
-        return parquet
-                .as(Encoders.bean(Query3Bean.class))
-                .toJavaRDD()
-                // mapping the entire row to a new tuple with only the useful fields (and a 1 to count)
-                .mapToPair(bean -> new Tuple2<>(new DayLocationKey(bean.getTpep_dropoff_datetime(), bean.getDOLocationID()), new Query3Calc(1, bean)))
-                // reduceByKey sums the counter, the passengers, the fare_amount and square_fare_amount in order to compute the mean and stdev in the next method in the chain
-                // DayLocationKey, Query3Calc{}
-                .reduceByKey(Query3Calc::sumWith)
-                // Query3Result: trips, location, avgPassengers, avgFareAmount, stdevFareAmount
-                .mapValues(Query3Result::new)
-                // Order descending by number of taxi_rides to each location
-                // Keep only top-5 locations.
-                .sortByKey(false)
-                .takeOrdered(RANKING_SIZE, TupleComparator.INSTANCE);
-        // To avoid "Task is not serializable" Error, we need a Serializable Comparator (Query3Comparator)
-    }
+        JavaRDD<Query3Bean> rdd = parquet.as(Encoders.bean(Query3Bean.class))
+                .toJavaRDD();
 
-    public void postProcessing(List<Tuple2<DayLocationKey, Query3Result>> query3) {
-        try (Jedis jedis = new Jedis("redis://redis:6379")) {
-            for (int i = 0, query3Size = query3.size(); i < query3Size; i++) {
-                Tuple2<DayLocationKey, Query3Result> q = query3.get(i);
-                HashMap<String, String> m = new HashMap<>();
-                m.put("Rank", String.valueOf(i + 1));
-                m.put("Day", q._1.getDay());
-                m.put("LocationID", q._1.getDestination().toString()); // TODO: mappare con location string
-                m.put("Trips Count", q._2.getTrips().toString());
-                m.put("Avg Passengers", q._2.getMeanPassengers().toString());
-                m.put("Avg Fare Amount", q._2.getMeanFareAmount().toString());
-                m.put("Stdev Fare Amount", q._2.getStDevFareAmount().toString());
-                jedis.hset(String.valueOf(i + 1), m);
+        JavaPairRDD<DayLocationKey, Query3Calc> mapping = rdd.mapToPair(bean -> new Tuple2<>(new DayLocationKey(bean.getTpep_dropoff_datetime(), bean.getDOLocationID()), new Query3Calc(1, bean)));
+        JavaPairRDD<DayLocationKey, Query3Calc> reduced = mapping.reduceByKey(Query3Calc::sumWith);// (DayLocationKey, Query3Calc(cose sommate));
+        reduced.persist(StorageLevel.MEMORY_AND_DISK());
+
+        JavaPairRDD<String, Tuple2<Long, Query3Calc>> newPair = reduced.mapToPair(pair -> new Tuple2<>(pair._1.getDay(), new Tuple2<>(pair._1.getDestination(), pair._2)));
+        JavaPairRDD<String, Iterable<Tuple2<Long, Query3Calc>>> grouped = newPair.groupByKey(); // (day, [ID, Query3Calc()..])
+        JavaPairRDD<String, Tuple2<Long, Query3Calc>> top5 = grouped.flatMapValues(t -> {
+            List<Tuple2<Long, Query3Calc>> list = StreamSupport.stream(t.spliterator(), false)
+                    .collect(Collectors.toList());
+
+            ArrayList<Tuple2<Long, Query3Calc>> top = new ArrayList<>();
+            for (int i = 0; i < RANKING_SIZE; i++) {
+                Optional<Tuple2<Long, Query3Calc>> max = list.stream().max(Comparator.comparingDouble(o -> o._2.getCount()));
+                if (max.isPresent()) {
+                    list.remove(max.get());
+                    top.add(max.get());
+                }
             }
-        }
+
+            return top.iterator();
+        });
+
+        return top5.map(resultPair -> new Query3Result(resultPair._1, resultPair._2._1, resultPair._2._2))
+                .collect();
     }
 
-    private static class TupleComparator implements Serializable, Comparator<Tuple2<DayLocationKey, Query3Result>>{
-        public static TupleComparator INSTANCE = new TupleComparator();
-
-        @Override
-        public int compare(Tuple2<DayLocationKey, Query3Result> o1, Tuple2<DayLocationKey, Query3Result> o2) {
-            return Query3Result.Query3Comparator.INSTANCE.compare(o1._2, o2._2);
+    public void postProcessing(List<CSVQuery3> query3) {
+        try (Jedis jedis = new Jedis("redis://redis:6379")) {
+            for (CSVQuery3 q : query3) {
+                HashMap<String, String> m = new HashMap<>();
+                m.put("day", q.getDay());
+                m.put("location1", q.getLocation1());
+                m.put("location2", q.getLocation2());
+                m.put("location3", q.getLocation3());
+                m.put("location4", q.getLocation4());
+                m.put("location5", q.getLocation5());
+                m.put("trips1", q.getTrips1());
+                m.put("trips2", q.getTrips2());
+                m.put("trips3", q.getTrips3());
+                m.put("trips4", q.getTrips4());
+                m.put("trips5", q.getTrips5());
+                m.put("meanPassengers1", q.getMeanPassengers1());
+                m.put("meanPassengers2", q.getMeanPassengers2());
+                m.put("meanPassengers3", q.getMeanPassengers3());
+                m.put("meanPassengers4", q.getMeanPassengers4());
+                m.put("meanPassengers5", q.getMeanPassengers5());
+                m.put("meanFareAmount1", q.getMeanFareAmount1());
+                m.put("meanFareAmount2", q.getMeanFareAmount2());
+                m.put("meanFareAmount3", q.getMeanFareAmount3());
+                m.put("meanFareAmount4", q.getMeanFareAmount4());
+                m.put("meanFareAmount5", q.getMeanFareAmount5());
+                m.put("stdDevFareAmount1", q.getStDevFareAmount1());
+                m.put("stdDevFareAmount2", q.getStDevFareAmount2());
+                m.put("stdDevFareAmount3", q.getStDevFareAmount3());
+                m.put("stdDevFareAmount4", q.getStDevFareAmount4());
+                m.put("stdDevFareAmount5", q.getStDevFareAmount5());
+                jedis.hset(q.getDay(), m);
+            }
         }
     }
 }
