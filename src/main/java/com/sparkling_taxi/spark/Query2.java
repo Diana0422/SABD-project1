@@ -1,19 +1,15 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.bean.query2.DoubleKey;
-import com.sparkling_taxi.bean.query2.TipAndTrips;
-import com.sparkling_taxi.bean.query2.TipTripsAndPayment;
-import com.sparkling_taxi.bean.query2.TripleKey;
+import com.sparkling_taxi.bean.query2.*;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 import scala.Tuple4;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 import static com.sparkling_taxi.utils.Const.*;
@@ -63,33 +59,41 @@ public class Query2 {
      * - most popular payment method each hour (MAX number of occurrence)
      */
     public static JavaPairRDD query2PerHourWithGroupBy(SparkSession spark, String file) {
-        JavaRDD<Row> rdd = spark.read().parquet(file).toJavaRDD();
+        JavaRDD<Query2Bean> rdd = spark.read().parquet(file)
+                .as(Encoders.bean(Query2Bean.class))
+                .toJavaRDD();
+        // (hour, Query2Calc)
+        JavaPairRDD<String, Query2Calc> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2Calc(1, bean)));
 
-        JavaPairRDD<TripleKey, TipAndTrips> mappedPair1 = rdd.mapToPair(row -> {
-            Timestamp timestamp = row.getTimestamp(PICKUP_COL);
-            Timestamp timestamp2 = row.getTimestamp(DROPOFF_COL);
-            int hourStart = Utils.toLocalDateTime(timestamp).getHour();
-            int hourEnd = Utils.toLocalDateTime(timestamp2).getHour();
-            return new Tuple2<>(new TripleKey(hourStart, hourEnd, row.getLong(PAYMENT_TYPE_COL)), new TipAndTrips(1, row.getDouble(TIP_AMOUNT_COL), row.getDouble(TIP_AMOUNT_COL) * row.getDouble(TIP_AMOUNT_COL)));
-        });
+        JavaPairRDD<String, Query2Calc> stringQuery2CalcJavaPairRDD = hourCalc.reduceByKey(Query2Calc::sumWith);
 
-        JavaPairRDD<TripleKey, TipAndTrips> ttt1 = mappedPair1.reduceByKey(TipAndTrips::sumWith);// number of elements in RDD is greatly reduced
-        JavaPairRDD<DoubleKey, TipAndTrips> flattone = ttt1.flatMapToPair(ttt -> {
-            List<Tuple2<DoubleKey, TipAndTrips>> list = new ArrayList<>();
-            int startHour = ttt._1.getHourStart();
-            int stopHour = ttt._1.getHourEnd();
-            List<Integer> integers = hourSlotsList(startHour, stopHour);
-            for (int hour : integers) {
-                Tuple2<DoubleKey, TipAndTrips> tuple = new Tuple2<>(new DoubleKey(hour, ttt._1.getPaymentType()), ttt._2);
-                list.add(tuple);
-            }
-            return list.iterator();
-        });
+        stringQuery2CalcJavaPairRDD.collect().forEach(System.out::println);
 
-        flattone.reduceByKey(TipAndTrips::sumWith)
-                .mapToPair(d -> new Tuple2<>(d._1.getHour(), d._2.toTipTripsAndPayment(d._1.getPaymentType())))
-                .reduceByKey(TipTripsAndPayment::sumWith)
-                .collect().forEach(System.out::println);
+//        JavaPairRDD<TripleKey, TipAndTrips> mappedPair1 = rdd.mapToPair(row -> {
+//            Timestamp timestamp = row.getTimestamp(PICKUP_COL);
+//            Timestamp timestamp2 = row.getTimestamp(DROPOFF_COL);
+//            int hourStart = Utils.toLocalDateTime(timestamp).getHour();
+//            int hourEnd = Utils.toLocalDateTime(timestamp2).getHour();
+//            return new Tuple2<>(new TripleKey(hourStart, hourEnd, row.getLong(PAYMENT_TYPE_COL)), new TipAndTrips(1, row.getDouble(TIP_AMOUNT_COL), row.getDouble(TIP_AMOUNT_COL) * row.getDouble(TIP_AMOUNT_COL)));
+//        });
+//
+//        JavaPairRDD<TripleKey, TipAndTrips> ttt1 = mappedPair1.reduceByKey(TipAndTrips::sumWith);// number of elements in RDD is greatly reduced
+//        JavaPairRDD<DoubleKey, TipAndTrips> flattone = ttt1.flatMapToPair(ttt -> {
+//            List<Tuple2<DoubleKey, TipAndTrips>> list = new ArrayList<>();
+//            int startHour = ttt._1.getHourStart();
+//            int stopHour = ttt._1.getHourEnd();
+//            List<Integer> integers = hourSlotsList(startHour, stopHour);
+//            for (int hour : integers) {
+//                Tuple2<DoubleKey, TipAndTrips> tuple = new Tuple2<>(new DoubleKey(hour, ttt._1.getPaymentType()), ttt._2);
+//                list.add(tuple);
+//            }
+//            return list.iterator();
+//        });
+//
+//        flattone.reduceByKey(TipAndTrips::sumWith)
+//                .mapToPair(d -> new Tuple2<>(d._1.getHour(), d._2.toTipTripsAndPayment(d._1.getPaymentType())))
+//                .reduceByKey(TipTripsAndPayment::sumWith)
+//                .collect().forEach(System.out::println);
 
         return null;
 

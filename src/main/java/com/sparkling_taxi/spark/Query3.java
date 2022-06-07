@@ -15,12 +15,12 @@ import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static com.sparkling_taxi.utils.Const.*;
+import static org.apache.spark.sql.functions.*;
 
 // docker cp backup/Query3.parquet namenode:/home/Query3.parquet
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
@@ -56,7 +56,18 @@ public class Query3 {
             spark.sparkContext().setLogLevel("WARN");
             List<Query3Result> query3 = Performance.measure("Query3 - file4", () -> mostPopularDestinationWithStdDev(spark, FILE_Q3));
 
-            List<CSVQuery3> query3WithRank = new ArrayList<>();
+            Map<String, String> zones = spark.read()
+                    .option("header", false)
+                    .csv(ZONES_CSV)
+                    .toDF("LocationID", "Borough", "Zone", "service_zone")
+                    .drop("service_zone")
+                    .collectAsList()
+                    .stream()
+                    .map(row -> new Zone(row.getString(0), row.getString(1), row.getString(2)))
+                    .collect(Collectors.toMap(Zone::getId, Zone::zoneString));
+
+
+            List<CSVQuery3> query3CsvList = new ArrayList<>();
             int j = 0;
             List<String> locations = new ArrayList<>();
             List<String> trips = new ArrayList<>();
@@ -66,14 +77,14 @@ public class Query3 {
 
             for (var query3Result : query3) {
                 if (j % RANKING_SIZE == 0 && j != 0) {
-                    query3WithRank.add(new CSVQuery3(query3Result.getDay(), locations, trips, meanPassengers, meanFareAmounts, stdDevFareAmounts));
+                    query3CsvList.add(new CSVQuery3(query3Result.getDay(), locations, trips, meanPassengers, meanFareAmounts, stdDevFareAmounts));
                     locations = new ArrayList<>();
                     trips = new ArrayList<>();
                     meanPassengers = new ArrayList<>();
                     meanFareAmounts = new ArrayList<>();
                     stdDevFareAmounts = new ArrayList<>();
                 }
-                locations.add(query3Result.getLocation().toString());
+                locations.add(zones.get(query3Result.getLocation().toString()));
                 trips.add(query3Result.getTrips().toString());
                 meanPassengers.add(query3Result.getMeanPassengers());
                 meanFareAmounts.add(query3Result.getMeanFareAmount());
@@ -81,7 +92,7 @@ public class Query3 {
                 j++;
             }
 
-            JavaRDD<CSVQuery3> result = jc.parallelize(query3WithRank)
+            JavaRDD<CSVQuery3> result = jc.parallelize(query3CsvList)
                     .repartition(1);
 
             spark.createDataFrame(result, CSVQuery3.class)
@@ -116,7 +127,7 @@ public class Query3 {
                     .option("header", true)
                     .option("delimiter", ";")
                     .csv(OUT_DIR_Q3);
-            return query3WithRank;
+            return query3CsvList;
         }
     }
 

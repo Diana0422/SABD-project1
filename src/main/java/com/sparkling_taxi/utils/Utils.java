@@ -58,6 +58,12 @@ public class Utils {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return ld.format(formatter);
     }
+    public static String getHourDay(Timestamp t){
+        Date date = new Date(t.getTime());
+        LocalDateTime ld = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd.HH:00");
+        return ld.format(formatter);
+    }
 
     /**
      * Calculates stdev using the formula
@@ -92,30 +98,6 @@ public class Utils {
         double stdev = Utils.stddev((double) count, (double) totalMillis, (double) squareTotalMillis);
 
         return new Tuple2<>(new Time((long) mean), new Time((long) stdev));
-    }
-
-    /**
-     * Starting from the sum of *only* prime numbers, gets the prime number which has the maximum exponent.
-     * USED TO GET THE MAX TYPE
-     *
-     * @param sumOfPrimesTypes
-     * @return prime number with maximum exponent
-     */
-    public static int argMax(final int sumOfPrimesTypes, List<Integer> primes) {
-        Map<Integer, Integer> map = new HashMap<>();
-        for (Integer prime : primes) {
-            map.put(prime, sumOfPrimesTypes / prime);
-        }
-
-
-        return primes.stream()
-                .map(prime -> new Tuple2<>(prime, sumOfPrimesTypes))
-                .map(tup -> tup._2 / tup._1)
-                .max((o1, o2) -> {
-                    if (o1 > o2) return o2;
-                    else return o1;
-                }).map(primes::get)
-                .orElse(primes.get(0));
     }
 
     public static List<Integer> intRange(int start, int end){
@@ -163,7 +145,7 @@ public class Utils {
             // now cleanup nifi
             n.stopAll();
             n.removeAll();
-            System.out.println("All 3 input files downloaded!");
+            System.out.println("All input files downloaded!");
         } else {
             System.out.println("The datasets are already downloaded!");
         }

@@ -1,6 +1,5 @@
 version: '3'
 services:
-
   ## SERVICE3: NIFI ----------------------------------------------
   nifi:
     image: apache/nifi:latest
