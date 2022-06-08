@@ -4,6 +4,8 @@ import com.sparkling_taxi.bean.query2.CSVQuery2;
 import com.sparkling_taxi.bean.query2.Query2Bean;
 import com.sparkling_taxi.bean.query2.Query2Calc;
 import com.sparkling_taxi.bean.query2.Query2Result;
+import com.sparkling_taxi.bean.query2.*;
+import com.sparkling_taxi.bean.query3.Query3Calc;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -16,6 +18,9 @@ import scala.Tuple2;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.sparkling_taxi.utils.Const.*;
 
@@ -40,7 +45,8 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public List<Query2Result> processing() {
-        return Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
+//        return Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
+        return Performance.measure("Query completa", () -> query2V2(spark, FILE_Q2));
     }
 
     public void postProcessing(List<Query2Result> result) {
@@ -109,5 +115,49 @@ public class Query2 extends Query<Query2Result> {
         // where distribution_of_trips_for_265_locations is a Map with the percentage of trips from each location
         JavaRDD<Query2Result> result = reduced.map(Query2Result::new);
         return result.persist(StorageLevel.MEMORY_ONLY_SER()).collect();
+    }
+
+    public static List<Query2Result> query2V2(SparkSession spark, String file) {
+        JavaRDD<Query2Bean> rdd = spark.read().parquet(file)
+                .as(Encoders.bean(Query2Bean.class))
+                .toJavaRDD()
+                .cache();
+        // partial 1: calculate total trips + total tip + distribution
+        JavaPairRDD<String, Query2CalcV2> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2CalcV2(1, bean)));
+        JavaPairRDD<String, Query2CalcV2> reduced1 = hourCalc.reduceByKey(Query2CalcV2::sumWith);
+        JavaPairRDD<String, Query2ResultV2> partial1 = reduced1.mapValues(Query2ResultV2::new).cache();
+
+
+        // partial 2: calculate number of trips for each PULocation
+        JavaPairRDD<Tuple2<String, Long>, Integer> locationMapping = rdd.mapToPair(bean -> new Tuple2<>(new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), bean.getPayment_type()), 1));
+        JavaPairRDD<Tuple2<String, Long>, Integer> reduced = locationMapping.reduceByKey(Integer::sum); // ((dayHour, paymentType), 1) -> ((dayHour, paymentType), occorrenzaxtipo))
+
+        JavaPairRDD<String, Tuple2<Long, Integer>> result = reduced.mapToPair(t -> new Tuple2<>(t._1._1, new Tuple2<>(t._1._2, t._2))) // ((dayHour, paymentType), occorrenzaxtipo)) -> (dayHour, (paymentType, occorrenza))
+                .reduceByKey((t1, t2) -> { // (dayHour, (paymentType1, occorrenza)) , (dayHour, (paymentType2, occorrenza))
+                    if (t1._2 >= t2._2) return t1;
+                    else return t2;
+                }).cache(); // (dayHour, (payment, occurrence))
+
+        JavaPairRDD<String, Tuple2<Tuple2<Long, Integer>, Query2ResultV2>> join = result.join(partial1).cache();
+        join.collect();
+        return null;
+    }
+
+    private enum PaymentType {
+        CreditCard(1),
+        Cash(2),
+        NoCharge(3),
+        Dispute(4),
+        Unknown(5),
+        VoidedTrip(6);
+        private final int num;
+
+        PaymentType(int num) {
+            this.num = num;
+        }
+
+        public int getNum() {
+            return num;
+        }
     }
 }
