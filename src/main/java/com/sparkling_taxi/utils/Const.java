@@ -13,6 +13,7 @@ public class Const {
 
     public static final Long NUM_PAYMENT_TYPES = 6L;
     public static final Long UNKNOWN_PAYMENT_TYPE = 5L;
+    public static final Long NUM_LOCATIONS = 265L;
     // ================ QUERY 3 =========================
     public static final String PRE_PROCESSING_TEMPLATE_Q3 = "/home/templates/template_query3.xml";
     public static final String FILE_Q3 = "hdfs://namenode:9000/home/dataset-batch/Query3.parquet";

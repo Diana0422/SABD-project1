@@ -6,26 +6,30 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.sparkling_taxi.utils.Const.NUM_PAYMENT_TYPES;
-import static com.sparkling_taxi.utils.Const.UNKNOWN_PAYMENT_TYPE;
+import static com.sparkling_taxi.utils.Const.*;
 
 public class Query2Calc implements Serializable {
     private Double count;
-    private Long locationID; // TODO: metti come chiave????
     private Double tipAmount;
     private final Map<Long, Long> paymentTypeDistribution; // Map(paymentType, numero_occorrenze)
+    private final Map<Long, Long> locationDistribution;
     private Double squareTipAmount;
 
     public Query2Calc(double count, Query2Bean q2b) {
         this.count = count;
-        this.locationID = q2b.getPULocationID();
         this.tipAmount = q2b.getTip_amount();
         this.squareTipAmount = tipAmount * tipAmount;
         this.paymentTypeDistribution = new HashMap<>();
+        this.locationDistribution = new HashMap<>();
         for (Long i = 1L; i <= NUM_PAYMENT_TYPES; i++) {
             this.paymentTypeDistribution.put(i, 0L);
         }
+        for (Long i = 1L; i <= NUM_LOCATIONS; i++) {
+            this.locationDistribution.put(i, 0L);
+        }
+
         this.paymentTypeDistribution.put(q2b.getPayment_type(), 1L);
+        this.locationDistribution.put(q2b.getPULocationID(), 1L);
     }
 
     /**
@@ -46,6 +50,12 @@ public class Query2Calc implements Serializable {
             Long type1 = this.paymentTypeDistribution.get(key);
             Long type2 = other.paymentTypeDistribution.get(key);
             this.paymentTypeDistribution.put(key, type1 + type2);
+        }
+        for (Map.Entry<Long, Long> locs : this.locationDistribution.entrySet()) {
+            Long key = locs.getKey();
+            Long loc1 = this.locationDistribution.get(key);
+            Long loc2 = other.locationDistribution.get(key);
+            this.locationDistribution.put(key, loc1 + loc2);
         }
         return this;
     }
@@ -70,14 +80,24 @@ public class Query2Calc implements Serializable {
                 .orElse(UNKNOWN_PAYMENT_TYPE);
     }
 
+    public Map<Long, Double> computeLocationDistribution() {
+        Map<Long, Double> percent = new HashMap<>();
+        for (Map.Entry<Long, Long> locs : this.locationDistribution.entrySet()) {
+            Long key = locs.getKey();
+            Long loc = this.locationDistribution.get(key);
+            percent.put(key, loc/count);
+        }
+        return percent;
+    }
+
     @Override
     public String toString() {
         return "Query2Calc{" +
-               "count=" + count +
-               ", fake_location=" + locationID +
-               ", tip=" + tipAmount +
-               ", paymentDistribution=" + paymentTypeDistribution +
-               ", squareTip=" + squareTipAmount +
-               '}';
+                "count=" + count +
+                ", tipAmount=" + tipAmount +
+                ", paymentTypeDistribution=" + paymentTypeDistribution +
+                ", locationDistribution=" + locationDistribution +
+                ", squareTipAmount=" + squareTipAmount +
+                '}';
     }
 }

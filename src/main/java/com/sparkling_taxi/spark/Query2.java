@@ -65,9 +65,11 @@ public class Query2 {
         // (hour, Query2Calc)
         JavaPairRDD<String, Query2Calc> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2Calc(1, bean)));
 
-        JavaPairRDD<String, Query2Calc> stringQuery2CalcJavaPairRDD = hourCalc.reduceByKey(Query2Calc::sumWith);
+        JavaPairRDD<String, Query2Calc> reduced = hourCalc.reduceByKey(Query2Calc::sumWith);
 
-        stringQuery2CalcJavaPairRDD.collect().forEach(System.out::println);
+        JavaPairRDD<String, Query2Result> result = reduced.mapValues(Query2Result::new);
+
+        result.collect().forEach(System.out::println);
 
 //        JavaPairRDD<TripleKey, TipAndTrips> mappedPair1 = rdd.mapToPair(row -> {
 //            Timestamp timestamp = row.getTimestamp(PICKUP_COL);
