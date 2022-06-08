@@ -3,6 +3,7 @@ package com.sparkling_taxi.utils;
 import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import scala.Tuple2;
 
+import java.io.File;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +26,21 @@ public class Utils {
         return System.getProperty("os.name").equals("linux");
     }
 
+    /**
+     * @return true if on windows is installed C:\\Hadoop\\hadoop-2.8.1\\bin\\WINUTILS.EXE
+     */
+    private static boolean windowsCheck() {
+        if (System.getProperty("os.name").equals("windows")) {
+            System.out.println("Hi");
+            if (new File("C:\\Hadoop\\hadoop-2.8.1").exists()) {
+                System.setProperty("hadoop.home.dir", "C:\\Hadoop");
+            } else {
+                System.out.println("Install WINUTIL.EXE from and unpack it in C:\\Windows");
+                return false;
+            }
+        }
+        return true;
+    }
     public static String getYearMonthDayString(String with_yyyy_MM_dd) {
 
         Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{2})-([0-9]{2})");

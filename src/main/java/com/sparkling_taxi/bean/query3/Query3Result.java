@@ -1,5 +1,6 @@
 package com.sparkling_taxi.bean.query3;
 
+import com.sparkling_taxi.bean.QueryResult;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -9,7 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Data
-public class Query3Result implements Serializable {
+public class Query3Result implements QueryResult {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.####");
     private final Long location;
     private String day;
