@@ -1,11 +1,6 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.bean.query2.CSVQuery2;
-import com.sparkling_taxi.bean.query2.Query2Bean;
-import com.sparkling_taxi.bean.query2.Query2Calc;
-import com.sparkling_taxi.bean.query2.Query2Result;
 import com.sparkling_taxi.bean.query2.*;
-import com.sparkling_taxi.bean.query3.Query3Calc;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -18,9 +13,6 @@ import scala.Tuple2;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static com.sparkling_taxi.utils.Const.*;
 
