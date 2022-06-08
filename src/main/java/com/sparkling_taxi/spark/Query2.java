@@ -68,9 +68,9 @@ public class Query2 {
                 .as(Encoders.bean(Query2Bean.class))
                 .toJavaRDD();
         // (hour, Query2Calc)
-        JavaPairRDD<String, Query2Calc> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2Calc(1, bean)));
+        JavaPairRDD<String, Query2Calc> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2Calc(1, bean))).cache();
 
-        JavaPairRDD<String, Query2Calc> reduced = hourCalc.reduceByKey(Query2Calc::sumWith);
+        JavaPairRDD<String, Query2Calc> reduced = hourCalc.reduceByKey(Query2Calc::sumWith).cache();
 
         JavaPairRDD<String, Query2Result> result = reduced.mapValues(Query2Result::new);
 
@@ -86,7 +86,7 @@ public class Query2 {
         // partial 1: calculate total trips + total tip + distribution
         JavaPairRDD<String, Query2CalcV2> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2CalcV2(1, bean)));
         JavaPairRDD<String, Query2CalcV2> reduced1 = hourCalc.reduceByKey(Query2CalcV2::sumWith);
-        JavaPairRDD<String, Query2ResultV2> partial1 = reduced1.mapValues(Query2ResultV2::new).persist(StorageLevel.MEMORY_AND_DISK());
+        JavaPairRDD<String, Query2ResultV2> partial1 = reduced1.mapValues(Query2ResultV2::new).cache();
 
 
         // partial 2: calculate number of trips for each PULocation
@@ -97,10 +97,10 @@ public class Query2 {
                 .reduceByKey((t1, t2) -> { // (dayHour, (paymentType1, occorrenza)) , (dayHour, (paymentType2, occorrenza))
                     if (t1._2 >= t2._2) return t1;
                     else return t2;
-                }).persist(StorageLevel.MEMORY_AND_DISK()); // (dayHour, (payment, occurrence))
+                }).cache(); // (dayHour, (payment, occurrence))
 
-        JavaPairRDD<String, Tuple2<Tuple2<Long, Integer>, Query2ResultV2>> join = result.join(partial1);
-        join.collect().forEach(System.out::println);
+        JavaPairRDD<String, Tuple2<Tuple2<Long, Integer>, Query2ResultV2>> join = result.join(partial1).cache();
+        join.collect();
         return null;
     }
 
