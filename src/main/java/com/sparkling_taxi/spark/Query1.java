@@ -5,13 +5,12 @@ import com.sparkling_taxi.bean.query1.*;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -19,24 +18,7 @@ import static com.sparkling_taxi.utils.Const.*;
 
 // docker cp backup/Query1.parquet namenode:/home/Query1.parquet
 // hdfs dfs -get Query1.parquet /home/dataset-batch/Query1.parquet /home/Query1.parquet
-public class Query1 {
-
-
-    /**
-     * @return true if on windows is installed C:\\Hadoop\\hadoop-2.8.1\\bin\\WINUTILS.EXE
-     */
-    private static boolean windowsCheck() {
-        if (System.getProperty("os.name").equals("windows")) {
-            System.out.println("Hi");
-            if (new File("C:\\Hadoop\\hadoop-2.8.1").exists()) {
-                System.setProperty("hadoop.home.dir", "C:\\Hadoop");
-            } else {
-                System.out.println("Install WINUTIL.EXE from and unpack it in C:\\Windows");
-                return false;
-            }
-        }
-        return true;
-    }
+public class Query1 extends Query<Query1Result> {
 
     /**
      * Spark Query1:
@@ -48,7 +30,7 @@ public class Query1 {
      * @param file  the input file
      * @return List of computed means
      */
-    public List<Tuple2<YearMonthKey, Query1Result>> multiMonthMeans(SparkSession spark, String file) {
+    public List<Query1Result> multiMonthMeans(SparkSession spark, String file) {
         System.out.println("======================= Query 1 =========================");
         // TODO: per migliorare le performance, su NiFi unire le tre colonne toll_amount, tip_amount, total_amount
         //  in una sola colonna ratio con il calcolo già effettuato!
@@ -60,58 +42,26 @@ public class Query1 {
                 /* after mapToPair: ((month, year), (1, passengers, ...)) */
                 .reduceByKey(Query1Calc::sumWith)
                 /* after reduceByKey: ((month, year), (count, sum_passengers, ...)) */
-                .mapValues(Query1Result::new)// Query1Result computes means inside the constructor
+                .map(Query1Result::new)// Query1Result computes means inside the constructor
+                .cache()
                 /* after mapValues: ((month, year), (passengers_mean, other_mean...)) */
-                .sortByKey(true)
                 .collect();
+    }
+
+    public Query1(){
+        super();
     }
 
     public static void main(String[] args) {
         Query1 q = new Query1();
         q.preProcessing();
-        List<Tuple2<YearMonthKey, Query1Result>> query1 = q.runQuery();
+        List<Query1Result> query1 = q.processing();
         q.postProcessing(query1);
+        q.closeSession();
     }
 
-    public List<Tuple2<YearMonthKey, Query1Result>> runQuery() {
-        SparkSession spark = SparkSession
-                .builder()
-                .master("spark://spark:7077")
-                .appName("Query1")
-                .getOrCreate();
-        spark.sparkContext().setLogLevel("WARN");
-
-        List<Tuple2<YearMonthKey, Query1Result>> query1 = Performance.measure("Complete Query 1", () -> multiMonthMeans(spark, FILE_Q1));
-
-        JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
-        JavaRDD<CSVQuery1> result = sc.parallelize(query1)
-                // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
-                // so we force it to use only 1 partition
-                .repartition(1) // TODO: forse questo rallenta le cose..
-                .map(v1 -> new CSVQuery1(v1._1, v1._2))
-                .cache();
-
-        // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
-        spark.createDataFrame(result, CSVQuery1.class)
-                .select("year",new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
-                .write()
-                .mode("overwrite")
-                .option("header", true)
-                .option("delimiter", ";")
-                .csv(OUT_DIR_Q1);
-
-        postProcessing(query1);
-
-
-        // result.saveAsTextFile(OUT_DIR);
-        System.out.println("================== written to HDFS =================");
-
-        query1.forEach(System.out::println);
-
-        sc.close();
-        spark.close();
-
-        return query1;
+    public List<Query1Result> processing() {
+        return Performance.measure("Complete Query 1", () -> multiMonthMeans(spark, FILE_Q1));
     }
 
     public void preProcessing() {
@@ -119,14 +69,35 @@ public class Query1 {
     }
 
 
-    public void postProcessing(List<Tuple2<YearMonthKey, Query1Result>> query1) {
+    public void postProcessing(List<Query1Result> query1) {
+        JavaRDD<CSVQuery1> csvListResult = jc.parallelize(query1)
+                // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
+                // so we force it to use only 1 partition
+                .repartition(1)
+                .map(CSVQuery1::new)
+                .cache();
+
+        // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
+        spark.createDataFrame(csvListResult, CSVQuery1.class)
+                .select("year",new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
+                .write()
+                .mode("overwrite")
+                .option("header", true)
+                .option("delimiter", ";")
+                .csv(OUT_DIR_Q1);
+
+        System.out.println("================== written to HDFS =================");
+
+        query1.forEach(System.out::println);
+
+        // REDIS
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
-            for (Tuple2<YearMonthKey, Query1Result> t : query1) {
+            for (CSVQuery1 t: csvListResult.collect()) {
                 HashMap<String, String> m = new HashMap<>();
-                m.put("Year / Month", t._1().toString());
-                m.put("Avg Ratio", String.valueOf(t._2.getAvgRatio()));
-                m.put("Count", String.valueOf(t._2.getCount()));
-                jedis.hset(t._1().toString(), m);
+                m.put("Year / Month", t.getYearMonth());
+                m.put("Avg Ratio", String.valueOf(t.getAvgRatio()));
+                m.put("Count", String.valueOf(t.getCount()));
+                jedis.hset(t.getYearMonth(), m);
             }
         }
     }
