@@ -1,16 +1,20 @@
 package com.sparkling_taxi.spark;
 
 import com.sparkling_taxi.bean.query2.*;
+import com.sparkling_taxi.bean.query3.Query3Calc;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 import scala.Tuple4;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.sparkling_taxi.utils.Const.*;
 import static com.sparkling_taxi.utils.Utils.intRange;
@@ -44,7 +48,8 @@ public class Query2 {
                 .getOrCreate();
         spark.sparkContext().setLogLevel("WARN");
 
-        Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
+//        Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
+        Performance.measure("Query completa", () -> query2V2(spark, FILE_Q2));
     }
 
     public void postProcessing() {
@@ -70,35 +75,33 @@ public class Query2 {
         JavaPairRDD<String, Query2Result> result = reduced.mapValues(Query2Result::new);
 
         result.collect().forEach(System.out::println);
-
-//        JavaPairRDD<TripleKey, TipAndTrips> mappedPair1 = rdd.mapToPair(row -> {
-//            Timestamp timestamp = row.getTimestamp(PICKUP_COL);
-//            Timestamp timestamp2 = row.getTimestamp(DROPOFF_COL);
-//            int hourStart = Utils.toLocalDateTime(timestamp).getHour();
-//            int hourEnd = Utils.toLocalDateTime(timestamp2).getHour();
-//            return new Tuple2<>(new TripleKey(hourStart, hourEnd, row.getLong(PAYMENT_TYPE_COL)), new TipAndTrips(1, row.getDouble(TIP_AMOUNT_COL), row.getDouble(TIP_AMOUNT_COL) * row.getDouble(TIP_AMOUNT_COL)));
-//        });
-//
-//        JavaPairRDD<TripleKey, TipAndTrips> ttt1 = mappedPair1.reduceByKey(TipAndTrips::sumWith);// number of elements in RDD is greatly reduced
-//        JavaPairRDD<DoubleKey, TipAndTrips> flattone = ttt1.flatMapToPair(ttt -> {
-//            List<Tuple2<DoubleKey, TipAndTrips>> list = new ArrayList<>();
-//            int startHour = ttt._1.getHourStart();
-//            int stopHour = ttt._1.getHourEnd();
-//            List<Integer> integers = hourSlotsList(startHour, stopHour);
-//            for (int hour : integers) {
-//                Tuple2<DoubleKey, TipAndTrips> tuple = new Tuple2<>(new DoubleKey(hour, ttt._1.getPaymentType()), ttt._2);
-//                list.add(tuple);
-//            }
-//            return list.iterator();
-//        });
-//
-//        flattone.reduceByKey(TipAndTrips::sumWith)
-//                .mapToPair(d -> new Tuple2<>(d._1.getHour(), d._2.toTipTripsAndPayment(d._1.getPaymentType())))
-//                .reduceByKey(TipTripsAndPayment::sumWith)
-//                .collect().forEach(System.out::println);
-
         return null;
+    }
 
+    public static JavaPairRDD query2V2(SparkSession spark, String file) {
+        JavaRDD<Query2Bean> rdd = spark.read().parquet(file)
+                .as(Encoders.bean(Query2Bean.class))
+                .toJavaRDD()
+                .cache();
+        // partial 1: calculate total trips + total tip + distribution
+        JavaPairRDD<String, Query2CalcV2> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2CalcV2(1, bean)));
+        JavaPairRDD<String, Query2CalcV2> reduced1 = hourCalc.reduceByKey(Query2CalcV2::sumWith);
+        JavaPairRDD<String, Query2ResultV2> partial1 = reduced1.mapValues(Query2ResultV2::new).persist(StorageLevel.MEMORY_AND_DISK());
+
+
+        // partial 2: calculate number of trips for each PULocation
+        JavaPairRDD<Tuple2<String, Long>, Integer> locationMapping = rdd.mapToPair(bean -> new Tuple2<>(new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), bean.getPayment_type()), 1));
+        JavaPairRDD<Tuple2<String, Long>, Integer> reduced = locationMapping.reduceByKey(Integer::sum); // ((dayHour, paymentType), 1) -> ((dayHour, paymentType), occorrenzaxtipo))
+
+        JavaPairRDD<String, Tuple2<Long, Integer>> result = reduced.mapToPair(t -> new Tuple2<>(t._1._1, new Tuple2<>(t._1._2, t._2))) // ((dayHour, paymentType), occorrenzaxtipo)) -> (dayHour, (paymentType, occorrenza))
+                .reduceByKey((t1, t2) -> { // (dayHour, (paymentType1, occorrenza)) , (dayHour, (paymentType2, occorrenza))
+                    if (t1._2 >= t2._2) return t1;
+                    else return t2;
+                }).persist(StorageLevel.MEMORY_AND_DISK()); // (dayHour, (payment, occurrence))
+
+        JavaPairRDD<String, Tuple2<Tuple2<Long, Integer>, Query2ResultV2>> join = result.join(partial1);
+        join.collect().forEach(System.out::println);
+        return null;
     }
 
     public static List<Integer> hourSlotsList(int hourStart, int hourEnd) {
