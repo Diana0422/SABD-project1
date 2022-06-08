@@ -39,7 +39,8 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public List<Query2Result> processing() {
-        return Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
+//        return Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
+        return Performance.measure("Query completa", () -> query2V2(spark, FILE_Q2));
     }
 
     public void postProcessing(List<Query2Result> result) {
@@ -73,7 +74,7 @@ public class Query2 extends Query<Query2Result> {
         return result.persist(StorageLevel.MEMORY_ONLY_SER()).collect();
     }
 
-    public static JavaPairRDD query2V2(SparkSession spark, String file) {
+    public static List<Query2Result> query2V2(SparkSession spark, String file) {
         JavaRDD<Query2Bean> rdd = spark.read().parquet(file)
                 .as(Encoders.bean(Query2Bean.class))
                 .toJavaRDD()
