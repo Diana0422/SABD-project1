@@ -18,8 +18,8 @@ public class CSVQuery2 implements Serializable {
     private Long popPayment;
     private Map<Long, Double> locationDistribution;
 
-    public CSVQuery2(String hour, Query2Result query2Result) {
-        this.hour = hour;
+    public CSVQuery2(Query2Result query2Result) {
+        this.hour = query2Result.getHour();
         this.avgTip = query2Result.getAvgTip();
         this.stdDevTip = query2Result.getStdDevTip();
         this.popPayment = query2Result.getPopPayment();

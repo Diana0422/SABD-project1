@@ -1,17 +1,21 @@
 package com.sparkling_taxi.spark;
 
-import com.sparkling_taxi.bean.query2.*;
+import com.sparkling_taxi.bean.query2.CSVQuery2;
+import com.sparkling_taxi.bean.query2.Query2Bean;
+import com.sparkling_taxi.bean.query2.Query2Calc;
+import com.sparkling_taxi.bean.query2.Query2Result;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
+import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
 
 import static com.sparkling_taxi.utils.Const.*;
 
@@ -40,7 +44,44 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public void postProcessing(List<Query2Result> result) {
-        //TODO grafana redis interaction
+        JavaRDD<CSVQuery2> csvListResult = jc.parallelize(result)
+                // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
+                // so we force it to use only 1 partition
+                .repartition(1)
+                .map(CSVQuery2::new)
+                .cache();
+
+        // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
+        spark.createDataFrame(csvListResult, CSVQuery2.class)
+                .select("hour",
+                        new String[]{"avgTip",
+                                "stdDevTip",
+                                "popPayment",
+                                "locationDistribution"}) // to set the correct order of columns!
+                .write()
+                .mode("overwrite")
+                .option("header", true)
+                .option("delimiter", ";")
+                .csv(OUT_DIR_Q1);
+
+        System.out.println("================== written to HDFS =================");
+
+        // result.forEach(System.out::println);
+
+        // REDIS
+        try (Jedis jedis = new Jedis("redis://redis:6379")) {
+            for (CSVQuery2 t : csvListResult.collect()) {
+                HashMap<String, String> m = new HashMap<>();
+                m.put("Hour", t.getHour());
+                m.put("Avg Tip", String.valueOf(t.getAvgTip()));
+                m.put("Std Dev Tip", String.valueOf(t.getStdDevTip()));
+                m.put("Most Popular Payment", String.valueOf(t.getStdDevTip()));
+                for (Long i = 1L; i <= NUM_LOCATIONS; i++) {
+                    m.put("Loc"+i, String.valueOf(t.getLocationDistribution().get(i)));
+                }
+                jedis.hset(t.getHour(), m);
+            }
+        }
     }
 
     /**
