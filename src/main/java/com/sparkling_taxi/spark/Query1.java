@@ -5,9 +5,10 @@ import com.sparkling_taxi.bean.query1.*;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
@@ -48,14 +49,14 @@ public class Query1 extends Query<Query1Result> {
                 .collect();
     }
 
-    public Query1(){
+    public Query1() {
         super();
     }
 
     public static void main(String[] args) {
         Query1 q = new Query1();
         q.preProcessing();
-        List<Query1Result> query1 = q.processing();
+        List<Query1Result> query1 = Performance.measure("Query completa 1 ", q::processing);
         q.postProcessing(query1);
         q.closeSession();
     }
@@ -78,13 +79,16 @@ public class Query1 extends Query<Query1Result> {
                 .cache();
 
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
-        spark.createDataFrame(csvListResult, CSVQuery1.class)
-                .select("year",new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
+        DataFrameWriter<Row> finalResult = spark.createDataFrame(csvListResult, CSVQuery1.class)
+                .select("year", new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
                 .write()
                 .mode("overwrite")
                 .option("header", true)
-                .option("delimiter", ";")
-                .csv(OUT_DIR_Q1);
+                .option("delimiter", ";");
+
+        finalResult.csv(OUT_DIR_Q1);
+
+        this.copyAndRenameOutput(RESULT_DIR1);
 
         System.out.println("================== written to HDFS =================");
 
@@ -92,7 +96,7 @@ public class Query1 extends Query<Query1Result> {
 
         // REDIS
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
-            for (CSVQuery1 t: csvListResult.collect()) {
+            for (CSVQuery1 t : csvListResult.collect()) {
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Year / Month", t.getYearMonth());
                 m.put("Avg Ratio", String.valueOf(t.getAvgRatio()));

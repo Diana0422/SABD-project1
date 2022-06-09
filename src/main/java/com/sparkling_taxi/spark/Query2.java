@@ -5,16 +5,17 @@ import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import static com.sparkling_taxi.utils.Const.*;
+import static org.apache.spark.sql.functions.*;
 
 // docker cp backup/Query2.parquet namenode:/home/Query2.parquet
 // hdfs dfs -put Query2.parquet /home/dataset-batch/Query2.parquet
@@ -23,7 +24,7 @@ public class Query2 extends Query<Query2Result> {
     public static void main(String[] args) {
         Query2 q = new Query2();
         q.preProcessing();
-        List<Query2Result> result = q.processing();
+        List<Query2Result> result = Performance.measure("Query completa", q::processing);
         q.postProcessing(result);
         q.closeSession();
     }
@@ -37,8 +38,8 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public List<Query2Result> processing() {
-//        return Performance.measure("Query completa", () -> query2PerHourWithGroupBy(spark, FILE_Q2));
-        return Performance.measure("Query completa", () -> query2V2(spark, FILE_Q2));
+        return query2PerHourWithGroupBy(spark, FILE_Q2);
+//        return Performance.measure("Query completa", () -> query2V2(spark, FILE_Q2));
     }
 
     public void postProcessing(List<Query2Result> result) {
@@ -50,32 +51,37 @@ public class Query2 extends Query<Query2Result> {
                 .cache();
 
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
-        spark.createDataFrame(csvListResult, CSVQuery2.class)
-                .select("hour",
-                        new String[]{"avgTip",
-                                "stdDevTip",
-                                "popPayment",
-                                "locationDistribution"}) // to set the correct order of columns!
+        Dataset<Row> rowDataset = spark.createDataFrame(csvListResult, CSVQuery2.class);
+
+        Column locationDistribution = split(col("locationDistribution"), "-");
+
+        for (int i = 0; i < NUM_LOCATIONS; i++) {
+            System.out.println("colonna perc_PU" + i);
+            rowDataset = rowDataset.withColumn("perc_PU" + (i + 1), locationDistribution.getItem(i));
+        }
+        DataFrameWriter<Row> finalResult = rowDataset
+                .drop("locationDistribution")
                 .write()
                 .mode("overwrite")
                 .option("header", true)
-                .option("delimiter", ";")
-                .csv(OUT_DIR_Q1);
+                .option("delimiter", ";");
+        finalResult.csv(OUT_DIR_Q2);
+
+        this.copyAndRenameOutput(RESULT_DIR2);
 
         System.out.println("================== written to HDFS =================");
-
-        // result.forEach(System.out::println);
 
         // REDIS
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
             for (CSVQuery2 t : csvListResult.collect()) {
+                String[] split = t.getLocationDistribution().split("-");
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Hour", t.getHour());
                 m.put("Avg Tip", String.valueOf(t.getAvgTip()));
                 m.put("Std Dev Tip", String.valueOf(t.getStdDevTip()));
                 m.put("Most Popular Payment", String.valueOf(t.getStdDevTip()));
-                for (Long i = 1L; i <= NUM_LOCATIONS; i++) {
-                    m.put("Loc"+i, String.valueOf(t.getLocationDistribution().get(i)));
+                for (int i = 0; i < NUM_LOCATIONS; i++) {
+                    m.put("Loc" + (i + 1), String.valueOf(split[i]));
                 }
                 jedis.hset(t.getHour(), m);
             }
@@ -106,7 +112,7 @@ public class Query2 extends Query<Query2Result> {
         // (hour, Query2Result(avgTip, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations)
         // where distribution_of_trips_for_265_locations is a Map with the percentage of trips from each location
         JavaRDD<Query2Result> result = reduced.map(Query2Result::new);
-        return result.persist(StorageLevel.MEMORY_ONLY_SER()).collect();
+        return result.persist(StorageLevel.MEMORY_AND_DISK()).collect();
     }
 
     public static List<Query2Result> query2V2(SparkSession spark, String file) {
@@ -117,7 +123,7 @@ public class Query2 extends Query<Query2Result> {
         // partial 1: calculate total trips + total tip + distribution
         JavaPairRDD<String, Query2CalcV2> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2CalcV2(1, bean)));
         JavaPairRDD<String, Query2CalcV2> reduced1 = hourCalc.reduceByKey(Query2CalcV2::sumWith);
-        JavaPairRDD<String, Query2ResultV2> partial1 = reduced1.mapValues(Query2ResultV2::new).cache();
+        JavaPairRDD<String, Query2ResultV2> partial1 = reduced1.mapValues(Query2ResultV2::new).persist(StorageLevel.MEMORY_AND_DISK());
 
 
         // partial 2: calculate number of trips for each PULocation
@@ -128,11 +134,11 @@ public class Query2 extends Query<Query2Result> {
                 .reduceByKey((t1, t2) -> { // (dayHour, (paymentType1, occorrenza)) , (dayHour, (paymentType2, occorrenza))
                     if (t1._2 >= t2._2) return t1;
                     else return t2;
-                }).cache(); // (dayHour, (payment, occurrence))
+                }).persist(StorageLevel.MEMORY_AND_DISK()); // (dayHour, (payment, occurrence))
 
         JavaPairRDD<String, Tuple2<Tuple2<Long, Integer>, Query2ResultV2>> join = result.join(partial1).cache();
         join.collect();
-        return null;
+        return new ArrayList<>();
     }
 
     private enum PaymentType {

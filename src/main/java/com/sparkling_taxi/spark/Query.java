@@ -1,6 +1,7 @@
 package com.sparkling_taxi.spark;
 
 import com.sparkling_taxi.bean.QueryResult;
+import com.sparkling_taxi.utils.FileUtils;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
@@ -28,4 +29,11 @@ public abstract class Query<T extends QueryResult> {
     public abstract void preProcessing();
     public abstract List<T> processing();
     public abstract void postProcessing(List<T> queryResultList);
+
+    public void copyAndRenameOutput(String resultDir){
+
+        String newName = this.getClass().getSimpleName() + ".csv";
+        String name = FileUtils.getFirstFileStartWithHDFS(resultDir, "part-").orElse(newName);
+        FileUtils.copyFromHDFS(name, newName);
+    }
 }

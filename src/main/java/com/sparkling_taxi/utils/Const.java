@@ -1,7 +1,12 @@
 package com.sparkling_taxi.utils;
 
 public class Const {
+    private Const(){}
+
     public static final String DOWNLOAD_TEMPLATE = "/home/templates/download_to_hdfs.xml";
+    public static final String RESULT_DIR1 = "/home/results/query1";
+    public static final String RESULT_DIR2 = "/home/results/query2";
+    public static final String RESULT_DIR3 = "/home/results/query3";
     // ================ QUERY 1 =========================
     public static final String PRE_PROCESSING_TEMPLATE_Q1 = "/home/templates/template_query1.xml";
     public static final String FILE_Q1 = "hdfs://namenode:9000/home/dataset-batch/Query1.parquet";
@@ -9,7 +14,7 @@ public class Const {
     // ================ QUERY 2 =========================
     public static final String PRE_PROCESSING_TEMPLATE_Q2 = "/home/templates/template_query2.xml";
     public static final String FILE_Q2 = "hdfs://namenode:9000/home/dataset-batch/Query2.parquet";
-
+    public static final String OUT_DIR_Q2 = "hdfs://namenode:9000/home/dataset-batch/output-query2";
 
     public static final Long NUM_PAYMENT_TYPES = 6L;
     public static final Long UNKNOWN_PAYMENT_TYPE = 5L;

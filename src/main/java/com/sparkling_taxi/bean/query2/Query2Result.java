@@ -12,7 +12,7 @@ public class Query2Result implements QueryResult {
     private Double avgTip;
     private Double stdDevTip;
     private Long popPayment;
-    private Map<Long, Double> locationDistribution;
+    private Double[] locationDistribution;
 
     public Query2Result(Tuple2<String, Query2Calc> x) {
         this.hour = x._1;

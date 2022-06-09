@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <template encoding-version="1.3">
     <description></description>
-    <groupId>3f112ba8-0181-1000-020b-3de090956ff1</groupId>
+    <groupId>435a50da-0181-1000-0fcd-3d6ce3dfcf5f</groupId>
     <name>template_query2</name>
     <snippet>
         <processGroups>
-            <id>e8684863-5b0c-3eb3-0000-000000000000</id>
-            <parentGroupId>7efef6c3-0438-30f2-0000-000000000000</parentGroupId>
+            <id>b911e195-1ac2-3fed-0000-000000000000</id>
+            <parentGroupId>743ad87d-f8c5-388a-0000-000000000000</parentGroupId>
             <position>
                 <x>0.0</x>
                 <y>0.0</y>
@@ -14,63 +14,13 @@
             <comments></comments>
             <contents>
                 <connections>
-                    <id>0db78a68-af33-31ed-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
+                    <id>54796b07-19cb-32e0-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
                     <backPressureDataSizeThreshold>1 GB</backPressureDataSizeThreshold>
                     <backPressureObjectThreshold>10000</backPressureObjectThreshold>
                     <destination>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>178da41c-5c6f-3c63-0000-000000000000</id>
-                        <type>PROCESSOR</type>
-                    </destination>
-                    <flowFileExpiration>0 sec</flowFileExpiration>
-                    <labelIndex>1</labelIndex>
-                    <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
-                    <loadBalancePartitionAttribute></loadBalancePartitionAttribute>
-                    <loadBalanceStatus>LOAD_BALANCE_NOT_CONFIGURED</loadBalanceStatus>
-                    <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
-                    <name></name>
-                    <selectedRelationships>success</selectedRelationships>
-                    <source>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>36c95c6a-b634-3cd7-0000-000000000000</id>
-                        <type>PROCESSOR</type>
-                    </source>
-                    <zIndex>0</zIndex>
-                </connections>
-                <connections>
-                    <id>52a73d89-68fc-3574-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
-                    <backPressureDataSizeThreshold>1 GB</backPressureDataSizeThreshold>
-                    <backPressureObjectThreshold>10000</backPressureObjectThreshold>
-                    <destination>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>e04a9725-bf1d-31f6-0000-000000000000</id>
-                        <type>PROCESSOR</type>
-                    </destination>
-                    <flowFileExpiration>0 sec</flowFileExpiration>
-                    <labelIndex>1</labelIndex>
-                    <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
-                    <loadBalancePartitionAttribute></loadBalancePartitionAttribute>
-                    <loadBalanceStatus>LOAD_BALANCE_NOT_CONFIGURED</loadBalanceStatus>
-                    <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
-                    <name></name>
-                    <selectedRelationships>query</selectedRelationships>
-                    <source>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>401dad47-22fc-3c2a-0000-000000000000</id>
-                        <type>PROCESSOR</type>
-                    </source>
-                    <zIndex>0</zIndex>
-                </connections>
-                <connections>
-                    <id>81b9352e-1b97-3013-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
-                    <backPressureDataSizeThreshold>1 GB</backPressureDataSizeThreshold>
-                    <backPressureObjectThreshold>10000</backPressureObjectThreshold>
-                    <destination>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>36c95c6a-b634-3cd7-0000-000000000000</id>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>5908f9d0-c92d-3dda-0000-000000000000</id>
                         <type>PROCESSOR</type>
                     </destination>
                     <flowFileExpiration>0 sec</flowFileExpiration>
@@ -82,20 +32,45 @@
                     <name></name>
                     <selectedRelationships>merged</selectedRelationships>
                     <source>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>e04a9725-bf1d-31f6-0000-000000000000</id>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>9cf03440-757e-38a9-0000-000000000000</id>
                         <type>PROCESSOR</type>
                     </source>
                     <zIndex>0</zIndex>
                 </connections>
                 <connections>
-                    <id>94699995-e8ce-3a6a-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
+                    <id>598d947a-14df-343f-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
                     <backPressureDataSizeThreshold>1 GB</backPressureDataSizeThreshold>
                     <backPressureObjectThreshold>10000</backPressureObjectThreshold>
                     <destination>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>401dad47-22fc-3c2a-0000-000000000000</id>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>9cf03440-757e-38a9-0000-000000000000</id>
+                        <type>PROCESSOR</type>
+                    </destination>
+                    <flowFileExpiration>0 sec</flowFileExpiration>
+                    <labelIndex>1</labelIndex>
+                    <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+                    <loadBalancePartitionAttribute></loadBalancePartitionAttribute>
+                    <loadBalanceStatus>LOAD_BALANCE_NOT_CONFIGURED</loadBalanceStatus>
+                    <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+                    <name></name>
+                    <selectedRelationships>query</selectedRelationships>
+                    <source>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>c2887bf9-feca-386c-0000-000000000000</id>
+                        <type>PROCESSOR</type>
+                    </source>
+                    <zIndex>0</zIndex>
+                </connections>
+                <connections>
+                    <id>704c6a21-dbfe-3a49-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
+                    <backPressureDataSizeThreshold>1 GB</backPressureDataSizeThreshold>
+                    <backPressureObjectThreshold>10000</backPressureObjectThreshold>
+                    <destination>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>70031099-f329-33a3-0000-000000000000</id>
                         <type>PROCESSOR</type>
                     </destination>
                     <flowFileExpiration>0 sec</flowFileExpiration>
@@ -107,15 +82,67 @@
                     <name></name>
                     <selectedRelationships>success</selectedRelationships>
                     <source>
-                        <groupId>e8684863-5b0c-3eb3-0000-000000000000</groupId>
-                        <id>53c28e50-02b7-3827-0000-000000000000</id>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>5908f9d0-c92d-3dda-0000-000000000000</id>
+                        <type>PROCESSOR</type>
+                    </source>
+                    <zIndex>0</zIndex>
+                </connections>
+                <connections>
+                    <id>b4bcaf9a-cf88-3d51-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
+                    <backPressureDataSizeThreshold>1 GB</backPressureDataSizeThreshold>
+                    <backPressureObjectThreshold>10000</backPressureObjectThreshold>
+                    <destination>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>c2887bf9-feca-386c-0000-000000000000</id>
+                        <type>PROCESSOR</type>
+                    </destination>
+                    <flowFileExpiration>0 sec</flowFileExpiration>
+                    <labelIndex>1</labelIndex>
+                    <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+                    <loadBalancePartitionAttribute></loadBalancePartitionAttribute>
+                    <loadBalanceStatus>LOAD_BALANCE_NOT_CONFIGURED</loadBalanceStatus>
+                    <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+                    <name></name>
+                    <selectedRelationships>success</selectedRelationships>
+                    <source>
+                        <groupId>b911e195-1ac2-3fed-0000-000000000000</groupId>
+                        <id>5ad35616-fc54-3bbf-0000-000000000000</id>
                         <type>PROCESSOR</type>
                     </source>
                     <zIndex>0</zIndex>
                 </connections>
                 <controllerServices>
-                    <id>046947f5-222a-32d9-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
+                    <id>53d12621-4701-3f25-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
+                    <bundle>
+                        <artifact>nifi-parquet-nar</artifact>
+                        <group>org.apache.nifi</group>
+                        <version>1.16.1</version>
+                    </bundle>
+                    <descriptors>
+                        <entry>
+                            <key>avro-read-compatibility</key>
+                            <value>
+<name>avro-read-compatibility</name>
+                            </value>
+                        </entry>
+                    </descriptors>
+                    <name>ParquetReader</name>
+                    <persistsState>false</persistsState>
+                    <properties>
+                        <entry>
+                            <key>avro-read-compatibility</key>
+                            <value>true</value>
+                        </entry>
+                    </properties>
+                    <state>DISABLED</state>
+                    <type>org.apache.nifi.parquet.ParquetReader</type>
+                </controllerServices>
+                <controllerServices>
+                    <id>a182a719-8268-3972-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
                     <bundle>
                         <artifact>nifi-parquet-nar</artifact>
                         <group>org.apache.nifi</group>
@@ -358,263 +385,9 @@
                     <state>DISABLED</state>
                     <type>org.apache.nifi.parquet.ParquetRecordSetWriter</type>
                 </controllerServices>
-                <controllerServices>
-                    <id>f04e7a0c-7c0e-3bf1-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
-                    <bundle>
-                        <artifact>nifi-parquet-nar</artifact>
-                        <group>org.apache.nifi</group>
-                        <version>1.16.1</version>
-                    </bundle>
-                    <descriptors>
-                        <entry>
-                            <key>avro-read-compatibility</key>
-                            <value>
-<name>avro-read-compatibility</name>
-                            </value>
-                        </entry>
-                    </descriptors>
-                    <name>ParquetReader</name>
-                    <persistsState>false</persistsState>
-                    <properties>
-                        <entry>
-                            <key>avro-read-compatibility</key>
-                            <value>true</value>
-                        </entry>
-                    </properties>
-                    <state>DISABLED</state>
-                    <type>org.apache.nifi.parquet.ParquetReader</type>
-                </controllerServices>
                 <processors>
-                    <id>178da41c-5c6f-3c63-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
-                    <position>
-                        <x>1504.0</x>
-                        <y>680.0</y>
-                    </position>
-                    <bundle>
-                        <artifact>nifi-hadoop-nar</artifact>
-                        <group>org.apache.nifi</group>
-                        <version>1.16.1</version>
-                    </bundle>
-                    <config>
-                        <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
-                        <bulletinLevel>WARN</bulletinLevel>
-                        <comments></comments>
-                        <concurrentlySchedulableTaskCount>1</concurrentlySchedulableTaskCount>
-                        <descriptors>
-                            <entry>
-<key>Hadoop Configuration Resources</key>
-<value>
-    <name>Hadoop Configuration Resources</name>
-</value>
-                            </entry>
-                            <entry>
-<key>kerberos-credentials-service</key>
-<value>
-    <identifiesControllerService>org.apache.nifi.kerberos.KerberosCredentialsService</identifiesControllerService>
-    <name>kerberos-credentials-service</name>
-</value>
-                            </entry>
-                            <entry>
-<key>kerberos-user-service</key>
-<value>
-    <identifiesControllerService>org.apache.nifi.kerberos.KerberosUserService</identifiesControllerService>
-    <name>kerberos-user-service</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Kerberos Principal</key>
-<value>
-    <name>Kerberos Principal</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Kerberos Keytab</key>
-<value>
-    <name>Kerberos Keytab</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Kerberos Password</key>
-<value>
-    <name>Kerberos Password</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Kerberos Relogin Period</key>
-<value>
-    <name>Kerberos Relogin Period</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Additional Classpath Resources</key>
-<value>
-    <name>Additional Classpath Resources</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Directory</key>
-<value>
-    <name>Directory</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Conflict Resolution Strategy</key>
-<value>
-    <name>Conflict Resolution Strategy</name>
-</value>
-                            </entry>
-                            <entry>
-<key>writing-strategy</key>
-<value>
-    <name>writing-strategy</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Block Size</key>
-<value>
-    <name>Block Size</name>
-</value>
-                            </entry>
-                            <entry>
-<key>IO Buffer Size</key>
-<value>
-    <name>IO Buffer Size</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Replication</key>
-<value>
-    <name>Replication</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Permissions umask</key>
-<value>
-    <name>Permissions umask</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Remote Owner</key>
-<value>
-    <name>Remote Owner</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Remote Group</key>
-<value>
-    <name>Remote Group</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Compression codec</key>
-<value>
-    <name>Compression codec</name>
-</value>
-                            </entry>
-                            <entry>
-<key>Ignore Locality</key>
-<value>
-    <name>Ignore Locality</name>
-</value>
-                            </entry>
-                        </descriptors>
-                        <executionNode>ALL</executionNode>
-                        <lossTolerant>false</lossTolerant>
-                        <maxBackoffPeriod>10 mins</maxBackoffPeriod>
-                        <penaltyDuration>30 sec</penaltyDuration>
-                        <properties>
-                            <entry>
-<key>Hadoop Configuration Resources</key>
-<value>/opt/nifi/nifi-current/ls-target/hdfs-conf/core-site.xml,/opt/nifi/nifi-current/ls-target/hdfs-conf/hdfs-site.xml</value>
-                            </entry>
-                            <entry>
-<key>kerberos-credentials-service</key>
-                            </entry>
-                            <entry>
-<key>kerberos-user-service</key>
-                            </entry>
-                            <entry>
-<key>Kerberos Principal</key>
-                            </entry>
-                            <entry>
-<key>Kerberos Keytab</key>
-                            </entry>
-                            <entry>
-<key>Kerberos Password</key>
-                            </entry>
-                            <entry>
-<key>Kerberos Relogin Period</key>
-<value>4 hours</value>
-                            </entry>
-                            <entry>
-<key>Additional Classpath Resources</key>
-                            </entry>
-                            <entry>
-<key>Directory</key>
-<value>/home/dataset-batch</value>
-                            </entry>
-                            <entry>
-<key>Conflict Resolution Strategy</key>
-<value>replace</value>
-                            </entry>
-                            <entry>
-<key>writing-strategy</key>
-<value>writeAndRename</value>
-                            </entry>
-                            <entry>
-<key>Block Size</key>
-                            </entry>
-                            <entry>
-<key>IO Buffer Size</key>
-                            </entry>
-                            <entry>
-<key>Replication</key>
-                            </entry>
-                            <entry>
-<key>Permissions umask</key>
-                            </entry>
-                            <entry>
-<key>Remote Owner</key>
-                            </entry>
-                            <entry>
-<key>Remote Group</key>
-                            </entry>
-                            <entry>
-<key>Compression codec</key>
-<value>NONE</value>
-                            </entry>
-                            <entry>
-<key>Ignore Locality</key>
-<value>false</value>
-                            </entry>
-                        </properties>
-                        <retryCount>10</retryCount>
-                        <runDurationMillis>0</runDurationMillis>
-                        <schedulingPeriod>0 sec</schedulingPeriod>
-                        <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
-                        <yieldDuration>1 sec</yieldDuration>
-                    </config>
-                    <executionNodeRestricted>false</executionNodeRestricted>
-                    <name>PutHDFS</name>
-                    <relationships>
-                        <autoTerminate>true</autoTerminate>
-                        <name>failure</name>
-                        <retry>false</retry>
-                    </relationships>
-                    <relationships>
-                        <autoTerminate>true</autoTerminate>
-                        <name>success</name>
-                        <retry>false</retry>
-                    </relationships>
-                    <state>STOPPED</state>
-                    <style/>
-                    <type>org.apache.nifi.processors.hadoop.PutHDFS</type>
-                </processors>
-                <processors>
-                    <id>36c95c6a-b634-3cd7-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
+                    <id>5908f9d0-c92d-3dda-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
                     <position>
                         <x>912.0</x>
                         <y>680.0</y>
@@ -703,141 +476,8 @@
                     <type>org.apache.nifi.processors.attributes.UpdateAttribute</type>
                 </processors>
                 <processors>
-                    <id>401dad47-22fc-3c2a-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
-                    <position>
-                        <x>904.0</x>
-                        <y>192.0</y>
-                    </position>
-                    <bundle>
-                        <artifact>nifi-standard-nar</artifact>
-                        <group>org.apache.nifi</group>
-                        <version>1.16.1</version>
-                    </bundle>
-                    <config>
-                        <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
-                        <bulletinLevel>WARN</bulletinLevel>
-                        <comments></comments>
-                        <concurrentlySchedulableTaskCount>1</concurrentlySchedulableTaskCount>
-                        <descriptors>
-                            <entry>
-<key>record-reader</key>
-<value>
-    <identifiesControllerService>org.apache.nifi.serialization.RecordReaderFactory</identifiesControllerService>
-    <name>record-reader</name>
-</value>
-                            </entry>
-                            <entry>
-<key>record-writer</key>
-<value>
-    <identifiesControllerService>org.apache.nifi.serialization.RecordSetWriterFactory</identifiesControllerService>
-    <name>record-writer</name>
-</value>
-                            </entry>
-                            <entry>
-<key>include-zero-record-flowfiles</key>
-<value>
-    <name>include-zero-record-flowfiles</name>
-</value>
-                            </entry>
-                            <entry>
-<key>cache-schema</key>
-<value>
-    <name>cache-schema</name>
-</value>
-                            </entry>
-                            <entry>
-<key>dbf-default-precision</key>
-<value>
-    <name>dbf-default-precision</name>
-</value>
-                            </entry>
-                            <entry>
-<key>dbf-default-scale</key>
-<value>
-    <name>dbf-default-scale</name>
-</value>
-                            </entry>
-                            <entry>
-<key>query</key>
-<value>
-    <name>query</name>
-</value>
-                            </entry>
-                        </descriptors>
-                        <executionNode>ALL</executionNode>
-                        <lossTolerant>false</lossTolerant>
-                        <maxBackoffPeriod>10 mins</maxBackoffPeriod>
-                        <penaltyDuration>30 sec</penaltyDuration>
-                        <properties>
-                            <entry>
-<key>record-reader</key>
-<value>f04e7a0c-7c0e-3bf1-0000-000000000000</value>
-                            </entry>
-                            <entry>
-<key>record-writer</key>
-<value>046947f5-222a-32d9-0000-000000000000</value>
-                            </entry>
-                            <entry>
-<key>include-zero-record-flowfiles</key>
-<value>true</value>
-                            </entry>
-                            <entry>
-<key>cache-schema</key>
-<value>true</value>
-                            </entry>
-                            <entry>
-<key>dbf-default-precision</key>
-<value>10</value>
-                            </entry>
-                            <entry>
-<key>dbf-default-scale</key>
-<value>0</value>
-                            </entry>
-                            <entry>
-<key>query</key>
-<value>select tpep_pickup_datetime,
-	   PULocationID,
-       tip_amount,
-       payment_type
-from FLOWFILE
-where tpep_pickup_datetime BETWEEN '2021-12-01 00:00:00' AND '2022-02-28 23:59:59'
-AND tpep_pickup_datetime IS NOT NULL
-AND tip_amount IS NOT NULL
-AND payment_type IS NOT NULL
-AND payment_type IS NOT NULL</value>
-                            </entry>
-                        </properties>
-                        <retryCount>10</retryCount>
-                        <runDurationMillis>0</runDurationMillis>
-                        <schedulingPeriod>0 sec</schedulingPeriod>
-                        <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
-                        <yieldDuration>1 sec</yieldDuration>
-                    </config>
-                    <executionNodeRestricted>false</executionNodeRestricted>
-                    <name>QueryRecord_2</name>
-                    <relationships>
-                        <autoTerminate>true</autoTerminate>
-                        <name>failure</name>
-                        <retry>false</retry>
-                    </relationships>
-                    <relationships>
-                        <autoTerminate>true</autoTerminate>
-                        <name>original</name>
-                        <retry>false</retry>
-                    </relationships>
-                    <relationships>
-                        <autoTerminate>false</autoTerminate>
-                        <name>query</name>
-                        <retry>false</retry>
-                    </relationships>
-                    <state>STOPPED</state>
-                    <style/>
-                    <type>org.apache.nifi.processors.standard.QueryRecord</type>
-                </processors>
-                <processors>
-                    <id>53c28e50-02b7-3827-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
+                    <id>5ad35616-fc54-3bbf-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
                     <position>
                         <x>216.0</x>
                         <y>208.0</y>
@@ -1071,8 +711,235 @@ AND payment_type IS NOT NULL</value>
                     <type>org.apache.nifi.processors.hadoop.GetHDFS</type>
                 </processors>
                 <processors>
-                    <id>e04a9725-bf1d-31f6-0000-000000000000</id>
-                    <parentGroupId>e8684863-5b0c-3eb3-0000-000000000000</parentGroupId>
+                    <id>70031099-f329-33a3-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
+                    <position>
+                        <x>1504.0</x>
+                        <y>680.0</y>
+                    </position>
+                    <bundle>
+                        <artifact>nifi-hadoop-nar</artifact>
+                        <group>org.apache.nifi</group>
+                        <version>1.16.1</version>
+                    </bundle>
+                    <config>
+                        <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+                        <bulletinLevel>WARN</bulletinLevel>
+                        <comments></comments>
+                        <concurrentlySchedulableTaskCount>1</concurrentlySchedulableTaskCount>
+                        <descriptors>
+                            <entry>
+<key>Hadoop Configuration Resources</key>
+<value>
+    <name>Hadoop Configuration Resources</name>
+</value>
+                            </entry>
+                            <entry>
+<key>kerberos-credentials-service</key>
+<value>
+    <identifiesControllerService>org.apache.nifi.kerberos.KerberosCredentialsService</identifiesControllerService>
+    <name>kerberos-credentials-service</name>
+</value>
+                            </entry>
+                            <entry>
+<key>kerberos-user-service</key>
+<value>
+    <identifiesControllerService>org.apache.nifi.kerberos.KerberosUserService</identifiesControllerService>
+    <name>kerberos-user-service</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Kerberos Principal</key>
+<value>
+    <name>Kerberos Principal</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Kerberos Keytab</key>
+<value>
+    <name>Kerberos Keytab</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Kerberos Password</key>
+<value>
+    <name>Kerberos Password</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Kerberos Relogin Period</key>
+<value>
+    <name>Kerberos Relogin Period</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Additional Classpath Resources</key>
+<value>
+    <name>Additional Classpath Resources</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Directory</key>
+<value>
+    <name>Directory</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Conflict Resolution Strategy</key>
+<value>
+    <name>Conflict Resolution Strategy</name>
+</value>
+                            </entry>
+                            <entry>
+<key>writing-strategy</key>
+<value>
+    <name>writing-strategy</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Block Size</key>
+<value>
+    <name>Block Size</name>
+</value>
+                            </entry>
+                            <entry>
+<key>IO Buffer Size</key>
+<value>
+    <name>IO Buffer Size</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Replication</key>
+<value>
+    <name>Replication</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Permissions umask</key>
+<value>
+    <name>Permissions umask</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Remote Owner</key>
+<value>
+    <name>Remote Owner</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Remote Group</key>
+<value>
+    <name>Remote Group</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Compression codec</key>
+<value>
+    <name>Compression codec</name>
+</value>
+                            </entry>
+                            <entry>
+<key>Ignore Locality</key>
+<value>
+    <name>Ignore Locality</name>
+</value>
+                            </entry>
+                        </descriptors>
+                        <executionNode>ALL</executionNode>
+                        <lossTolerant>false</lossTolerant>
+                        <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+                        <penaltyDuration>30 sec</penaltyDuration>
+                        <properties>
+                            <entry>
+<key>Hadoop Configuration Resources</key>
+<value>/opt/nifi/nifi-current/ls-target/hdfs-conf/core-site.xml,/opt/nifi/nifi-current/ls-target/hdfs-conf/hdfs-site.xml</value>
+                            </entry>
+                            <entry>
+<key>kerberos-credentials-service</key>
+                            </entry>
+                            <entry>
+<key>kerberos-user-service</key>
+                            </entry>
+                            <entry>
+<key>Kerberos Principal</key>
+                            </entry>
+                            <entry>
+<key>Kerberos Keytab</key>
+                            </entry>
+                            <entry>
+<key>Kerberos Password</key>
+                            </entry>
+                            <entry>
+<key>Kerberos Relogin Period</key>
+<value>4 hours</value>
+                            </entry>
+                            <entry>
+<key>Additional Classpath Resources</key>
+                            </entry>
+                            <entry>
+<key>Directory</key>
+<value>/home/dataset-batch</value>
+                            </entry>
+                            <entry>
+<key>Conflict Resolution Strategy</key>
+<value>replace</value>
+                            </entry>
+                            <entry>
+<key>writing-strategy</key>
+<value>writeAndRename</value>
+                            </entry>
+                            <entry>
+<key>Block Size</key>
+                            </entry>
+                            <entry>
+<key>IO Buffer Size</key>
+                            </entry>
+                            <entry>
+<key>Replication</key>
+                            </entry>
+                            <entry>
+<key>Permissions umask</key>
+                            </entry>
+                            <entry>
+<key>Remote Owner</key>
+                            </entry>
+                            <entry>
+<key>Remote Group</key>
+                            </entry>
+                            <entry>
+<key>Compression codec</key>
+<value>NONE</value>
+                            </entry>
+                            <entry>
+<key>Ignore Locality</key>
+<value>false</value>
+                            </entry>
+                        </properties>
+                        <retryCount>10</retryCount>
+                        <runDurationMillis>0</runDurationMillis>
+                        <schedulingPeriod>0 sec</schedulingPeriod>
+                        <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+                        <yieldDuration>1 sec</yieldDuration>
+                    </config>
+                    <executionNodeRestricted>false</executionNodeRestricted>
+                    <name>PutHDFS</name>
+                    <relationships>
+                        <autoTerminate>true</autoTerminate>
+                        <name>failure</name>
+                        <retry>false</retry>
+                    </relationships>
+                    <relationships>
+                        <autoTerminate>true</autoTerminate>
+                        <name>success</name>
+                        <retry>false</retry>
+                    </relationships>
+                    <state>STOPPED</state>
+                    <style/>
+                    <type>org.apache.nifi.processors.hadoop.PutHDFS</type>
+                </processors>
+                <processors>
+                    <id>9cf03440-757e-38a9-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
                     <position>
                         <x>904.0</x>
                         <y>448.0</y>
@@ -1164,11 +1031,11 @@ AND payment_type IS NOT NULL</value>
                         <properties>
                             <entry>
 <key>record-reader</key>
-<value>f04e7a0c-7c0e-3bf1-0000-000000000000</value>
+<value>53d12621-4701-3f25-0000-000000000000</value>
                             </entry>
                             <entry>
 <key>record-writer</key>
-<value>046947f5-222a-32d9-0000-000000000000</value>
+<value>a182a719-8268-3972-0000-000000000000</value>
                             </entry>
                             <entry>
 <key>merge-strategy</key>
@@ -1231,6 +1098,138 @@ AND payment_type IS NOT NULL</value>
                     <style/>
                     <type>org.apache.nifi.processors.standard.MergeRecord</type>
                 </processors>
+                <processors>
+                    <id>c2887bf9-feca-386c-0000-000000000000</id>
+                    <parentGroupId>b911e195-1ac2-3fed-0000-000000000000</parentGroupId>
+                    <position>
+                        <x>904.0</x>
+                        <y>192.0</y>
+                    </position>
+                    <bundle>
+                        <artifact>nifi-standard-nar</artifact>
+                        <group>org.apache.nifi</group>
+                        <version>1.16.1</version>
+                    </bundle>
+                    <config>
+                        <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+                        <bulletinLevel>WARN</bulletinLevel>
+                        <comments></comments>
+                        <concurrentlySchedulableTaskCount>1</concurrentlySchedulableTaskCount>
+                        <descriptors>
+                            <entry>
+<key>record-reader</key>
+<value>
+    <identifiesControllerService>org.apache.nifi.serialization.RecordReaderFactory</identifiesControllerService>
+    <name>record-reader</name>
+</value>
+                            </entry>
+                            <entry>
+<key>record-writer</key>
+<value>
+    <identifiesControllerService>org.apache.nifi.serialization.RecordSetWriterFactory</identifiesControllerService>
+    <name>record-writer</name>
+</value>
+                            </entry>
+                            <entry>
+<key>include-zero-record-flowfiles</key>
+<value>
+    <name>include-zero-record-flowfiles</name>
+</value>
+                            </entry>
+                            <entry>
+<key>cache-schema</key>
+<value>
+    <name>cache-schema</name>
+</value>
+                            </entry>
+                            <entry>
+<key>dbf-default-precision</key>
+<value>
+    <name>dbf-default-precision</name>
+</value>
+                            </entry>
+                            <entry>
+<key>dbf-default-scale</key>
+<value>
+    <name>dbf-default-scale</name>
+</value>
+                            </entry>
+                            <entry>
+<key>query</key>
+<value>
+    <name>query</name>
+</value>
+                            </entry>
+                        </descriptors>
+                        <executionNode>ALL</executionNode>
+                        <lossTolerant>false</lossTolerant>
+                        <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+                        <penaltyDuration>30 sec</penaltyDuration>
+                        <properties>
+                            <entry>
+<key>record-reader</key>
+<value>53d12621-4701-3f25-0000-000000000000</value>
+                            </entry>
+                            <entry>
+<key>record-writer</key>
+<value>a182a719-8268-3972-0000-000000000000</value>
+                            </entry>
+                            <entry>
+<key>include-zero-record-flowfiles</key>
+<value>true</value>
+                            </entry>
+                            <entry>
+<key>cache-schema</key>
+<value>true</value>
+                            </entry>
+                            <entry>
+<key>dbf-default-precision</key>
+<value>10</value>
+                            </entry>
+                            <entry>
+<key>dbf-default-scale</key>
+<value>0</value>
+                            </entry>
+                            <entry>
+<key>query</key>
+<value>select tpep_pickup_datetime,
+	   PULocationID,
+       tip_amount,
+       payment_type
+from FLOWFILE
+where tpep_pickup_datetime BETWEEN '2021-12-01 00:00:00' AND '2022-02-28 23:59:59'
+AND tpep_pickup_datetime IS NOT NULL
+AND tip_amount IS NOT NULL
+AND payment_type &gt; 0</value>
+                            </entry>
+                        </properties>
+                        <retryCount>10</retryCount>
+                        <runDurationMillis>0</runDurationMillis>
+                        <schedulingPeriod>0 sec</schedulingPeriod>
+                        <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+                        <yieldDuration>1 sec</yieldDuration>
+                    </config>
+                    <executionNodeRestricted>false</executionNodeRestricted>
+                    <name>QueryRecord_2</name>
+                    <relationships>
+                        <autoTerminate>true</autoTerminate>
+                        <name>failure</name>
+                        <retry>false</retry>
+                    </relationships>
+                    <relationships>
+                        <autoTerminate>true</autoTerminate>
+                        <name>original</name>
+                        <retry>false</retry>
+                    </relationships>
+                    <relationships>
+                        <autoTerminate>false</autoTerminate>
+                        <name>query</name>
+                        <retry>false</retry>
+                    </relationships>
+                    <state>STOPPED</state>
+                    <style/>
+                    <type>org.apache.nifi.processors.standard.QueryRecord</type>
+                </processors>
             </contents>
             <defaultBackPressureDataSizeThreshold>1 GB</defaultBackPressureDataSizeThreshold>
             <defaultBackPressureObjectThreshold>10000</defaultBackPressureObjectThreshold>
@@ -1241,5 +1240,5 @@ AND payment_type IS NOT NULL</value>
             <variables/>
         </processGroups>
     </snippet>
-    <timestamp>06/07/2022 18:42:22 UTC</timestamp>
+    <timestamp>06/09/2022 13:38:16 UTC</timestamp>
 </template>

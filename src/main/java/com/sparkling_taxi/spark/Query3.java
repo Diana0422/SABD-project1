@@ -5,7 +5,9 @@ import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import lombok.var;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
@@ -119,7 +121,7 @@ public class Query3 extends Query<Query3Result>{
         JavaRDD<CSVQuery3> result = jc.parallelize(query3CsvList)
                 .repartition(1);
 
-        spark.createDataFrame(result, CSVQuery3.class)
+        DataFrameWriter<Row> finalResult = spark.createDataFrame(result, CSVQuery3.class)
                 .select("day",
                         "location1", "location2", "location3", "location4", "location5",
                         "trips1", "trips2", "trips3", "trips4", "trips5",
@@ -129,8 +131,11 @@ public class Query3 extends Query<Query3Result>{
                 .write()
                 .mode("overwrite")
                 .option("header", true)
-                .option("delimiter", ";")
-                .csv(OUT_DIR_Q3);
+                .option("delimiter", ";");
+
+        finalResult.csv(OUT_DIR_Q3);
+        this.copyAndRenameOutput(RESULT_DIR3);
+
         // REDIS
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
             for (CSVQuery3 q : query3CsvList) {

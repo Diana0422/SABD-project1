@@ -2,6 +2,7 @@ package com.sparkling_taxi.utils;
 
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,10 +15,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -113,8 +111,10 @@ public class FileUtils {
     }
 
     public static String appendEndOfFileName(String oldName, String append) {
-        if (oldName.contains(".") && append.contains(".")) throw new IllegalArgumentException("la stringa da aggiungere non può contenere un punto se questo è già presente nel nome iniziale");
-        else if (oldName.contains(".") && !append.contains(".")) return getFileNameWithoutExtension(oldName) + append + getExtension(oldName);
+        if (oldName.contains(".") && append.contains("."))
+            throw new IllegalArgumentException("la stringa da aggiungere non può contenere un punto se questo è già presente nel nome iniziale");
+        else if (oldName.contains(".") && !append.contains("."))
+            return getFileNameWithoutExtension(oldName) + append + getExtension(oldName);
         else return oldName + append;
     }
 
@@ -178,6 +178,7 @@ public class FileUtils {
 
     /**
      * Check if a HDFS file exists
+     *
      * @param file hdfs path of the file
      * @return true if file exists
      */
@@ -193,6 +194,80 @@ public class FileUtils {
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * @param dir     name of directory
+     * @param pattern a lambda that returns a boolean
+     * @return an optional string with the first file that matches the pattern
+     */
+    public static Optional<String> getFirstFileWithPattern(String dir, FilenameFilter pattern) {
+        File f = new File(dir);
+        if (f.exists()) {
+            return Arrays.stream(Objects.requireNonNull(f.listFiles(pattern)))
+                    .map(File::getName)
+                    .findFirst();
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Rename File
+     *
+     * @param parentPath path of parent dir
+     * @param name the old name
+     * @param newName    the new name
+     * @return true if all goes well
+     */
+    public static boolean renameFile(String parentPath, String name, String newName) {
+        File file = new File(parentPath + name);
+        // Create an object of the File class
+        // Replace the file path with path of the directory
+        File rename = new File(parentPath + newName);
+        // store the return value of renameTo() method in
+        // flag
+        return file.renameTo(rename);
+    }
+
+    /**
+     * @param dir     name of directory
+     * @param startWith a lambda that returns a boolean
+     * @return an optional string with the first file that matches the pattern
+     */
+    public static Optional<String> getFirstFileStartWithHDFS(String dir, String startWith) {
+        try {
+            Configuration conf = new Configuration();
+            conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+            conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+            //Get the filesystem - HDFS//Get the filesystem - HDFS
+            FileSystem hdfs = FileSystem.get(URI.create(dir), conf);
+            FileStatus[] aiuto = hdfs.listStatus(   new org.apache.hadoop.fs.Path(dir));
+            for (FileStatus fileStatus : aiuto) {
+                String name = fileStatus.getPath().getName();
+                if (name.startsWith(startWith)){
+                    return Optional.of(name);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    public static void copyFromHDFS(String from, String to){
+
+        try {
+            Configuration conf = new Configuration();
+            conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+            conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+            //Get the filesystem - HDFS//Get the filesystem - HDFS
+            FileSystem hdfs = FileSystem.get(URI.create(from), conf);
+            if (hdfs.exists(new org.apache.hadoop.fs.Path(from))){
+                hdfs.copyToLocalFile(false, new org.apache.hadoop.fs.Path(from),new org.apache.hadoop.fs.Path(to), true);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
