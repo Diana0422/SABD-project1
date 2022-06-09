@@ -1,12 +1,13 @@
 package com.sparkling_taxi.bean.query1;
 
+import com.sparkling_taxi.bean.QueryResult;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
 
 @Data
-public class CSVQuery1 implements Serializable {
+public class CSVQuery1 implements QueryResult {
 
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.####");
     private int year;

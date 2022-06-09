@@ -1,5 +1,6 @@
 package com.sparkling_taxi.bean.query2;
 
+import com.sparkling_taxi.bean.QueryResult;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +9,7 @@ import java.text.DecimalFormat;
 
 @Data
 @NoArgsConstructor
-public class CSVQuery2 implements Serializable {
+public class CSVQuery2 implements QueryResult {
 
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.######");
     private String hour;

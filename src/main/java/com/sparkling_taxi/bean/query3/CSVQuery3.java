@@ -1,5 +1,6 @@
 package com.sparkling_taxi.bean.query3;
 
+import com.sparkling_taxi.bean.QueryResult;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -7,7 +8,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 @Data
-public class CSVQuery3 implements Serializable {
+public class CSVQuery3 implements QueryResult {
 
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.####");
     private String day;

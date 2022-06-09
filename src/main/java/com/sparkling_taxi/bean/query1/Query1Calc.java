@@ -32,7 +32,7 @@ public class Query1Calc implements Serializable {
     }
 
     public Double computeRatioMean() {
-        return this.ratio / count;
+        return ratio / count;
     }
 
     @Override
