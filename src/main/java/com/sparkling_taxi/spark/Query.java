@@ -11,7 +11,7 @@ public abstract class Query<T extends QueryResult> {
     protected final SparkSession spark;
     protected final JavaSparkContext jc;
 
-    public Query(){
+    public Query() {
         spark = SparkSession
                 .builder()
                 .master("spark://spark:7077")
@@ -27,13 +27,14 @@ public abstract class Query<T extends QueryResult> {
     }
 
     public abstract void preProcessing();
+
     public abstract List<T> processing();
+
     public abstract void postProcessing(List<T> queryResultList);
 
-    public void copyAndRenameOutput(String resultDir){
-
+    public void copyAndRenameOutput(String outHDFS, String resultDir) {
         String newName = this.getClass().getSimpleName() + ".csv";
-        String name = FileUtils.getFirstFileStartWithHDFS(resultDir, "part-").orElse(newName);
-        FileUtils.copyFromHDFS(name, newName);
+        String name = FileUtils.getFirstFileStartWithHDFS(outHDFS, "part-").orElse(newName);
+        FileUtils.copyFromHDFS(outHDFS + "/" + name, resultDir + "/" + newName);
     }
 }

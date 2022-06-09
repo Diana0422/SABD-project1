@@ -86,9 +86,9 @@ public class Query1 extends Query<Query1Result> {
                 .option("header", true)
                 .option("delimiter", ";");
 
-        finalResult.csv(OUT_DIR_Q1);
+        finalResult.csv(OUT_HDFS_URL_Q1);
 
-        this.copyAndRenameOutput(RESULT_DIR1);
+        this.copyAndRenameOutput(OUT_HDFS_URL_Q1, RESULT_DIR1 );
 
         System.out.println("================== written to HDFS =================");
 

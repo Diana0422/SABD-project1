@@ -245,17 +245,19 @@ public class FileUtils {
             for (FileStatus fileStatus : aiuto) {
                 String name = fileStatus.getPath().getName();
                 if (name.startsWith(startWith)){
+                    System.out.println("Found");
                     return Optional.of(name);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("Not Found");
         return Optional.empty();
     }
 
-    public static void copyFromHDFS(String from, String to){
-
+    public static boolean copyFromHDFS(String from, String to){
+        System.out.println("from = " + from + ", to = " + to);
         try {
             Configuration conf = new Configuration();
             conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
@@ -263,11 +265,17 @@ public class FileUtils {
             //Get the filesystem - HDFS//Get the filesystem - HDFS
             FileSystem hdfs = FileSystem.get(URI.create(from), conf);
             if (hdfs.exists(new org.apache.hadoop.fs.Path(from))){
+                System.out.println("Copying");
                 hdfs.copyToLocalFile(false, new org.apache.hadoop.fs.Path(from),new org.apache.hadoop.fs.Path(to), true);
+                return true;
+            } else {
+                System.out.println("AIUTO non esisto");
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("QUI NON VA BENISSIMO");
+        return false;
     }
 
 }

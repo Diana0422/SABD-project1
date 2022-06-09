@@ -21,7 +21,7 @@ import static com.sparkling_taxi.utils.Const.*;
 
 // docker cp backup/Query3.parquet namenode:/home/Query3.parquet
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
-public class Query3 extends Query<Query3Result>{
+public class Query3 extends Query<Query3Result> {
     private static final int RANKING_SIZE = 5;
 
     public static void main(String[] args) {
@@ -35,7 +35,6 @@ public class Query3 extends Query<Query3Result>{
     public Query3() {
         super();
     }
-
 
 
     public void preProcessing() {
@@ -133,8 +132,8 @@ public class Query3 extends Query<Query3Result>{
                 .option("header", true)
                 .option("delimiter", ";");
 
-        finalResult.csv(OUT_DIR_Q3);
-        this.copyAndRenameOutput(RESULT_DIR3);
+        finalResult.csv(OUT_HDFS_URL_Q3);
+        this.copyAndRenameOutput(OUT_HDFS_URL_Q3, RESULT_DIR3);
 
         // REDIS
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
