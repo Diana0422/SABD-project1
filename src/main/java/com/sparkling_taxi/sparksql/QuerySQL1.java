@@ -49,7 +49,7 @@ public class QuerySQL1 extends Query<CSVQuery1> {
                         "ORDER BY year, month ";
 
         return Performance.measure("SQL Query 1", () -> {
-            Dataset<Row> sql = spark.sql(query1).cache();
+            Dataset<Row> sql = spark.sql(query1);
             sql.show();
             return sql.as(Encoders.bean(CSVQuery1.class)).collectAsList();
         });

@@ -112,7 +112,7 @@ public class Query2 extends Query<Query2Result> {
         // (hour, Query2Result(avgTip, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations)
         // where distribution_of_trips_for_265_locations is a Map with the percentage of trips from each location
         JavaRDD<Query2Result> result = reduced.map(Query2Result::new);
-        return result.persist(StorageLevel.MEMORY_AND_DISK()).collect();
+        return result.collect();
     }
 
     public static List<Query2Result> query2V2(SparkSession spark, String file) {
@@ -136,7 +136,7 @@ public class Query2 extends Query<Query2Result> {
                     else return t2;
                 }).persist(StorageLevel.MEMORY_AND_DISK()); // (dayHour, (payment, occurrence))
 
-        JavaPairRDD<String, Tuple2<Tuple2<Long, Integer>, Query2ResultV2>> join = result.join(partial1).cache();
+        JavaPairRDD<String, Tuple2<Tuple2<Long, Integer>, Query2ResultV2>> join = result.join(partial1);
         join.collect();
         return new ArrayList<>();
     }

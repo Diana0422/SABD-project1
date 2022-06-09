@@ -22,7 +22,7 @@ import static com.sparkling_taxi.utils.Const.*;
 // docker cp backup/Query3.parquet namenode:/home/Query3.parquet
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
 public class Query3 extends Query<Query3Result> {
-    private static final int RANKING_SIZE = 5;
+    public static final int RANKING_SIZE = 5;
 
     public static void main(String[] args) {
         Query3 q = new Query3();
@@ -60,8 +60,7 @@ public class Query3 extends Query<Query3Result> {
                 .as(Encoders.bean(Query3Bean.class))
                 .toJavaRDD()
                 .mapToPair(bean -> new Tuple2<>(new DayLocationKey(bean.getTpep_dropoff_datetime(), bean.getDOLocationID()), new Query3Calc(1, bean)))
-                .reduceByKey(Query3Calc::sumWith) // (DayLocationKey, Query3Calc(cose sommate));
-                .persist(StorageLevel.MEMORY_AND_DISK()) // TODO: forse non va bene qui???
+                .reduceByKey(Query3Calc::sumWith) // (DayLocationKey, Query3Calc(cose sommate))
                 .mapToPair(pair -> new Tuple2<>(pair._1.getDay(), new Tuple2<>(pair._1.getDestination(), pair._2)))
                 .groupByKey() // (day, [ID, Query3Calc()..])
                 .flatMapValues(t -> {

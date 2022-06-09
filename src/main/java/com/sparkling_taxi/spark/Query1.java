@@ -44,7 +44,6 @@ public class Query1 extends Query<Query1Result> {
                 .reduceByKey(Query1Calc::sumWith)
                 /* after reduceByKey: ((month, year), (count, sum_passengers, ...)) */
                 .map(Query1Result::new)// Query1Result computes means inside the constructor
-                .cache()
                 /* after mapValues: ((month, year), (passengers_mean, other_mean...)) */
                 .collect();
     }
@@ -62,7 +61,7 @@ public class Query1 extends Query<Query1Result> {
     }
 
     public List<Query1Result> processing() {
-        return Performance.measure("Complete Query 1", () -> multiMonthMeans(spark, FILE_Q1));
+        return multiMonthMeans(spark, FILE_Q1);
     }
 
     public void preProcessing() {
