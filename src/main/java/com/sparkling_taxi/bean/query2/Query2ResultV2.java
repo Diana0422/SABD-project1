@@ -1,9 +1,12 @@
 package com.sparkling_taxi.bean.query2;
 
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
 
+@Data
 public class Query2ResultV2 implements Serializable {
     private Double avgTip;
     private Double stdDevTip;
