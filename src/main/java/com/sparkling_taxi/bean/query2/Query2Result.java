@@ -1,12 +1,14 @@
 package com.sparkling_taxi.bean.query2;
 
 import com.sparkling_taxi.bean.QueryResult;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import scala.Tuple2;
 
 import java.util.Map;
 
 @Data
+@AllArgsConstructor
 public class Query2Result implements QueryResult {
     private final String hour;
     private Double avgTip;
