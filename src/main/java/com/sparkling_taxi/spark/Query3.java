@@ -1,5 +1,6 @@
 package com.sparkling_taxi.spark;
 
+import com.sparkling_taxi.bean.QueryResult;
 import com.sparkling_taxi.bean.query3.*;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
@@ -9,7 +10,6 @@ import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
@@ -22,12 +22,11 @@ import static com.sparkling_taxi.utils.Const.*;
 // docker cp backup/Query3.parquet namenode:/home/Query3.parquet
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
 public class Query3 extends Query<Query3Result> {
-    public static final int RANKING_SIZE = 5;
 
     public static void main(String[] args) {
         Query3 q = new Query3();
         q.preProcessing();
-        List<Query3Result> query3 = q.processing();
+        List<Query3Result> query3 = Performance.measure(q::processing);
         q.postProcessing(query3);
         q.closeSession();
     }
@@ -49,7 +48,8 @@ public class Query3 extends Query<Query3Result> {
      * @return the query3 result list
      */
     public List<Query3Result> processing() {
-        return Performance.measure("Query3 - file4", () -> mostPopularDestinationWithStdDev(spark, FILE_Q3));
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
+        return mostPopularDestinationWithStdDev(spark, FILE_Q3);
     }
 
     public static List<Query3Result> mostPopularDestinationWithStdDev(SparkSession spark, String file) {
@@ -116,10 +116,13 @@ public class Query3 extends Query<Query3Result> {
             j++;
         }
 
-        JavaRDD<CSVQuery3> result = jc.parallelize(query3CsvList)
-                .repartition(1);
+        storeToCSVOnHDFS(query3CsvList, this);
+        // REDIS
+        storeQuery3ToRedis(query3CsvList);
+    }
 
-        DataFrameWriter<Row> finalResult = spark.createDataFrame(result, CSVQuery3.class)
+    public static <T extends QueryResult> void storeToCSVOnHDFS(List<CSVQuery3> query3CsvList, Query<T> q) {
+        DataFrameWriter<Row> finalResult = q.spark.createDataFrame(query3CsvList, CSVQuery3.class)
                 .select("day",
                         "location1", "location2", "location3", "location4", "location5",
                         "trips1", "trips2", "trips3", "trips4", "trips5",
@@ -132,10 +135,16 @@ public class Query3 extends Query<Query3Result> {
                 .option("delimiter", ";");
 
         finalResult.csv(OUT_HDFS_URL_Q3);
-        this.copyAndRenameOutput(OUT_HDFS_URL_Q3, RESULT_DIR3);
+        System.out.println("================== written csv to HDFS =================");
 
-        // REDIS
-        try (Jedis jedis = new Jedis("redis://redis:6379")) {
+        // also copies to local file system thanks to a docker volume
+        q.copyAndRenameOutput(OUT_HDFS_URL_Q3, RESULT_DIR3);
+        System.out.println("================== copied csv to local FS =================");
+
+    }
+
+    public static void storeQuery3ToRedis(List<CSVQuery3> query3CsvList) {
+        try (Jedis jedis = new Jedis(REDIS_URL)) {
             for (CSVQuery3 q : query3CsvList) {
                 HashMap<String, String> m = new HashMap<>();
                 m.put("day", q.getDay());
@@ -168,4 +177,5 @@ public class Query3 extends Query<Query3Result> {
             }
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package com.sparkling_taxi.spark;
 
+import com.sparkling_taxi.bean.QueryResult;
 import com.sparkling_taxi.bean.query2.*;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
@@ -15,7 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.sparkling_taxi.utils.Const.*;
-import static org.apache.spark.sql.functions.*;
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.split;
 
 // docker cp backup/Query2.parquet namenode:/home/Query2.parquet
 // hdfs dfs -put Query2.parquet /home/dataset-batch/Query2.parquet
@@ -38,25 +40,29 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public List<Query2Result> processing() {
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
         return query2PerHourWithGroupBy(spark, FILE_Q2);
 //        return Performance.measure("Query completa", () -> query2V2(spark, FILE_Q2));
     }
 
     public void postProcessing(List<Query2Result> result) {
-        JavaRDD<CSVQuery2> csvListResult = jc.parallelize(result)
+        List<CSVQuery2> csvListResult = jc.parallelize(result)
                 // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
                 // so we force it to use only 1 partition
                 .repartition(1)
                 .map(CSVQuery2::new)
-                .cache();
+                .collect();
+        storeToCSVOnHDFS(csvListResult, this);
+        storeQuery2ToRedis(csvListResult);
+    }
 
+    public static <T extends QueryResult> void storeToCSVOnHDFS(List<CSVQuery2> query2CsvList, Query<T> q) {
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
-        Dataset<Row> rowDataset = spark.createDataFrame(csvListResult, CSVQuery2.class);
+        Dataset<Row> rowDataset = q.spark.createDataFrame(query2CsvList, CSVQuery2.class);
 
         Column locationDistribution = split(col("locationDistribution"), "-");
 
         for (int i = 0; i < NUM_LOCATIONS; i++) {
-            System.out.println("colonna perc_PU" + i);
             rowDataset = rowDataset.withColumn("perc_PU" + (i + 1), locationDistribution.getItem(i));
         }
         DataFrameWriter<Row> finalResult = rowDataset
@@ -66,14 +72,19 @@ public class Query2 extends Query<Query2Result> {
                 .option("header", true)
                 .option("delimiter", ";");
         finalResult.csv(OUT_HDFS_URL_Q2);
+        System.out.println("================== written csv to HDFS =================");
 
-        this.copyAndRenameOutput(OUT_HDFS_URL_Q2, RESULT_DIR2);
+        q.copyAndRenameOutput(OUT_HDFS_URL_Q2, RESULT_DIR2);
 
-        System.out.println("================== written to HDFS =================");
+        System.out.println("================== copied csv to local FS =================");
 
+    }
+
+
+    public static void storeQuery2ToRedis(List<CSVQuery2> csvListResult) {
         // REDIS
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
-            for (CSVQuery2 t : csvListResult.collect()) {
+            for (CSVQuery2 t : csvListResult) {
                 String[] split = t.getLocationDistribution().split("-");
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Hour", t.getHour());

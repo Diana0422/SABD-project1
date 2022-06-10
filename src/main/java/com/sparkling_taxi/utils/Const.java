@@ -1,7 +1,8 @@
 package com.sparkling_taxi.utils;
 
 public class Const {
-    private Const(){}
+    private Const() {
+    }
 
     public static final String DOWNLOAD_TEMPLATE = "/home/templates/download_to_hdfs.xml";
     public static final String RESULT_DIR1 = "/home/results/query1";
@@ -22,6 +23,7 @@ public class Const {
     public static final Long NUM_PAYMENT_TYPES = 6L;
     public static final Long UNKNOWN_PAYMENT_TYPE = 5L;
     public static final Long NUM_LOCATIONS = 265L;
+    public static final int RANKING_SIZE = 5;
     // ================ QUERY 3 =========================
     public static final String PRE_PROCESSING_TEMPLATE_Q3 = "/home/templates/template_query3.xml";
     public static final String FILE_Q3 = "hdfs://namenode:9000/home/dataset-batch/Query3.parquet";
@@ -39,6 +41,8 @@ public class Const {
 
     public static final String NIFI_URL = "http://nifi:8181/nifi-api/";
     // ================ OTHER ===========================
+
+    public static final String REDIS_URL = "redis://redis:6379";
     public static final String LINUX_SEPARATOR = "/";
     public static final String WINDOWS_SEPARATOR = "\\";
 }

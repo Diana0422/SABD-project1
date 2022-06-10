@@ -1,7 +1,10 @@
 package com.sparkling_taxi.spark;
 
 
+import com.sparkling_taxi.bean.QueryResult;
 import com.sparkling_taxi.bean.query1.*;
+import com.sparkling_taxi.bean.query2.CSVQuery2;
+import com.sparkling_taxi.bean.query3.CSVQuery3;
 import com.sparkling_taxi.utils.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaRDD;
@@ -32,9 +35,6 @@ public class Query1 extends Query<Query1Result> {
      * @return List of computed means
      */
     public List<Query1Result> multiMonthMeans(SparkSession spark, String file) {
-        System.out.println("======================= Query 1 =========================");
-        // TODO: per migliorare le performance, su NiFi unire le tre colonne toll_amount, tip_amount, total_amount
-        //  in una sola colonna ratio con il calcolo già effettuato!
         return spark.read().parquet(file)
                 // Converts the typed Dataset<Row> to Dataset<Query1Bean>
                 .as(Encoders.bean(Query1Bean.class))
@@ -61,6 +61,7 @@ public class Query1 extends Query<Query1Result> {
     }
 
     public List<Query1Result> processing() {
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
         return multiMonthMeans(spark, FILE_Q1);
     }
 
@@ -70,15 +71,24 @@ public class Query1 extends Query<Query1Result> {
 
 
     public void postProcessing(List<Query1Result> query1) {
-        JavaRDD<CSVQuery1> csvListResult = jc.parallelize(query1)
+        List<CSVQuery1> csvListResult = jc.parallelize(query1)
                 // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
                 // so we force it to use only 1 partition
                 .repartition(1)
                 .map(CSVQuery1::new)
-                .cache();
+                .collect();
 
+        storeToCSVOnHDFS(csvListResult, this);
+        System.out.println("================== written csv to HDFS =================");
+        // REDIS
+        storeQuery1ToRedis(csvListResult);
+        System.out.println("================== copied csv to local FS =================");
+
+    }
+
+    public static <T extends QueryResult> void storeToCSVOnHDFS(List<CSVQuery1> query1CsvList, Query<T> q) {
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
-        DataFrameWriter<Row> finalResult = spark.createDataFrame(csvListResult, CSVQuery1.class)
+        DataFrameWriter<Row> finalResult = q.spark.createDataFrame(query1CsvList, CSVQuery1.class)
                 .select("year", new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
                 .write()
                 .mode("overwrite")
@@ -87,15 +97,12 @@ public class Query1 extends Query<Query1Result> {
 
         finalResult.csv(OUT_HDFS_URL_Q1);
 
-        this.copyAndRenameOutput(OUT_HDFS_URL_Q1, RESULT_DIR1 );
+        q.copyAndRenameOutput(OUT_HDFS_URL_Q1, RESULT_DIR1);
+    }
 
-        System.out.println("================== written to HDFS =================");
-
-        query1.forEach(System.out::println);
-
-        // REDIS
+    public static void storeQuery1ToRedis(List<CSVQuery1> csvListResult) {
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
-            for (CSVQuery1 t : csvListResult.collect()) {
+            for (CSVQuery1 t : csvListResult) {
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Year / Month", t.getYearMonth());
                 m.put("Avg Ratio", String.valueOf(t.getAvgRatio()));
