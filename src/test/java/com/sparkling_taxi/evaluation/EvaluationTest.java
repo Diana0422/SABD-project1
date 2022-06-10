@@ -1,7 +1,5 @@
 package com.sparkling_taxi.evaluation;
 
-import com.sparkling_taxi.evaluation.Evaluation;
-import com.sparkling_taxi.evaluation.Time;
 import org.junit.jupiter.api.Test;
 import scala.Tuple2;
 
@@ -33,4 +31,6 @@ public class EvaluationTest {
         assertEquals(new Time(23, 603), ttt._1);
         assertEquals(new Time(500), ttt._2);
     }
+
+
 }

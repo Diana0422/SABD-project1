@@ -47,4 +47,5 @@ public class Const {
     public static final String WINDOWS_SEPARATOR = "\\";
 
     public static final int NUM_EVALUATIONS = 40;
+    public static final String EVALUATION_FILE = "/home/results/evaluation.csv";
 }

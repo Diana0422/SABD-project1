@@ -41,7 +41,7 @@ public class QuerySQL3 extends Query<CSVQuery3> {
     }
 
     public List<CSVQuery3> processing() {
-        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
         Dataset<Row> parquet = spark.read().parquet(FILE_Q3);
         Dataset<Row> rowDataset = parquet.toDF("dropoff", "passengers", "location", "fare_amount");
         Dataset<Row> convertDay = rowDataset.withColumn("day", to_date(col("dropoff"), "yyyy-MM-dd"))

@@ -47,7 +47,7 @@ public class Query3 extends Query<Query3Result> {
      * @return the query3 result list
      */
     public List<Query3Result> processing() {
-        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
         return mostPopularDestinationWithStdDev(spark, FILE_Q3);
     }
 

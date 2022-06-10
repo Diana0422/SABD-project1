@@ -38,7 +38,7 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public List<Query2Result> processing() {
-        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
         return query2PerHourWithGroupBy(spark, FILE_Q2);
 //        return query2V2(spark, FILE_Q2);
     }

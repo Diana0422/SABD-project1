@@ -33,7 +33,7 @@ public class QuerySQL1 extends Query<CSVQuery1> {
     }
 
     public List<CSVQuery1> processing() {
-        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
         spark.read().parquet(FILE_Q1)
                 .toDF("dropoff", "tip", "toll", "total", "payment_type") // already removed other payment types on NiFi
                 .withColumn("month", month(col("dropoff")))

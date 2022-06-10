@@ -58,7 +58,7 @@ public class Query1 extends Query<Query1Result> {
     }
 
     public List<Query1Result> processing() {
-        System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
         return multiMonthMeans(spark, FILE_Q1);
     }
 
