@@ -43,7 +43,6 @@ public class Query2 extends Query<Query2Result> {
         System.out.println("======================= Running " + this.getClass().getSimpleName() + "=======================");
         return query2PerHourWithGroupBy(spark, FILE_Q2);
 //        return query2V2(spark, FILE_Q2);
-//        return Performance.measure("Query completa", () -> query2V2(spark, FILE_Q2));
     }
 
     public void postProcessing(List<Query2Result> result) {
@@ -98,6 +97,8 @@ public class Query2 extends Query<Query2Result> {
                 jedis.hset(t.getHour(), m);
             }
         }
+
+        System.out.println("================= Stored on REDIS =================");
     }
 
     /**

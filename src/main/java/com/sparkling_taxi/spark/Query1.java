@@ -110,5 +110,6 @@ public class Query1 extends Query<Query1Result> {
                 jedis.hset(t.getYearMonth(), m);
             }
         }
+        System.out.println("================= Stored on REDIS =================");
     }
 }

@@ -176,6 +176,7 @@ public class Query3 extends Query<Query3Result> {
                 jedis.hset(q.getDay(), m);
             }
         }
+        System.out.println("================= Stored on REDIS =================");
     }
 
 }
