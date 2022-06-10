@@ -1,4 +1,4 @@
-package com.sparkling_taxi.utils;
+package com.sparkling_taxi.evaluation;
 
 import lombok.Data;
 

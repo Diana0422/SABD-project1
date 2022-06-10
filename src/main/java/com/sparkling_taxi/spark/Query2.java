@@ -2,16 +2,14 @@ package com.sparkling_taxi.spark;
 
 import com.sparkling_taxi.bean.QueryResult;
 import com.sparkling_taxi.bean.query2.*;
-import com.sparkling_taxi.utils.Performance;
+import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.*;
-import org.apache.spark.storage.StorageLevel;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 

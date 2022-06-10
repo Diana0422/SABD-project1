@@ -1,4 +1,4 @@
-package com.sparkling_taxi.utils;
+package com.sparkling_taxi.evaluation;
 
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;

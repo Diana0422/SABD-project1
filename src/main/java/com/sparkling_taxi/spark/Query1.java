@@ -3,11 +3,8 @@ package com.sparkling_taxi.spark;
 
 import com.sparkling_taxi.bean.QueryResult;
 import com.sparkling_taxi.bean.query1.*;
-import com.sparkling_taxi.bean.query2.CSVQuery2;
-import com.sparkling_taxi.bean.query3.CSVQuery3;
-import com.sparkling_taxi.utils.Performance;
+import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.utils.Utils;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;

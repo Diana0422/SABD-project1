@@ -2,10 +2,9 @@ package com.sparkling_taxi.spark;
 
 import com.sparkling_taxi.bean.QueryResult;
 import com.sparkling_taxi.bean.query3.*;
-import com.sparkling_taxi.utils.Performance;
+import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.utils.Utils;
 import lombok.var;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;

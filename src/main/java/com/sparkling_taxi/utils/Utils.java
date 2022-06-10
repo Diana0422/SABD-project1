@@ -1,5 +1,6 @@
 package com.sparkling_taxi.utils;
 
+import com.sparkling_taxi.evaluation.Time;
 import com.sparkling_taxi.nifi.NifiTemplateInstance;
 import scala.Tuple2;
 
@@ -97,23 +98,6 @@ public class Utils {
      */
     public static double stddev(double count, double valueSum, double squareSum) {
         return Math.sqrt((squareSum / count - (valueSum / count) * (valueSum / count)));
-    }
-
-    public static Tuple2<Time, Time> calculateMeanStdev(List<Time> t){
-        long count = 0;
-        long totalMillis = 0;
-        long squareTotalMillis = 0;
-        for (Time time : t) {
-            long millis = time.toMillis();
-            totalMillis += millis;
-            squareTotalMillis += millis * millis;
-            count++;
-        }
-
-        double mean = (double) totalMillis / count;
-        double stdev = Utils.stddev((double) count, (double) totalMillis, (double) squareTotalMillis);
-
-        return new Tuple2<>(new Time((long) mean), new Time((long) stdev));
     }
 
     public static List<Integer> intRange(int start, int end){

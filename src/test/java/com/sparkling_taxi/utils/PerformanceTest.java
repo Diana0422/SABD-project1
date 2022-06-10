@@ -1,5 +1,7 @@
 package com.sparkling_taxi.utils;
 
+import com.sparkling_taxi.evaluation.Performance;
+import com.sparkling_taxi.evaluation.Time;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

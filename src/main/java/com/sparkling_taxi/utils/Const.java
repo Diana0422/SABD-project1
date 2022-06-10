@@ -45,4 +45,6 @@ public class Const {
     public static final String REDIS_URL = "redis://redis:6379";
     public static final String LINUX_SEPARATOR = "/";
     public static final String WINDOWS_SEPARATOR = "\\";
+
+    public static final int NUM_EVALUATIONS = 40;
 }
