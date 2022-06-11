@@ -9,6 +9,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,15 +82,16 @@ public class QuerySQL2 extends Query<CSVQuery2> {
                 .join(locCountHourly, "hour")
                 .createOrReplaceTempView("partial_result");
 
-        List<Row> rows = spark.sql("SELECT hour, avg_tip, stddev_tip, concat_ws(';', partial_result.pu_location, loc_count / hour_loc_count ) as loc_distr, payment_type " +
-                                  "FROM partial_result " +
-                                  "ORDER BY hour, loc_distr")
+        List<Row> rows = spark.sql("SELECT hour, avg_tip, stddev_tip, concat_ws(';', partial_result.pu_location, loc_count / hour_loc_count) as loc_distr, payment_type " +
+                                   "FROM partial_result " +
+                                   "ORDER BY hour, loc_distr")
                 .groupBy("hour", "avg_tip", "stddev_tip", "payment_type")
                 .agg(collect_list("loc_distr").alias("all_loc_distr"))
                 .collectAsList();
         List<CSVQuery2> query2 = new ArrayList<>();
+        DecimalFormat decimalFormat = new DecimalFormat("#.######");
         for (Row r : rows) {
-            if (rows.indexOf(r) < 20){
+            if (rows.indexOf(r) < 20) {
                 System.out.println(r);
             }
             String hour = r.getTimestamp(0).toString();
@@ -107,10 +109,11 @@ public class QuerySQL2 extends Query<CSVQuery2> {
                 array[Integer.parseInt(loc) - 1] = Double.valueOf(split[1]);
             }
             StringBuilder s = new StringBuilder();
+
             for (int i = 0, arrayLength = array.length; i < arrayLength; i++) {
                 Double d = array[i];
-                s.append(d);
-                if (i != arrayLength - 1){
+                s.append(decimalFormat.format(d));
+                if (i != arrayLength - 1) {
                     s.append("-");
                 }
             }
