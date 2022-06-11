@@ -276,4 +276,25 @@ public class FileUtils {
         return false;
     }
 
+    public static boolean deleteFromHDFS(String file){
+        try {
+            Configuration conf = new Configuration();
+            conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+            conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+            //Get the filesystem - HDFS//Get the filesystem - HDFS
+            FileSystem hdfs = FileSystem.get(URI.create(file), conf);
+            if (hdfs.exists(new org.apache.hadoop.fs.Path(file))){
+                System.out.println("Copying");
+                hdfs.delete(new org.apache.hadoop.fs.Path(file), true);
+                return true;
+            } else {
+                System.out.println("AIUTO esisto");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("E QUI NON VA BENISSIMO");
+        return false;
+    }
+
 }

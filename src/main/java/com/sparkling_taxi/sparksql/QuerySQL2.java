@@ -7,17 +7,28 @@ import com.sparkling_taxi.spark.Query2;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import scala.Tuple2;
+import org.apache.spark.sql.SparkSession;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.sparkling_taxi.utils.Const.*;
 import static org.apache.spark.sql.functions.*;
 
 public class QuerySQL2 extends Query<CSVQuery2> {
+
+    public QuerySQL2(SparkSession s) {
+        super(s);
+    }
+
+    public QuerySQL2() {
+        super();
+    }
+
+    public QuerySQL2(boolean b, SparkSession s) {
+        super(b, s);
+    }
 
     public static void main(String[] args) {
         QuerySQL2 sql2 = new QuerySQL2();
@@ -34,7 +45,7 @@ public class QuerySQL2 extends Query<CSVQuery2> {
 
     @Override
     public void preProcessing() {
-        Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2);
+        Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2, forcePreprocessing);
     }
 
     /**
@@ -91,9 +102,6 @@ public class QuerySQL2 extends Query<CSVQuery2> {
         List<CSVQuery2> query2 = new ArrayList<>();
         DecimalFormat decimalFormat = new DecimalFormat("#.######");
         for (Row r : rows) {
-            if (rows.indexOf(r) < 20) {
-                System.out.println(r);
-            }
             String hour = r.getTimestamp(0).toString();
             Double avgTip = r.getDouble(1);
             Double stdDevTip = r.getDouble(2);

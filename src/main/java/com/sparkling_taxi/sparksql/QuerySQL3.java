@@ -8,6 +8,7 @@ import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,14 @@ import static org.apache.spark.sql.functions.to_date;
 public class QuerySQL3 extends Query<CSVQuery3> {
     public QuerySQL3() {
         super();
+    }
+
+    public QuerySQL3(SparkSession s) {
+        super(s);
+    }
+
+    public QuerySQL3(boolean b, SparkSession s) {
+        super(b, s);
     }
 
     public static void main(String[] args) {
@@ -37,7 +46,7 @@ public class QuerySQL3 extends Query<CSVQuery3> {
     }
 
     public void preProcessing() {
-        Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3);
+        Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3, forcePreprocessing);
     }
 
     public List<CSVQuery3> processing() {

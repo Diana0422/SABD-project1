@@ -22,6 +22,14 @@ import static com.sparkling_taxi.utils.Const.*;
 // hdfs dfs -put Query3.parquet /home/dataset-batch/Query3.parquet
 public class Query3 extends Query<Query3Result> {
 
+    public Query3(SparkSession s) {
+        super(s);
+    }
+
+    public Query3(boolean b, SparkSession s) {
+        super(b, s);
+    }
+
     public static void main(String[] args) {
         Query3 q = new Query3();
         q.preProcessing();
@@ -36,7 +44,7 @@ public class Query3 extends Query<Query3Result> {
 
 
     public void preProcessing() {
-        Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3);
+        Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3, forcePreprocessing);
     }
 
     /**

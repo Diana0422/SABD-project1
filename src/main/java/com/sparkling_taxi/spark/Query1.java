@@ -21,6 +21,14 @@ import static com.sparkling_taxi.utils.Const.*;
 // hdfs dfs -get Query1.parquet /home/dataset-batch/Query1.parquet /home/Query1.parquet
 public class Query1 extends Query<Query1Result> {
 
+    public Query1(SparkSession s) {
+        super(s);
+    }
+
+    public Query1(boolean b, SparkSession s) {
+        super(b, s);
+    }
+
     /**
      * Spark Query1:
      * Average calculation on a monthly basis and on a subset of values:
@@ -63,7 +71,7 @@ public class Query1 extends Query<Query1Result> {
     }
 
     public void preProcessing() {
-        Utils.doPreProcessing(FILE_Q1, PRE_PROCESSING_TEMPLATE_Q1);
+        Utils.doPreProcessing(FILE_Q1, PRE_PROCESSING_TEMPLATE_Q1, forcePreprocessing);
     }
 
 

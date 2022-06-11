@@ -7,8 +7,9 @@ if "%1" == "3" GOTO q3
 if "%1" == "4" GOTO q4
 if "%1" == "5" GOTO q5
 if "%1" == "6" GOTO q6
+if "%1" == "7" GOTO q7
 
-echo "Usage: ./submit_query <query number in 1-6>"
+echo "Usage: ./submit_query <query number in 1-7>"
 GOTO done
 
 :q1
@@ -36,6 +37,10 @@ goto done
 
 :q6
 docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.sparksql.QuerySQL3 ./taxi-app/sabd1-1.0-jar-with-dependencies.jar
+goto done
+
+:q7
+docker exec spark-master /opt/bitnami/spark/bin/spark-submit --class com.sparkling_taxi.evaluation.Evaluation ./taxi-app/sabd1-1.0-jar-with-dependencies.jar
 goto done
 
 :done

@@ -21,6 +21,14 @@ import static org.apache.spark.sql.functions.split;
 // hdfs dfs -put Query2.parquet /home/dataset-batch/Query2.parquet
 public class Query2 extends Query<Query2Result> {
 
+    public Query2(SparkSession s) {
+        super(s);
+    }
+
+    public Query2(boolean b, SparkSession s) {
+        super(b, s);
+    }
+
     public static void main(String[] args) {
         Query2 q = new Query2();
         q.preProcessing();
@@ -34,7 +42,7 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public void preProcessing() {
-        Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2);
+        Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2, forcePreprocessing);
     }
 
     public List<Query2Result> processing() {
