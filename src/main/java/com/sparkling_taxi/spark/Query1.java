@@ -109,9 +109,9 @@ public class Query1 extends Query<Query1Result> {
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
             for (CSVQuery1 t : csvListResult) {
                 HashMap<String, String> m = new HashMap<>();
-                m.put("Year / Month", t.getYearMonth());
-                m.put("Avg Ratio", String.valueOf(t.getAvgRatio()));
-                m.put("Count", String.valueOf(t.getCount()));
+                m.put("year_month", t.getYearMonth());
+                m.put("avg_ratio", String.valueOf(t.getAvgRatio()));
+                m.put("count", String.valueOf(t.getCount()));
                 jedis.hset(t.getYearMonth(), m);
             }
         }
