@@ -241,18 +241,16 @@ public class FileUtils {
             conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
             //Get the filesystem - HDFS//Get the filesystem - HDFS
             FileSystem hdfs = FileSystem.get(URI.create(dir), conf);
-            FileStatus[] aiuto = hdfs.listStatus(   new org.apache.hadoop.fs.Path(dir));
-            for (FileStatus fileStatus : aiuto) {
+            FileStatus[] status = hdfs.listStatus(   new org.apache.hadoop.fs.Path(dir));
+            for (FileStatus fileStatus : status) {
                 String name = fileStatus.getPath().getName();
                 if (name.startsWith(startWith)){
-                    System.out.println("Found");
                     return Optional.of(name);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Not Found");
         return Optional.empty();
     }
 

@@ -40,7 +40,6 @@ public class Query2 extends Query<Query2Result> {
     public List<Query2Result> processing() {
         System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
         return query2PerHourWithGroupBy(spark, FILE_Q2);
-//        return query2V2(spark, FILE_Q2);
     }
 
     public void postProcessing(List<Query2Result> result) {
@@ -101,7 +100,7 @@ public class Query2 extends Query<Query2Result> {
 
     /**
      * Hourly distribution of
-     * - mean number of trips each hour
+     * - percentage of trips each hour each start location
      * - mean of tips each hour
      * - standard deviation of tips each hour
      * - most popular payment method each hour (MAX number of occurrence)
@@ -124,36 +123,6 @@ public class Query2 extends Query<Query2Result> {
         // where distribution_of_trips_for_265_locations is a Map with the percentage of trips from each location
         JavaRDD<Query2Result> result = reduced.map(Query2Result::new);
         return result.collect();
-    }
-
-    public static List<Query2Result> query2V2(SparkSession spark, String file) {
-        JavaRDD<Query2Bean> rdd = spark.read().parquet(file)
-                .as(Encoders.bean(Query2Bean.class))
-                .toJavaRDD()
-                .cache();
-        // partial 1: calculate total trips + total tip + distribution
-        JavaPairRDD<String, Query2CalcV2> hourCalc = rdd
-                .mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2CalcV2(1, bean)));
-        JavaPairRDD<String, Query2CalcV2> reduced1 = hourCalc.reduceByKey(Query2CalcV2::sumWith);
-        JavaPairRDD<String, Query2ResultV2> partial1 = reduced1
-                .mapValues(Query2ResultV2::new)
-                .cache();
-
-
-        // partial 2: calculate number of trips for each PULocation
-        JavaPairRDD<DayPaymentKey, Integer> locationMapping = rdd
-                .mapToPair(bean -> new Tuple2<>(new DayPaymentKey(Utils.getHourDay(bean.getTpep_pickup_datetime()), bean.getPayment_type()), 1));
-        JavaPairRDD<DayPaymentKey, Integer> reduced = locationMapping.reduceByKey(Integer::sum); // ((dayHour, paymentType), 1) -> ((dayHour, paymentType), occorrenzaxtipo))
-
-        JavaPairRDD<String, PaymentCount> result = reduced.mapToPair(t -> new Tuple2<>(t._1.getHourDay(), new PaymentCount(t._1.getPaymentType(), t._2))); // ((dayHour, paymentType), occorrenzaxtipo)) -> (dayHour, (paymentType, occorrenza))
-        result.reduceByKey((t1, t2) -> {
-            if (t1.getOccurrence() >= t2.getOccurrence()) return t1;
-            else return t2;
-        }).cache();
-        JavaRDD<Query2Result> join = result
-                .join(partial1)
-                .map(t -> new Query2Result(t._1, t._2._2.getAvgTip(), t._2._2.getStdDevTip(), t._2._1.getPaymentType(), t._2._2.getLocationDistribution()));
-        return join.collect();
     }
 
     private enum PaymentType {
