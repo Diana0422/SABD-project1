@@ -104,7 +104,7 @@ public class Query1 extends Query<Query1Result> {
                 m.put("year_month", t.getYearMonth());
                 m.put("avg_ratio", String.valueOf(t.getAvgRatio()));
                 m.put("count", String.valueOf(t.getCount()));
-                jedis.hset("query1", m);
+                jedis.hset(t.getYearMonth(), m);
             }
         }
         System.out.println("================= Stored on REDIS =================");

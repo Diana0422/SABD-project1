@@ -172,7 +172,7 @@ public class Query3 extends Query<Query3Result> {
                 m.put("stdDevFareAmount3", q.getStDevFareAmount3());
                 m.put("stdDevFareAmount4", q.getStDevFareAmount4());
                 m.put("stdDevFareAmount5", q.getStDevFareAmount5());
-                jedis.hset("query3", m);
+                jedis.hset(q.getDay(), m);
             }
         }
         System.out.println("================= Stored on REDIS =================");

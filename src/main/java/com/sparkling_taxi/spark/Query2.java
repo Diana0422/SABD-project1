@@ -87,9 +87,12 @@ public class Query2 extends Query<Query2Result> {
                 m.put("Hour", t.getHour());
                 m.put("AvgTip", String.valueOf(t.getAvgTip()));
                 m.put("StdDevTip", String.valueOf(t.getStdDevTip()));
-                m.put("MostPopularPayment", String.valueOf(t.getStdDevTip()));
+                m.put("MostPopularPayment", String.valueOf(t.getPopPayment()));
                 for (int i = 0; i < NUM_LOCATIONS; i++) {
-                    m.put("Loc" + (i + 1), String.valueOf(split[i]));
+                    String s = split[i];
+                    if (!s.equals("0")) {
+                        m.put("Loc" + (i + 1), s);
+                    }
                 }
                 jedis.hset(t.getHour(), m);
             }
