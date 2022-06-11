@@ -49,6 +49,13 @@ public class QuerySQL3 extends Query<CSVQuery3> {
         Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3, forcePreprocessing);
     }
 
+    /**
+     * Identify for EACH DAY the top-5 most popular DOLocationIDs, indicating for each one:
+     * - the average number of passengers,
+     * - the mean and standard deviation of fare_amount
+     *
+     * @return the query3 result list
+     */
     public List<CSVQuery3> processing() {
         System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
         Dataset<Row> parquet = spark.read().parquet(FILE_Q3);
@@ -57,20 +64,23 @@ public class QuerySQL3 extends Query<CSVQuery3> {
                 .select("day", "passengers", "location", "fare_amount");
         convertDay.createOrReplaceTempView("query3");
 
-
-        String sql = "SELECT day, location, count(*) AS occurrence, avg(passengers) as avg_passengers, " +
+        // groups by day and location the number of trips with the location as destination,
+        // the average numbers of passengers and fare amount and also the fare amount stdev.
+        // the only thing that remains to compute si the rank of each location
+        String sql = "SELECT day, location, count(location) AS occurrence, avg(passengers) as avg_passengers, " +
                      "avg(fare_amount) as avg_fare_amount, stddev(fare_amount) as stddev_fare_amount" +
                      " FROM query3 GROUP BY day, location";
         Dataset<Row> sql1 = spark.sql(sql);
         sql1.createOrReplaceTempView("sql1");
 
-        // row_number: incrementa un contatore (rank) sopra la partizione del giorno. Per ogni giorno ordina le occorrenze in ordine decrescente.
+        // row_number: assigns a row number to each occurrence in the day to each location, and orders them in descending order
         String calcTopRanking = "SELECT day, location, occurrence, avg_passengers, avg_fare_amount, stddev_fare_amount," +
                                 "row_number() over (PARTITION BY day ORDER BY occurrence DESC) as rank " +
                                 "FROM sql1";
         Dataset<Row> sql2 = spark.sql(calcTopRanking);
         sql2.createOrReplaceTempView("sql2");
 
+        // limits to get only the top 5 locations that day
         String calcTop5 = "SELECT * FROM sql2 WHERE rank <= 5";
         List<Row> query3 = spark.sql(calcTop5).collectAsList();
 

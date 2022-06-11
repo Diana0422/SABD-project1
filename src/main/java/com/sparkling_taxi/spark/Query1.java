@@ -79,7 +79,6 @@ public class Query1 extends Query<Query1Result> {
         List<CSVQuery1> csvListResult = jc.parallelize(query1)
                 // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
                 // so we force it to use only 1 partition
-                .repartition(1)
                 .map(CSVQuery1::new)
                 .collect();
 
@@ -95,6 +94,8 @@ public class Query1 extends Query<Query1Result> {
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
         DataFrameWriter<Row> finalResult = q.spark.createDataFrame(query1CsvList, CSVQuery1.class)
                 .select("year", new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
+                .coalesce(1)
+                .sort("year", "month")
                 .write()
                 .mode("overwrite")
                 .option("header", true)

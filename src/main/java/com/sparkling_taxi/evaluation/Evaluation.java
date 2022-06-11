@@ -35,6 +35,8 @@ public class Evaluation {
         this.csvGlobalOutputFile = new File(FileUtils.appendEndOfFileName(GLOBAL_EVALUATION_FILE, fileInputPrefix));
         this.writer = new BufferedWriter(new FileWriter(csvDetailedOutputFile));
         this.runs = runs;
+        // overwrites the file
+        writer.write(RunResult.toCSVHeader());
     }
 
 
@@ -87,13 +89,13 @@ public class Evaluation {
     }
 
     public <T extends QueryResult> Tuple2<Time, Time> evaluate(Query<T> q) {
-        if (!q.isForcePreprocessing()){
+        if (!q.isForcePreprocessing()) {
             q.preProcessing();
         }
         List<Time> timesQuery1 = new ArrayList<>();
         for (int i = 0; i < runs; i++) {
             Time time;
-            if (q.isForcePreprocessing()){
+            if (q.isForcePreprocessing()) {
                 time = Performance.measureTime(() -> {
                     q.preProcessing();
                     q.processing();
@@ -147,10 +149,6 @@ public class Evaluation {
 
     public void addToCsv(RunResult runResult) {
         try {
-            if (!csvDetailedOutputFile.exists()) {
-                Files.createFile(csvDetailedOutputFile.toPath());
-                writer.append(RunResult.toCSVHeader());
-            }
             writer.append(runResult.toCSV());
         } catch (IOException e) {
             e.printStackTrace();
