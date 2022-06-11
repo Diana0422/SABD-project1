@@ -1,6 +1,7 @@
 package com.sparkling_taxi.sparksql;
 
 import com.sparkling_taxi.bean.query2.CSVQuery2;
+import com.sparkling_taxi.bean.query2.Query2Result;
 import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.spark.Query;
 import com.sparkling_taxi.spark.Query2;
@@ -58,21 +59,48 @@ public class QuerySQL2 extends Query<CSVQuery2> {
                                             "GROUP BY hour, pu_location ");
         locDistrib.createOrReplaceTempView("loc_distribution");
 
+        Dataset<Row> locCountHourly = spark.sql("SELECT hour, count(pu_location) as hour_loc_count " +
+                                                "FROM query2 " +
+                                                "GROUP BY hour");
+        locDistrib.createOrReplaceTempView("hourly_loc_count");
+
         Dataset<Row> paymentDistrib = spark.sql("SELECT hour, payment_type, count(*) as occurrences " +
                                                 "FROM query2 " +
                                                 "GROUP BY hour, payment_type " +
                                                 "ORDER BY hour");
         paymentDistrib.createOrReplaceTempView("payment_distribution");
 
-        spark.sql("SELECT hour, payment_type, occurrences, row_number() over (PARTITION BY hour ORDER BY occurrences DESC) as rank " +
-                  "FROM payment_distribution ")
+        List<Row> rows = spark.sql("SELECT hour, payment_type, occurrences, row_number() over (PARTITION BY hour ORDER BY occurrences DESC) as rank " +
+                                   "FROM payment_distribution ")
                 .where("rank = 1")
                 .select("hour", "payment_type")
                 .join(hourlyTips, "hour")
                 .join(locDistrib, "hour")
-                .show(100);
+                .join(locCountHourly, "hour")
+                .selectExpr("hour", "avg_tip", "stddev_tip", "query2.pu_location", "loc_count / hour_loc_count as loc_distrib", "payment_type")
+                .collectAsList();
 
-        return new ArrayList<>();
+        /*
+         * +-------------------+------------------+------------------+-----------+--------------------+------------+
+         * |               hour|           avg_tip|        stddev_tip|pu_location|         loc_distrib|payment_type|
+         * +-------------------+------------------+------------------+-----------+--------------------+------------+
+         * |2021-12-01 00:00:00|2.9100474683544335|3.7732257355704832|        141|  0.0189873417721519|           1|
+         */
+
+//        List<Query2Result> query2Results = new ArrayList<>();
+//        List<Double> locDistrDoubles = new ArrayList<>();
+//        for (Row row : rows) {
+//            query2Results.add(new Query2Result(row.getTimestamp(0).toString(),
+//                    row.getDouble(1),
+//                    row.getDouble(2),
+//                    row.getLong(3),
+//                    "todo"));
+//        }
+
+        List<CSVQuery2> csvQuery2 = new ArrayList<>();
+
+
+        return csvQuery2;
     }
 
     @Override
