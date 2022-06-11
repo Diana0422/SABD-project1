@@ -17,6 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.sparkling_taxi.utils.Const.EVALUATION_FILE;
@@ -25,42 +26,14 @@ import static com.sparkling_taxi.utils.Const.NUM_EVALUATIONS;
 public class Evaluation {
 
     public static void main(String[] args) {
+        List<Query<? extends QueryResult>> queries = Arrays.asList(new Query1(), new Query2(), new Query3(), new QuerySQL1(), new QuerySQL2(), new QuerySQL3());
         List<EvalResult> evalResults = new ArrayList<>();
-        System.out.println("======================================================================");
-        Query1 q1 = new Query1();
-        Tuple2<Time, Time> eval1 = evaluate(q1);
-        printResults(eval1, q1);
-        evalResults.add(new EvalResult(q1.getClass().getSimpleName(), eval1._1, eval1._2));
-        System.out.println("======================================================================");
-        Query2 q2 = new Query2();
-        Tuple2<Time, Time> eval2 = evaluate(q2);
-        printResults(eval2, q2);
-        evalResults.add(new EvalResult(q2.getClass().getSimpleName(), eval2._1, eval2._2));
-        System.out.println("======================================================================");
-
-        Query3 q3 = new Query3();
-        Tuple2<Time, Time> eval3 = evaluate(q3);
-        printResults(eval3, q3);
-        evalResults.add(new EvalResult(q3.getClass().getSimpleName(), eval3._1, eval3._2));
-        System.out.println("======================================================================");
-
-        QuerySQL1 qs1 = new QuerySQL1();
-        Tuple2<Time, Time> eval4 = evaluate(qs1);
-        printResults(eval4, qs1);
-        evalResults.add(new EvalResult(qs1.getClass().getSimpleName(), eval4._1, eval2._2));
-        System.out.println("======================================================================");
-
-        QuerySQL2 qs2 = new QuerySQL2();
-        Tuple2<Time, Time> eval5 = evaluate(qs2);
-        printResults(eval5, qs2);
-        evalResults.add(new EvalResult(qs2.getClass().getSimpleName(), eval5._1, eval5._2));
-        System.out.println("======================================================================");
-
-        QuerySQL3 qs3 = new QuerySQL3();
-        Tuple2<Time, Time> eval6 = evaluate(qs3);
-        printResults(eval6, qs3);
-        evalResults.add(new EvalResult(qs3.getClass().getSimpleName(), eval6._1, eval6._2));
-        System.out.println("======================================================================");
+        for (Query<? extends QueryResult> query : queries) {
+            Tuple2<Time, Time> eval1 = evaluate(query);
+            printResults(eval1, query);
+            evalResults.add(new EvalResult(query.getClass().getSimpleName(), eval1._1, eval1._2));
+            System.out.println("======================================================================");
+        }
         saveToCSV(evalResults);
     }
 

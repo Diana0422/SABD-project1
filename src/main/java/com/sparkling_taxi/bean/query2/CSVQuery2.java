@@ -1,14 +1,15 @@
 package com.sparkling_taxi.bean.query2;
 
 import com.sparkling_taxi.bean.QueryResult;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.text.DecimalFormat;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class CSVQuery2 implements QueryResult {
 
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.######");
@@ -23,7 +24,10 @@ public class CSVQuery2 implements QueryResult {
         this.avgTip = query2Result.getAvgTip();
         this.stdDevTip = query2Result.getStdDevTip();
         this.popPayment = query2Result.getPopPayment();
-        Double[] locDistribution = query2Result.getLocationDistribution();
+        this.locationDistribution = locArrayToString(query2Result.getLocationDistribution());
+    }
+
+    public String locArrayToString(Double[] locDistribution){
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < locDistribution.length; i++) {
             sb.append(DECIMAL_FORMAT.format(locDistribution[i]));
@@ -31,6 +35,17 @@ public class CSVQuery2 implements QueryResult {
                 sb.append("-");
             }
         }
-        this.locationDistribution = sb.toString();
+        return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        return "CSVQuery2{" +
+               "hour='" + hour + '\'' +
+               ", avgTip=" + avgTip +
+               ", stdDevTip=" + stdDevTip +
+               ", popPayment=" + popPayment +
+               ", locationDistribution='" + locationDistribution + '\'' +
+               '}';
     }
 }
