@@ -86,9 +86,9 @@ public class Query2 extends Query<Query2Result> {
                 String[] split = t.getLocationDistribution().split("-");
                 HashMap<String, String> m = new HashMap<>();
                 m.put("Hour", t.getHour());
-                m.put("Avg Tip", String.valueOf(t.getAvgTip()));
-                m.put("Std Dev Tip", String.valueOf(t.getStdDevTip()));
-                m.put("Most Popular Payment", String.valueOf(t.getStdDevTip()));
+                m.put("AvgTip", String.valueOf(t.getAvgTip()));
+                m.put("StdDevTip", String.valueOf(t.getStdDevTip()));
+                m.put("MostPopularPayment", String.valueOf(t.getStdDevTip()));
                 for (int i = 0; i < NUM_LOCATIONS; i++) {
                     m.put("Loc" + (i + 1), String.valueOf(split[i]));
                 }
