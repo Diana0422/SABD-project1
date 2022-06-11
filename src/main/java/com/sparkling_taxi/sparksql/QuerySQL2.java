@@ -1,19 +1,19 @@
 package com.sparkling_taxi.sparksql;
 
 import com.sparkling_taxi.bean.query2.CSVQuery2;
-import com.sparkling_taxi.bean.query2.Query2Result;
 import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.spark.Query;
 import com.sparkling_taxi.spark.Query2;
 import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.sparkling_taxi.utils.Const.FILE_Q2;
-import static com.sparkling_taxi.utils.Const.PRE_PROCESSING_TEMPLATE_Q2;
+import static com.sparkling_taxi.utils.Const.*;
 import static org.apache.spark.sql.functions.*;
 
 public class QuerySQL2 extends Query<CSVQuery2> {
@@ -26,6 +26,8 @@ public class QuerySQL2 extends Query<CSVQuery2> {
             sql2.postProcessing(csvList);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            sql2.closeSession();
         }
     }
 
@@ -70,37 +72,51 @@ public class QuerySQL2 extends Query<CSVQuery2> {
                                                 "ORDER BY hour");
         paymentDistrib.createOrReplaceTempView("payment_distribution");
 
-        List<Row> rows = spark.sql("SELECT hour, payment_type, occurrences, row_number() over (PARTITION BY hour ORDER BY occurrences DESC) as rank " +
-                                   "FROM payment_distribution ")
+        spark.sql("SELECT hour, payment_type, occurrences, row_number() over (PARTITION BY hour ORDER BY occurrences DESC) as rank " +
+                  "FROM payment_distribution ")
                 .where("rank = 1")
                 .select("hour", "payment_type")
                 .join(hourlyTips, "hour")
                 .join(locDistrib, "hour")
                 .join(locCountHourly, "hour")
-                .selectExpr("hour", "avg_tip", "stddev_tip", "query2.pu_location", "loc_count / hour_loc_count as loc_distrib", "payment_type")
+                .createOrReplaceTempView("partial_result");
+
+        List<Row> rows = spark.sql("SELECT hour, avg_tip, stddev_tip, concat_ws(';', partial_result.pu_location, loc_count / hour_loc_count ) as loc_distr, payment_type " +
+                                  "FROM partial_result " +
+                                  "ORDER BY hour, loc_distr")
+                .groupBy("hour", "avg_tip", "stddev_tip", "payment_type")
+                .agg(collect_list("loc_distr").alias("all_loc_distr"))
                 .collectAsList();
-
-        /*
-         * +-------------------+------------------+------------------+-----------+--------------------+------------+
-         * |               hour|           avg_tip|        stddev_tip|pu_location|         loc_distrib|payment_type|
-         * +-------------------+------------------+------------------+-----------+--------------------+------------+
-         * |2021-12-01 00:00:00|2.9100474683544335|3.7732257355704832|        141|  0.0189873417721519|           1|
-         */
-
-//        List<Query2Result> query2Results = new ArrayList<>();
-//        List<Double> locDistrDoubles = new ArrayList<>();
-//        for (Row row : rows) {
-//            query2Results.add(new Query2Result(row.getTimestamp(0).toString(),
-//                    row.getDouble(1),
-//                    row.getDouble(2),
-//                    row.getLong(3),
-//                    "todo"));
-//        }
-
-        List<CSVQuery2> csvQuery2 = new ArrayList<>();
-
-
-        return csvQuery2;
+        List<CSVQuery2> query2 = new ArrayList<>();
+        for (Row r : rows) {
+            if (rows.indexOf(r) < 20){
+                System.out.println(r);
+            }
+            String hour = r.getTimestamp(0).toString();
+            Double avgTip = r.getDouble(1);
+            Double stdDevTip = r.getDouble(2);
+            Long payment = r.getLong(3);
+            List<String> list = r.getList(4);
+            Double[] array = new Double[NUM_LOCATIONS.intValue()];
+            for (int i = 0; i < NUM_LOCATIONS; i++) {
+                array[i] = 0.0;
+            }
+            for (String s : list) {
+                String[] split = s.split(";");
+                String loc = split[0];
+                array[Integer.parseInt(loc) - 1] = Double.valueOf(split[1]);
+            }
+            StringBuilder s = new StringBuilder();
+            for (int i = 0, arrayLength = array.length; i < arrayLength; i++) {
+                Double d = array[i];
+                s.append(d);
+                if (i != arrayLength - 1){
+                    s.append("-");
+                }
+            }
+            query2.add(new CSVQuery2(hour, avgTip, stdDevTip, payment, s.toString()));
+        }
+        return query2;
     }
 
     @Override

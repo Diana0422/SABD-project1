@@ -37,4 +37,15 @@ public class CSVQuery2 implements QueryResult {
         }
         return sb.toString();
     }
+
+    @Override
+    public String toString() {
+        return "CSVQuery2{" +
+               "hour='" + hour + '\'' +
+               ", avgTip=" + avgTip +
+               ", stdDevTip=" + stdDevTip +
+               ", popPayment=" + popPayment +
+               ", locationDistribution='" + locationDistribution + '\'' +
+               '}';
+    }
 }
