@@ -6,12 +6,13 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class Query<T extends QueryResult> {
     protected final SparkSession spark;
     protected final JavaSparkContext jc;
 
-    protected final boolean forcePreprocessing;
+    protected boolean forcePreprocessing;
 
     public Query() {
         spark = SparkSession
@@ -24,14 +25,14 @@ public abstract class Query<T extends QueryResult> {
         this.forcePreprocessing = false;
     }
 
-    public Query(SparkSession s){
+    public Query(SparkSession s) {
         this.spark = s;
         jc = JavaSparkContext.fromSparkContext(s.sparkContext());
         this.forcePreprocessing = false;
         s.sparkContext().setLogLevel("WARN");
     }
 
-    public Query(boolean forcePreprocessing, SparkSession s){
+    public Query(boolean forcePreprocessing, SparkSession s) {
         this.spark = s;
         jc = JavaSparkContext.fromSparkContext(s.sparkContext());
         this.forcePreprocessing = forcePreprocessing;
@@ -57,5 +58,9 @@ public abstract class Query<T extends QueryResult> {
 
     public boolean isForcePreprocessing() {
         return forcePreprocessing;
+    }
+
+    public void setForcePreprocessing(boolean forcePreprocessing) {
+        this.forcePreprocessing = forcePreprocessing;
     }
 }

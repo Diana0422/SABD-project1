@@ -3,7 +3,6 @@ services:
   ## SERVICE3: NIFI ----------------------------------------------
   nifi:
     image: apache/nifi:latest
-    restart: always
     container_name: nifi
     ports:
       - '8181:8181'   # http://localhost:8181 web ui NiFi
@@ -22,7 +21,6 @@ services:
   spark:
     image: docker.io/bitnami/spark:3
     container_name: spark-master
-    restart: always
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -60,7 +58,6 @@ services:
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
-    restart: always
     ports:
       - '9870:9870' # http://localhost:9870 web ui HDFS.
       - '9000:9000' # HDFS master
@@ -75,7 +72,6 @@ services:
 
   datanode: # se il datanode va in un ciclo di riavvii, bisogna eliminare tutti i container e volumi di questo compose e riavviare.
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: datanode
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
 #    environment:

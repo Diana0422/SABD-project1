@@ -10,6 +10,7 @@ import com.sparkling_taxi.sparksql.QuerySQL2;
 import com.sparkling_taxi.sparksql.QuerySQL3;
 import com.sparkling_taxi.utils.FileUtils;
 import com.sparkling_taxi.utils.Utils;
+import lombok.var;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 
@@ -40,75 +41,114 @@ public class Evaluation {
     }
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException {
         Evaluation e;
-        e = new Evaluation("-nifi&spark", 10);
-        nifiAndSparkPerformance(e);
-        e = new Evaluation("-spark", 40);
+//        e = new Evaluation("-nifi&spark", 10);
+//        nifiAndSparkPerformance(e);
+        e = new Evaluation("-spark", 2);
         sparkPerformance(e);
     }
 
-    private static void nifiAndSparkPerformance(Evaluation e) throws IOException {
-        SparkSession s = SparkSession
-                .builder()
-                .master("spark://spark:7077")
-                .appName("Evaluation")
-                .getOrCreate();
-        List<Query<? extends QueryResult>> queries = Arrays.asList(new Query1(true, s), new Query2(true, s), new Query3(true, s), new QuerySQL1(true, s), new QuerySQL2(true, s), new QuerySQL3(true, s));
+    private static void nifiAndSparkPerformance(Evaluation e) throws IOException, InstantiationException, IllegalAccessException {
+
+        List<Class<? extends Query<? extends QueryResult>>> queriesClasses = Arrays.asList(
+                Query1.class,
+                Query2.class,
+                Query3.class,
+                QuerySQL1.class,
+                QuerySQL2.class,
+                QuerySQL3.class);
         List<EvalResult> evalResults = new ArrayList<>();
-        for (Query<? extends QueryResult> query : queries) {
-            Tuple2<Time, Time> eval1 = e.evaluate(query);
-            e.printResults(eval1, query);
-            evalResults.add(new EvalResult(query.getClass().getSimpleName(), eval1._1, eval1._2));
+        for (Class<? extends Query<? extends QueryResult>> queryClass : queriesClasses) {
+            Query<? extends QueryResult> q = queryClass.newInstance();
+            q.setForcePreprocessing(true);
+            Tuple2<Time, Time> eval1 = e.evaluateAll(q, false);
+            e.printResults(eval1, q);
+            evalResults.add(new EvalResult(queryClass.getSimpleName(), eval1._1, eval1._2));
             System.out.println("======================================================================");
+            q.closeSession();
         }
         e.saveToCSV(evalResults);
         // And finally close the sessions
-        queries.forEach(Query::closeSession);
         e.writer.close();
     }
 
-    private static void sparkPerformance(Evaluation e) throws IOException {
-        SparkSession s = SparkSession
-                .builder()
-                .master("spark://spark:7077")
-                .appName("Evaluation")
-                .getOrCreate();
-        List<Query<? extends QueryResult>> queries = Arrays.asList(new Query1(s), new Query2(s), new Query3(s), new QuerySQL1(s), new QuerySQL2(s), new QuerySQL3(s));
+    private static void sparkPerformance(Evaluation e) throws IOException, InstantiationException, IllegalAccessException {
+        List<Class<? extends Query<? extends QueryResult>>> queriesClasses = Arrays.asList(
+                Query1.class,
+                Query2.class,
+                Query3.class,
+                QuerySQL1.class,
+                QuerySQL2.class,
+                QuerySQL3.class);
         List<EvalResult> evalResults = new ArrayList<>();
-        for (Query<? extends QueryResult> query : queries) {
-            Tuple2<Time, Time> eval1 = e.evaluate(query);
-            e.printResults(eval1, query);
-            evalResults.add(new EvalResult(query.getClass().getSimpleName(), eval1._1, eval1._2));
+        for (Class<? extends Query<? extends QueryResult>> queryClass : queriesClasses) {
+            Query<? extends QueryResult> q = queryClass.newInstance();
+            q.setForcePreprocessing(false);
+            Tuple2<Time, Time> eval1 = e.evaluateProcessing(q, true);
+            e.printResults(eval1, q);
+            evalResults.add(new EvalResult(queryClass.getSimpleName(), eval1._1, eval1._2));
             System.out.println("======================================================================");
         }
         e.saveToCSV(evalResults);
-        // And finally close the sessions
-        queries.forEach(Query::closeSession);
         e.writer.close();
     }
 
-    public <T extends QueryResult> Tuple2<Time, Time> evaluate(Query<T> q) {
-        if (!q.isForcePreprocessing()) {
-            q.preProcessing();
-        }
+    public <T extends QueryResult> Tuple2<Time, Time> evaluateProcessing(Query<T> q, boolean forceRecreateSession) throws InstantiationException, IllegalAccessException {
+        q.preProcessing(); // does the processing only if necessary
         List<Time> timesQuery1 = new ArrayList<>();
         for (int i = 0; i < runs; i++) {
-            Time time;
-            if (q.isForcePreprocessing()) {
-                time = Performance.measureTime(() -> {
-                    q.preProcessing();
-                    q.processing();
-                });
-            } else {
-                time = Performance.measureTime(q::processing);
+            if(forceRecreateSession) {
+                q = q.getClass().newInstance();
+                q.setForcePreprocessing(false);
             }
+            Time time = evaluate(q, i);
             timesQuery1.add(time);
-            System.out.println("Run " + (i + 1) + "/" + runs + " time: " + time);
-            addToCsv(new RunResult(i + 1, q.getClass().getSimpleName(), time));
+            if(forceRecreateSession) q.closeSession();
         }
         // Don't close now the session or nothing will work!
         return calculateMeanStdev(timesQuery1);
+    }
+
+    public <T extends QueryResult> Tuple2<Time, Time> evaluateAll(Query<T> q, boolean forceRecreateSession) throws InstantiationException, IllegalAccessException {
+        boolean forcePreprocessing = q.isForcePreprocessing();
+        List<Time> timesQuery1 = new ArrayList<>();
+        for (int i = 0; i < runs; i++) {
+            if(forceRecreateSession) {
+                q = q.getClass().newInstance();
+                q.setForcePreprocessing(forcePreprocessing);
+            }
+            Time time = evaluate(q, i);
+            timesQuery1.add(time);
+            if(forceRecreateSession) q.closeSession();
+        }
+
+        // Don't close now the session or nothing will work!
+        return calculateMeanStdev(timesQuery1);
+    }
+
+    /**
+     * Evaluates time for a single query
+     *
+     * @param <T>                Query1Result, Query2Result,...
+     * @param q                  is a query
+     * @param runNumber          the index of the run
+     * @return the time for the query
+     */
+    private <T extends QueryResult> Time evaluate(Query<T> q, int runNumber) {
+        Time time;
+        if (q.isForcePreprocessing()) {
+            time = Performance.measureTime(() -> {
+                q.preProcessing();
+                q.processing();
+            });
+        } else {
+            time = Performance.measureTime(q::processing);
+        }
+
+        System.out.println("Run " + (runNumber + 1) + "/" + runs + " time: " + time);
+        addToCsv(new RunResult(runNumber + 1, q.getClass().getSimpleName(), time));
+        return time;
     }
 
     public <T extends QueryResult> void printResults(Tuple2<Time, Time> tt, Query<T> q) {
