@@ -51,10 +51,10 @@ public class QuerySQL1 extends Query<CSVQuery1> {
                 .drop("payment_type")
                 .createOrReplaceTempView("query1");
 
-        String query1 = "SELECT year, month, avg(tip_toll_ratio) as avgRatio, count(*) as count " +
-                        "FROM query1 " +
-                        "GROUP BY year, month " +
-                        "ORDER BY year, month ";
+        String query1 = "SELECT year, month, avg(tip_toll_ratio) as avgRatio, count(*) as count \n" +
+                        "FROM query1 \n" +
+                        "GROUP BY year, month \n" +
+                        "ORDER BY year, month \n";
 
         Dataset<Row> sql = spark.sql(query1);
         return sql.as(Encoders.bean(CSVQuery1.class)).collectAsList();

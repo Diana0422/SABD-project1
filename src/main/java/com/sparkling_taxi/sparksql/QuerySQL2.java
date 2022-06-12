@@ -63,29 +63,30 @@ public class QuerySQL2 extends Query<CSVQuery2> {
                 .withColumn("hour", date_trunc("hour", col("pickup"))) // gets the date and the hour
                 .createOrReplaceTempView("query2");
 
-        Dataset<Row> hourlyTips = spark.sql("SELECT hour, avg(tip_amount) as avg_tip, stddev(tip_amount) as stddev_tip " +
-                                            "FROM query2 " +
-                                            "GROUP BY hour ");
+        Dataset<Row> hourlyTips = spark.sql("SELECT hour, avg(tip_amount) as avg_tip, stddev(tip_amount) as stddev_tip \n" +
+                                            "FROM query2 \n" +
+                                            "GROUP BY hour \n");
         hourlyTips.createOrReplaceTempView("hourly_tips");
 
-        Dataset<Row> locDistrib = spark.sql("SELECT hour, pu_location, count(pu_location) as loc_count " +
-                                            "FROM query2 " +
-                                            "GROUP BY hour, pu_location ");
+        Dataset<Row> locDistrib = spark.sql("SELECT hour, pu_location, count(pu_location) as loc_count \n" +
+                                            "FROM query2 \n" +
+                                            "GROUP BY hour, pu_location\n");
         locDistrib.createOrReplaceTempView("loc_distribution");
 
-        Dataset<Row> locCountHourly = spark.sql("SELECT hour, count(pu_location) as hour_loc_count " +
-                                                "FROM query2 " +
-                                                "GROUP BY hour");
+        Dataset<Row> locCountHourly = spark.sql("SELECT hour, count(pu_location) as hour_loc_count \n" +
+                                                "FROM query2 \n" +
+                                                "GROUP BY hour\n");
         locDistrib.createOrReplaceTempView("hourly_loc_count");
 
-        Dataset<Row> paymentDistrib = spark.sql("SELECT hour, payment_type, count(*) as occurrences " +
-                                                "FROM query2 " +
-                                                "GROUP BY hour, payment_type " +
-                                                "ORDER BY hour");
+        Dataset<Row> paymentDistrib = spark.sql("SELECT hour, payment_type, count(*) as occurrences \n" +
+                                                "FROM query2 \n" +
+                                                "GROUP BY hour, payment_type \n" +
+                                                "ORDER BY hour\n");
         paymentDistrib.createOrReplaceTempView("payment_distribution");
 
-        spark.sql("SELECT hour, payment_type, occurrences, row_number() over (PARTITION BY hour ORDER BY occurrences DESC) as rank " +
-                  "FROM payment_distribution ")
+        spark.sql("SELECT hour, payment_type, occurrences, \n" +
+                  "       row_number() over (PARTITION BY hour ORDER BY occurrences DESC) as rank \n" +
+                  "FROM payment_distribution \n")
                 .where("rank = 1")
                 .select("hour", "payment_type")
                 .join(hourlyTips, "hour")
@@ -93,9 +94,10 @@ public class QuerySQL2 extends Query<CSVQuery2> {
                 .join(locCountHourly, "hour")
                 .createOrReplaceTempView("partial_result");
 
-        List<Row> rows = spark.sql("SELECT hour, avg_tip, stddev_tip, concat_ws(';', partial_result.pu_location, loc_count / hour_loc_count) as loc_distr, payment_type " +
-                                   "FROM partial_result " +
-                                   "ORDER BY hour, loc_distr")
+        List<Row> rows = spark.sql("SELECT hour, avg_tip, stddev_tip, payment_type,\n" +
+                                   "       concat_ws(';', partial_result.pu_location, loc_count / hour_loc_count) as loc_distr\n" +
+                                   "FROM partial_result \n" +
+                                   "ORDER BY hour, loc_distr\n")
                 .groupBy("hour", "avg_tip", "stddev_tip", "payment_type")
                 .agg(collect_list("loc_distr").alias("all_loc_distr"))
                 .collectAsList();
