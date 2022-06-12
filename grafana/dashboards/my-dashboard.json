@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1654968263119,
+  "iteration": 1655019706632,
   "links": [
     {
       "icon": "external link",
@@ -181,7 +181,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Query 3 - Average Num. Passengers",
+      "title": "Query 3 - Total Trips",
       "transformations": [
         {
           "id": "filterFieldsByName",
@@ -722,7 +722,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "dark-yellow",
                 "value": null
               },
               {
@@ -771,71 +771,6 @@
       "title": "Query 2 - Top Payment Type",
       "transformations": [],
       "transparent": true,
-      "type": "stat"
-    },
-    {
-      "datasource": "-- Dashboard --",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {},
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "dark-blue",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 3,
-        "x": 21,
-        "y": 22
-      },
-      "id": 34,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "/.*/",
-          "values": true
-        },
-        "text": {},
-        "textMode": "auto"
-      },
-      "pluginVersion": "7.1.5",
-      "targets": [
-        {
-          "panelId": 8,
-          "refId": "A"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Eviction Policy",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "maxmemory_policy"
-              ]
-            }
-          }
-        }
-      ],
       "type": "stat"
     },
     {
@@ -1647,6 +1582,78 @@
         }
       ],
       "type": "bargauge"
+    },
+    {
+      "datasource": "-- Dashboard --",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 21,
+        "y": 34
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "/.*/",
+          "values": true
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.1.5",
+      "scopedVars": {
+        "redis": {
+          "selected": true,
+          "text": "Redis-Cache",
+          "value": "Redis-Cache"
+        }
+      },
+      "targets": [
+        {
+          "panelId": 8,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Eviction Policy",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "maxmemory_policy"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "stat"
     },
     {
       "collapsed": false,
@@ -2507,8 +2514,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "text": "20",
-          "value": "20"
+          "text": "21",
+          "value": "21"
         },
         "hide": 0,
         "includeAll": false,
@@ -2617,12 +2624,12 @@
             "value": "19"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "20",
             "value": "20"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "21",
             "value": "21"
           },
@@ -2646,8 +2653,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "text": "2022-02-17",
-          "value": "2022-02-17"
+          "text": "2022-02-08",
+          "value": "2022-02-08"
         },
         "hide": 0,
         "includeAll": false,
@@ -2696,7 +2703,7 @@
             "value": "2022-01-27"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -2716,7 +2723,7 @@
             "value": "2022-01-24"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -2746,7 +2753,7 @@
             "value": "2021-12-20"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -2921,7 +2928,7 @@
             "value": "2022-02-03"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -3176,12 +3183,12 @@
             "value": "2022-02-16"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -3561,7 +3568,7 @@
             "value": "2022-02-25"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -3611,7 +3618,7 @@
             "value": "2022-02-24"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -3681,7 +3688,7 @@
             "value": "2022-01-17"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -3716,7 +3723,7 @@
             "value": "2022-02-03"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -3986,7 +3993,7 @@
             "value": "2022-02-16"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -4046,7 +4053,7 @@
             "value": "2022-02-16"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -4156,7 +4163,7 @@
             "value": "2021-12-31"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -4821,7 +4828,7 @@
             "value": "2022-01-06"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -5391,7 +5398,7 @@
             "value": "2021-12-03"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -5751,7 +5758,7 @@
             "value": "2021-12-13"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -6486,7 +6493,7 @@
             "value": "2021-12-26"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -6681,7 +6688,7 @@
             "value": "2022-01-22"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -6861,7 +6868,7 @@
             "value": "2022-01-31"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -7261,7 +7268,7 @@
             "value": "2022-02-13"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "2022-02-17",
             "value": "2022-02-17"
           },
@@ -7531,7 +7538,7 @@
             "value": "2021-12-20"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -7786,7 +7793,7 @@
             "value": "2022-01-11"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -7916,7 +7923,7 @@
             "value": "2021-12-12"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -7936,7 +7943,7 @@
             "value": "2022-02-07"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "2022-02-08",
             "value": "2022-02-08"
           },
@@ -8083,5 +8090,5 @@
   "timezone": "",
   "title": "SABD - Project 1",
   "uid": "2J8ln097k",
-  "version": 8
+  "version": 12
 }
