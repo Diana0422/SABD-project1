@@ -80,7 +80,8 @@ public class Query3 extends Query<Query3Result> {
                 .mapToPair(pair -> new Tuple2<>(pair._1.getDay(), new Tuple2<>(pair._1.getDestination(), pair._2)))
                 // group by day: (day, Iterable[locID, day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount)])
                 .groupByKey()
-                // gets the top5 locations. After flatMapValues: (day, (location, day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount))
+                // gets the top5 locations.
+                // After flatMapValues: (day, (location, day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount))
                 .flatMapValues(t -> {
                     List<Tuple2<Long, Query3Calc>> list = StreamSupport.stream(t.spliterator(), false).collect(Collectors.toList());
                     List<Tuple2<Long, Query3Calc>> top = new ArrayList<>();

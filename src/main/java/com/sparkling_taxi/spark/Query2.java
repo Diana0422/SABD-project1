@@ -150,23 +150,23 @@ public class Query2 extends Query<Query2Result> {
      * - most popular payment method each hour (MAX number of occurrence)
      */
     public static List<Query2Result> query2PerHourWithGroupBy(SparkSession spark, String file) {
-        JavaRDD<Query2Bean> rdd = spark.read().parquet(file)
+        return spark.read().parquet(file)
                 .as(Encoders.bean(Query2Bean.class))
-                .toJavaRDD();
-        // (hour, Query2Calc(trip_count=1, tip_amount, square_tip_amount, payment_type_distribution, PULocation_trips_distribution))
-        // Payment_type_distribution is a Map with value 1 for the payment type of the trip and 0 for the other 5 payment types
-        // PULocation_trips_distribution is a Map with value 1 for the departure location of the trip and 0 for the other 264 locations
-        JavaPairRDD<String, Query2Calc> hourCalc = rdd.mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2Calc(1, bean)));
-        // sums all previous data and the result is:
-        // (hour, Query2Calc(total_trip_count, sum_of_tips, sum_of_square_tips, final_payment_type_distribution, final_PULocation_trips_distribution))
-        // where final_payment_type_distribution is a Map with the total number of trips paid with each payment type
-        // and final_PULocation_trips_distribution is a Map with the total number of trips from each location
-        JavaPairRDD<String, Query2Calc> reduced = hourCalc.reduceByKey(Query2Calc::sumWith);
-        // computes means, standard deviations, max payment types and location distribution of trips for each hour
-        // (hour, Query2Result(avgTip, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations)
-        // where distribution_of_trips_for_265_locations is a Map with the percentage of trips from each location
-        JavaRDD<Query2Result> result = reduced.map(Query2Result::new);
-        return result.collect();
+                .toJavaRDD()
+                // (hour, Query2Calc(trip_count=1, tip_amount, square_tip_amount, payment_type_distribution, PULocation_trips_distribution))
+                // Payment_type_distribution is a Map with value 1 for the payment type of the trip and 0 for the other 5 payment types
+                // PULocation_trips_distribution is a Map with value 1 for the departure location of the trip and 0 for the other 264 locations
+                .mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2Calc(1, bean)))
+                // sums all previous data and the result is:
+                // (hour, Query2Calc(total_trip_count, sum_of_tips, sum_of_square_tips, final_payment_type_distribution, final_PULocation_trips_distribution))
+                // where final_payment_type_distribution is a Map with the total number of trips paid with each payment type
+                // and final_PULocation_trips_distribution is a Map with the total number of trips from each location
+                .reduceByKey(Query2Calc::sumWith)
+                // computes means, standard deviations, max payment types and location distribution of trips for each hour
+                // (hour, Query2Result(avgTip, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations)
+                // where distribution_of_trips_for_265_locations is a Map with the percentage of trips from each location
+                .map(Query2Result::new)
+                .collect();
     }
 
     private enum PaymentType {
