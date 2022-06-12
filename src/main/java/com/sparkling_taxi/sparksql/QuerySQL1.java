@@ -8,6 +8,7 @@ import com.sparkling_taxi.utils.Utils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 
 import java.util.List;
 
@@ -16,6 +17,14 @@ import static com.sparkling_taxi.utils.Const.PRE_PROCESSING_TEMPLATE_Q1;
 import static org.apache.spark.sql.functions.*;
 
 public class QuerySQL1 extends Query<CSVQuery1> {
+    public QuerySQL1(SparkSession s) {
+        super(s);
+    }
+
+    public QuerySQL1(boolean b, SparkSession s) {
+        super(b, s);
+    }
+
     public static void main(String[] args) {
         QuerySQL1 q1 = new QuerySQL1();
         q1.preProcessing(); // NiFi pre-processing
@@ -29,7 +38,7 @@ public class QuerySQL1 extends Query<CSVQuery1> {
     }
 
     public void preProcessing() {
-        Utils.doPreProcessing(FILE_Q1, PRE_PROCESSING_TEMPLATE_Q1);
+        Utils.doPreProcessing(FILE_Q1, PRE_PROCESSING_TEMPLATE_Q1, forcePreprocessing);
     }
 
     public List<CSVQuery1> processing() {

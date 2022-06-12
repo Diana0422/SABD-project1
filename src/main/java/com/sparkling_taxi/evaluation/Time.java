@@ -51,7 +51,7 @@ public class Time {
         } else if (seconds > 0) {
             return String.format("Seconds: %d, Millis: %d", seconds, millis);
         } else {
-            return String.format("Time in millis: %d", millis);
+            return String.format("Millis: %d", millis);
         }
     }
 }

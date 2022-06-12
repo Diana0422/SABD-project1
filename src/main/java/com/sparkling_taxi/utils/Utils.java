@@ -1,8 +1,6 @@
 package com.sparkling_taxi.utils;
 
-import com.sparkling_taxi.evaluation.Time;
 import com.sparkling_taxi.nifi.NifiTemplateInstance;
-import scala.Tuple2;
 
 import java.io.File;
 import java.sql.Timestamp;
@@ -14,6 +12,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.sparkling_taxi.utils.FileUtils.deleteFromHDFS;
 import static com.sparkling_taxi.utils.FileUtils.hasFileHDFS;
 import static com.sparkling_taxi.utils.Const.*;
 
@@ -151,8 +150,11 @@ public class Utils {
         }
     }
 
-    public static void doPreProcessing(String file_for_query, String preprocessing_template_for_query){
+    public static void doPreProcessing(String file_for_query, String preprocessing_template_for_query, boolean force){
         downloadFilesIfNeeded();
+        if (force){
+            deleteFromHDFS(file_for_query);
+        }
         if (!hasFileHDFS(file_for_query)) {
             NifiTemplateInstance n = new NifiTemplateInstance(preprocessing_template_for_query, NIFI_URL);
             n.uploadAndInstantiateTemplate();

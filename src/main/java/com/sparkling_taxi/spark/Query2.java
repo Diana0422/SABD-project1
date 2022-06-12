@@ -21,6 +21,14 @@ import static org.apache.spark.sql.functions.split;
 // hdfs dfs -put Query2.parquet /home/dataset-batch/Query2.parquet
 public class Query2 extends Query<Query2Result> {
 
+    public Query2(SparkSession s) {
+        super(s);
+    }
+
+    public Query2(boolean b, SparkSession s) {
+        super(b, s);
+    }
+
     public static void main(String[] args) {
         Query2 q = new Query2();
         q.preProcessing();
@@ -34,7 +42,7 @@ public class Query2 extends Query<Query2Result> {
     }
 
     public void preProcessing() {
-        Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2);
+        Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2, forcePreprocessing);
     }
 
     public List<Query2Result> processing() {
@@ -46,7 +54,6 @@ public class Query2 extends Query<Query2Result> {
         List<CSVQuery2> csvListResult = jc.parallelize(result)
                 // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
                 // so we force it to use only 1 partition
-                .repartition(1)
                 .map(CSVQuery2::new)
                 .collect();
         storeToCSVOnHDFS(csvListResult, this);
@@ -64,6 +71,40 @@ public class Query2 extends Query<Query2Result> {
         }
         DataFrameWriter<Row> finalResult = rowDataset
                 .drop("locationDistribution")
+                .coalesce(1)
+                .select("hour", "avgTip", "stdDevTip", "popPayment", "perc_PU1", "perc_PU2", "perc_PU3", "perc_PU4", "perc_PU5", "perc_PU6",
+                        "perc_PU7", "perc_PU8", "perc_PU9", "perc_PU10", "perc_PU11", "perc_PU12", "perc_PU13", "perc_PU14", "perc_PU15",
+                        "perc_PU16", "perc_PU17", "perc_PU18", "perc_PU19", "perc_PU20", "perc_PU21", "perc_PU22", "perc_PU23", "perc_PU24",
+                        "perc_PU25", "perc_PU26", "perc_PU27", "perc_PU28", "perc_PU29", "perc_PU30", "perc_PU31", "perc_PU32", "perc_PU33",
+                        "perc_PU34", "perc_PU35", "perc_PU36", "perc_PU37", "perc_PU38", "perc_PU39", "perc_PU40", "perc_PU41", "perc_PU42",
+                        "perc_PU43", "perc_PU44", "perc_PU45", "perc_PU46", "perc_PU47", "perc_PU48", "perc_PU49", "perc_PU50", "perc_PU51",
+                        "perc_PU52", "perc_PU53", "perc_PU54", "perc_PU55", "perc_PU56", "perc_PU57", "perc_PU58", "perc_PU59", "perc_PU60",
+                        "perc_PU61", "perc_PU62", "perc_PU63", "perc_PU64", "perc_PU65", "perc_PU66", "perc_PU67", "perc_PU68", "perc_PU69",
+                        "perc_PU70", "perc_PU71", "perc_PU72", "perc_PU73", "perc_PU74", "perc_PU75", "perc_PU76", "perc_PU77", "perc_PU78",
+                        "perc_PU79", "perc_PU80", "perc_PU81", "perc_PU82", "perc_PU83", "perc_PU84", "perc_PU85", "perc_PU86", "perc_PU87",
+                        "perc_PU88", "perc_PU89", "perc_PU90", "perc_PU91", "perc_PU92", "perc_PU93", "perc_PU94", "perc_PU95", "perc_PU96",
+                        "perc_PU97", "perc_PU98", "perc_PU99", "perc_PU100", "perc_PU101", "perc_PU102", "perc_PU103", "perc_PU104",
+                        "perc_PU105", "perc_PU106", "perc_PU107", "perc_PU108", "perc_PU109", "perc_PU110", "perc_PU111", "perc_PU112",
+                        "perc_PU113", "perc_PU114", "perc_PU115", "perc_PU116", "perc_PU117", "perc_PU118", "perc_PU119", "perc_PU120",
+                        "perc_PU121", "perc_PU122", "perc_PU123", "perc_PU124", "perc_PU125", "perc_PU126", "perc_PU127", "perc_PU128",
+                        "perc_PU129", "perc_PU130", "perc_PU131", "perc_PU132", "perc_PU133", "perc_PU134", "perc_PU135", "perc_PU136",
+                        "perc_PU137", "perc_PU138", "perc_PU139", "perc_PU140", "perc_PU141", "perc_PU142", "perc_PU143", "perc_PU144",
+                        "perc_PU145", "perc_PU146", "perc_PU147", "perc_PU148", "perc_PU149", "perc_PU150", "perc_PU151", "perc_PU152",
+                        "perc_PU153", "perc_PU154", "perc_PU155", "perc_PU156", "perc_PU157", "perc_PU158", "perc_PU159", "perc_PU160",
+                        "perc_PU161", "perc_PU162", "perc_PU163", "perc_PU164", "perc_PU165", "perc_PU166", "perc_PU167", "perc_PU168",
+                        "perc_PU169", "perc_PU170", "perc_PU171", "perc_PU172", "perc_PU173", "perc_PU174", "perc_PU175", "perc_PU176",
+                        "perc_PU177", "perc_PU178", "perc_PU179", "perc_PU180", "perc_PU181", "perc_PU182", "perc_PU183", "perc_PU184",
+                        "perc_PU185", "perc_PU186", "perc_PU187", "perc_PU188", "perc_PU189", "perc_PU190", "perc_PU191", "perc_PU192",
+                        "perc_PU193", "perc_PU194", "perc_PU195", "perc_PU196", "perc_PU197", "perc_PU198", "perc_PU199", "perc_PU200",
+                        "perc_PU201", "perc_PU202", "perc_PU203", "perc_PU204", "perc_PU205", "perc_PU206", "perc_PU207", "perc_PU208",
+                        "perc_PU209", "perc_PU210", "perc_PU211", "perc_PU212", "perc_PU213", "perc_PU214", "perc_PU215", "perc_PU216",
+                        "perc_PU217", "perc_PU218", "perc_PU219", "perc_PU220", "perc_PU221", "perc_PU222", "perc_PU223", "perc_PU224",
+                        "perc_PU225", "perc_PU226", "perc_PU227", "perc_PU228", "perc_PU229", "perc_PU230", "perc_PU231", "perc_PU232",
+                        "perc_PU233", "perc_PU234", "perc_PU235", "perc_PU236", "perc_PU237", "perc_PU238", "perc_PU239", "perc_PU240",
+                        "perc_PU241", "perc_PU242", "perc_PU243", "perc_PU244", "perc_PU245", "perc_PU246", "perc_PU247", "perc_PU248",
+                        "perc_PU249", "perc_PU250", "perc_PU251", "perc_PU252", "perc_PU253", "perc_PU254", "perc_PU255", "perc_PU256",
+                        "perc_PU257", "perc_PU258", "perc_PU259", "perc_PU260", "perc_PU261", "perc_PU262", "perc_PU263", "perc_PU264", "perc_PU265")
+                .sort("hour")
                 .write()
                 .mode("overwrite")
                 .option("header", true)

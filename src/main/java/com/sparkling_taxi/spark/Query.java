@@ -11,6 +11,8 @@ public abstract class Query<T extends QueryResult> {
     protected final SparkSession spark;
     protected final JavaSparkContext jc;
 
+    protected final boolean forcePreprocessing;
+
     public Query() {
         spark = SparkSession
                 .builder()
@@ -19,6 +21,21 @@ public abstract class Query<T extends QueryResult> {
                 .getOrCreate();
         jc = JavaSparkContext.fromSparkContext(spark.sparkContext());
         spark.sparkContext().setLogLevel("WARN");
+        this.forcePreprocessing = false;
+    }
+
+    public Query(SparkSession s){
+        this.spark = s;
+        jc = JavaSparkContext.fromSparkContext(s.sparkContext());
+        this.forcePreprocessing = false;
+        s.sparkContext().setLogLevel("WARN");
+    }
+
+    public Query(boolean forcePreprocessing, SparkSession s){
+        this.spark = s;
+        jc = JavaSparkContext.fromSparkContext(s.sparkContext());
+        this.forcePreprocessing = forcePreprocessing;
+        s.sparkContext().setLogLevel("WARN");
     }
 
     public void closeSession() {
@@ -36,5 +53,9 @@ public abstract class Query<T extends QueryResult> {
         String newName = this.getClass().getSimpleName() + ".csv";
         String name = FileUtils.getFirstFileStartWithHDFS(outHDFS, "part-").orElse(newName);
         FileUtils.copyFromHDFS(outHDFS + "/" + name, resultDir + "/" + newName);
+    }
+
+    public boolean isForcePreprocessing() {
+        return forcePreprocessing;
     }
 }
