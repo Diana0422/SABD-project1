@@ -74,14 +74,14 @@ public class QuerySQL3 extends Query<CSVQuery3> {
         sql1.createOrReplaceTempView("sql1");
 
         // row_number: assigns a row number to each occurrence in the day to each location, and orders them in descending order
-        String calcTopRanking = "SELECT day, location, occurrence, avg_passengers, avg_fare_amount, stddev_fare_amount," +
-                                "row_number() over (PARTITION BY day ORDER BY occurrence DESC) as rank " +
-                                "FROM sql1";
+        String calcTopRanking = "SELECT day, location, occurrence, avg_passengers, avg_fare_amount, stddev_fare_amount,\n" +
+                "row_number() over (PARTITION BY day ORDER BY occurrence DESC) as rank \n" +
+                "FROM sql1\n";
         Dataset<Row> sql2 = spark.sql(calcTopRanking);
         sql2.createOrReplaceTempView("sql2");
 
         // limits to get only the top 5 locations that day
-        String calcTop5 = "SELECT * FROM sql2 WHERE rank <= 5";
+        String calcTop5 = "SELECT * FROM sql2 WHERE rank <= 5\n";
         List<Row> query3 = spark.sql(calcTop5).collectAsList();
 
         Map<String, String> zones = spark.read()
