@@ -13,7 +13,7 @@
     ]
   },
   "description": "Redis Dashboard",
-  "editable": true,
+  "editable": false,
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
@@ -8090,5 +8090,5 @@
   "timezone": "",
   "title": "SABD - Project 1",
   "uid": "2J8ln097k",
-  "version": 12
+  "version": 13
 }
