@@ -94,13 +94,6 @@ public class Query3 extends Query<Query3Result> {
                     }
                     return top.iterator();
                 })
-                // this map converts the  in Query3Result, computing averages and standard deviations.
-                // after this map we have the result, five tuples like the following for each day:
-                // (day, location1, avg_passengers1, avg_fare_amount1, stddev_fare_amount1)
-                // (day, location2, avg_passengers2, avg_fare_amount2, stddev_fare_amount2)
-                // (day, location3, avg_passengers3, avg_fare_amount3, stddev_fare_amount3)
-                // (day, location4, avg_passengers4, avg_fare_amount4, stddev_fare_amount4)
-                // (day, location5, avg_passengers5, avg_fare_amount5, stddev_fare_amount5)
                 .map(resultPair -> new Query3Result(resultPair._1, resultPair._2._1, resultPair._2._2))
                 .collect();
     }
