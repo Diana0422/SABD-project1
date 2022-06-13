@@ -81,11 +81,11 @@ http://localhost:8000/d/2J8ln097k/sabd-project-1?orgId=1
 [![nifi](https://svn-eu.apache.org/repos/asf/nifi/site/trunk/assets/images/nifiDrop.svg)](https://nifi.apache.org)
 [![spark](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Apache_Spark_logo.svg/320px-Apache_Spark_logo.svg.png)](https://spark.apache.org)
 <a href="https://redis.io">
-<img src="https://static.cdnlogo.com/logos/r/31/redis.svg" width="200" height="200">
+<img src="https://static.cdnlogo.com/logos/r/31/redis.svg" width="150" height="150">
 </a>
 <a href="https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html">
-<img src="https://cdn.worldvectorlogo.com/logos/hadoop.svg" width="200" height="200">
+<img src="https://cdn.worldvectorlogo.com/logos/hadoop.svg" width="150" height="150">
 </a>
 <a href="https://grafana.com">
-<img src="https://cdn.worldvectorlogo.com/logos/grafana.svg" width="200" height="200">
+<img src="https://cdn.worldvectorlogo.com/logos/grafana.svg" width="150" height="150">
 </a>
