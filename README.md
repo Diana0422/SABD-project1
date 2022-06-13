@@ -21,8 +21,58 @@ This project uses **Docker** and **DockerCompose** to instantiate the HDFS, Spar
 * [get docker](https://docs.docker.com/get-docker/)
 * [install docker compose](https://docs.docker.com/compose/install/)
 
+## Deployment:
+To deploy this project use **DockerCompose**:
+``` 
+docker compose up --scale spark-worker <num-worker-replicas> --scale datanode <num-datanode-replicas>
+```
+`--scale` permits to modify the number of replicas of the containers and services.
+
+## Execute Query:
+> **_NOTE:_**  Do this after the [deployment phase](##Deployment:).
+Open a terminal in the project base directory and follow these steps
+
+To execute a query and the build is not yet executed use the following scripts:
+> **_NOTE:_**  These comands also trigger the execution of the query once the project is built. 
+* Bash:
+```
+./scripts/submit_query.sh <num-query>
+```
+* Shell:
+```
+.\scripts\submit_query.cmd <num-query>
+```
+
+To execute a query and you already built the project, then you can use the following scripts:
+* Bash:
+```
+./scripts/run_query.sh <num-query>
+```
+* Shell:
+```
+.\scripts\run_query.bat <num-query>
+```
+where `num-query` is the number of the query to execute:
+ - 1 -> Query1
+ - 2 -> Query2
+ - 3 -> Query3
+ - 4 -> Query1SQL
+ - 5 -> Query2SQL
+ - 6 -> Query3SQL
+
+## UIs:
+* **NiFi**: http://localhost:8181/nifi
+* **HDFS(Master)**: http://localhost:9870/
+* **Grafana**: http://localhost:8000/
+* **Spark(Master)**: http://localhost:8080/
+* **Spark(Worker)**: http://localhost:4040/
+
+You can find the **Grafana Dashboard** of the project at:
+http://localhost:8000/d/2J8ln097k/sabd-project-1?orgId=1
+
+
 ## Frameworks:
-* **Nifi**: used for data acquisition and preprocessing
+* **NiFi**: used for data acquisition and preprocessing
 * **Spark**: used for data batch processing
 * **HDFS**: used as data storage. Contains the the batch to analyze in the processing layer and also contains the processing output.
 * **Redis**: used to cache output data to be read by the data visualization layer.
