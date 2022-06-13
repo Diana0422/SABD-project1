@@ -150,6 +150,12 @@ public class Utils {
         }
     }
 
+    /**
+     * The actual preprocessing execution calling the NiFiAPI
+     * @param file_for_query the input filename on HDFS of the input dataset of the Query
+     * @param preprocessing_template_for_query the name of the NiFi template to use to preprocess
+     * @param force force the preprocessing by deleting input file already present on HDFS
+     */
     public static void doPreProcessing(String file_for_query, String preprocessing_template_for_query, boolean force){
         downloadFilesIfNeeded();
         if (force){

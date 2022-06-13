@@ -40,11 +40,11 @@ public class CSVQuery3 implements QueryResult {
 
     public CSVQuery3(String day, List<String> locations, List<String> trips, List<Double> meanPassengers, List<Double> meanFareAmounts, List<Double> stdDevFareAmounts) {
         this.day = day;
-        this.location1 = locations.get(0); // TODO: zone mapping
-        this.location2 = locations.get(1); // TODO: zone mapping
-        this.location3 = locations.get(2); // TODO: zone mapping
-        this.location4 = locations.get(3); // TODO: zone mapping
-        this.location5 = locations.get(4); // TODO: zone mapping
+        this.location1 = locations.get(0);
+        this.location2 = locations.get(1);
+        this.location3 = locations.get(2);
+        this.location4 = locations.get(3);
+        this.location5 = locations.get(4);
         this.trips1 = trips.get(0);
         this.trips2 = trips.get(1);
         this.trips3 = trips.get(2);

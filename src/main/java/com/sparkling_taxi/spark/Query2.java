@@ -4,8 +4,6 @@ import com.sparkling_taxi.bean.QueryResult;
 import com.sparkling_taxi.bean.query2.*;
 import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.utils.Utils;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.*;
 import redis.clients.jedis.Jedis;
 import scala.Tuple2;
@@ -41,15 +39,27 @@ public class Query2 extends Query<Query2Result> {
         super();
     }
 
+    /**
+     * Triggers the execution of the preprocessing using NiFiAPI
+     */
     public void preProcessing() {
         Utils.doPreProcessing(FILE_Q2, PRE_PROCESSING_TEMPLATE_Q2, forcePreprocessing);
     }
 
+    /**
+     * Triggers the execution of the Query using Spark
+     * @return a list of Query2Result instances
+     */
     public List<Query2Result> processing() {
         System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
-        return query2PerHourWithGroupBy(spark, FILE_Q2);
+        return query2(spark, FILE_Q2);
     }
 
+    /**
+     * Stores the result of the query given in input on the HDFS and also stores the same data on
+     * Redis (serving layer).
+     * @param result a list of Query2Result instances (one for each row)
+     */
     public void postProcessing(List<Query2Result> result) {
         List<CSVQuery2> csvListResult = jc.parallelize(result)
                 // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
@@ -60,6 +70,12 @@ public class Query2 extends Query<Query2Result> {
         storeQuery2ToRedis(csvListResult);
     }
 
+    /**
+     * Stores the final output of the query given in input into the HDFS.
+     * @param query2CsvList the list of CSVQuery2 instances to save in the HDFS as a CSV file
+     * @param q the query executed
+     * @param <T> the specific type of Query executed
+     */
     public static <T extends QueryResult> void storeToCSVOnHDFS(List<CSVQuery2> query2CsvList, Query<T> q) {
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
         Dataset<Row> rowDataset = q.spark.createDataFrame(query2CsvList, CSVQuery2.class);
@@ -118,7 +134,10 @@ public class Query2 extends Query<Query2Result> {
 
     }
 
-
+    /**
+     * Saves in Redis the final output ad a HashMap
+     * @param csvListResult the list of CSVQuery2 output instances
+     */
     public static void storeQuery2ToRedis(List<CSVQuery2> csvListResult) {
         // REDIS
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
@@ -149,41 +168,22 @@ public class Query2 extends Query<Query2Result> {
      * - standard deviation of tips each hour
      * - most popular payment method each hour (MAX number of occurrence)
      */
-    public static List<Query2Result> query2PerHourWithGroupBy(SparkSession spark, String file) {
+    public static List<Query2Result> query2(SparkSession spark, String file) {
         return spark.read().parquet(file)
                 .as(Encoders.bean(Query2Bean.class))
                 .toJavaRDD()
                 // (hour, Query2Calc(trip_count=1, tip_amount, square_tip_amount, payment_type_distribution, PULocation_trips_distribution))
-                // Payment_type_distribution is a Map with value 1 for the payment type of the trip and 0 for the other 5 payment types
-                // PULocation_trips_distribution is a Map with value 1 for the departure location of the trip and 0 for the other 264 locations
+                // Payment_type_distribution is an array of Long with value 1 for the payment type of the trip and 0 for the other 5 payment types
+                // PULocation_trips_distribution is an array of Long with value 1 for the departure location of the trip and 0 for the other 264 locations
                 .mapToPair(bean -> new Tuple2<>(Utils.getHourDay(bean.getTpep_pickup_datetime()), new Query2Calc(1, bean)))
-                // sums all previous data and the result is:
-                // (hour, Query2Calc(total_trip_count, sum_of_tips, sum_of_square_tips, final_payment_type_distribution, final_PULocation_trips_distribution))
-                // where final_payment_type_distribution is a Map with the total number of trips paid with each payment type
-                // and final_PULocation_trips_distribution is a Map with the total number of trips from each location
-                .reduceByKey(Query2Calc::sumWith)
+                /* after mapToPair: (hourTs, Query2Calc(count =1, tipAmount=bean.getTipAmount(), squareTipAmount=tipAmount*tipAmount, paymentDistribution = [0L, .., 1L, ..0L], locationDistribution = [0L, .., 1L, ..0L])) */
+                .reduceByKey(Query2Calc::sumWith) // sums all previous data by hour
+                /* after reduceByKey: (hourTs, Query2Calc(total_trip_count, sum_of_tips, sum_of_square_tips, final_payment_type_distribution, final_PULocation_trips_distribution)) */
                 // computes means, standard deviations, max payment types and location distribution of trips for each hour
-                // (hour, Query2Result(avgTip, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations)
-                // where distribution_of_trips_for_265_locations is a Map with the percentage of trips from each location
-                .map(Query2Result::new)
+                // (hourTs, Query2Result(avgTip, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations)
+                .map(Query2Result::new)// computes average, standard deviations, max payment types and location distribution of trips for each hour
+                /* after map: (Query2Result(hour=hourString, avgTip=sum_of_trips/total_trip_count,    ))*/
                 .collect();
     }
 
-    private enum PaymentType {
-        CreditCard(1),
-        Cash(2),
-        NoCharge(3),
-        Dispute(4),
-        Unknown(5),
-        VoidedTrip(6);
-        private final int num;
-
-        PaymentType(int num) {
-            this.num = num;
-        }
-
-        public int getNum() {
-            return num;
-        }
-    }
 }

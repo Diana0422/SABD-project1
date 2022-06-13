@@ -62,11 +62,11 @@ public class CSVQuery3SQL implements QueryResult {
                         String stDevFareAmount4,
                         String stDevFareAmount5) {
         this.day = day;
-        this.location1 = location1; // TODO: zone mapping
-        this.location2 = location2; // TODO: zone mapping
-        this.location3 = location3; // TODO: zone mapping
-        this.location4 = location4; // TODO: zone mapping
-        this.location5 = location5; // TODO: zone mapping
+        this.location1 = location1;
+        this.location2 = location2;
+        this.location3 = location3;
+        this.location4 = location4;
+        this.location5 = location5;
         this.trips1 = trips1;
         this.trips2 = trips2;
         this.trips3 = trips3;

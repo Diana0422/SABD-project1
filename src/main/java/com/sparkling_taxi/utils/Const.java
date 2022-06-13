@@ -3,7 +3,6 @@ package com.sparkling_taxi.utils;
 public class Const {
     private Const() {
     }
-
     public static final String DOWNLOAD_TEMPLATE = "/home/templates/download_to_hdfs.xml";
     public static final String RESULT_DIR1 = "/home/results/query1";
     public static final String RESULT_DIR2 = "/home/results/query2";

@@ -30,6 +30,12 @@ This project uses **Docker** and **DockerCompose** to instantiate the HDFS, Spar
 
 [![nifi](https://svn-eu.apache.org/repos/asf/nifi/site/trunk/assets/images/nifiDrop.svg)](https://nifi.apache.org)
 [![spark](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Apache_Spark_logo.svg/320px-Apache_Spark_logo.svg.png)](https://spark.apache.org)
-[![redis](https://static.cdnlogo.com/logos/r/31/redis.svg)](https://redis.io)
-[![hdfs](https://cdn.worldvectorlogo.com/logos/hadoop.svg)](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html)
-[![grafana](https://cdn.worldvectorlogo.com/logos/grafana.svg)](https://grafana.com)
+<a href="https://redis.io">
+<img src="https://static.cdnlogo.com/logos/r/31/redis.svg" width="200" height="200">
+</a>
+<a href="https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html">
+<img src="https://cdn.worldvectorlogo.com/logos/hadoop.svg" width="200" height="200">
+</a>
+<a href="https://grafana.com">
+<img src="https://cdn.worldvectorlogo.com/logos/grafana.svg" width="200" height="200">
+</a>
