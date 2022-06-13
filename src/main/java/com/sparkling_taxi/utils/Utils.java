@@ -26,40 +26,6 @@ public class Utils {
         return System.getProperty("os.name").equals("linux");
     }
 
-    /**
-     * @return true if on windows is installed C:\\Hadoop\\hadoop-2.8.1\\bin\\WINUTILS.EXE
-     */
-    private static boolean windowsCheck() {
-        if (System.getProperty("os.name").equals("windows")) {
-            System.out.println("Hi");
-            if (new File("C:\\Hadoop\\hadoop-2.8.1").exists()) {
-                System.setProperty("hadoop.home.dir", "C:\\Hadoop");
-            } else {
-                System.out.println("Install WINUTIL.EXE from and unpack it in C:\\Windows");
-                return false;
-            }
-        }
-        return true;
-    }
-    public static String getYearMonthDayString(String with_yyyy_MM_dd) {
-
-        Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{2})-([0-9]{2})");
-        Matcher dateMatcher = datePattern.matcher(with_yyyy_MM_dd);
-        if (dateMatcher.find()) {
-            return dateMatcher.group();
-        }
-        return "UNKNOWN_DATE";
-    }
-
-    public static String getYearMonthString(String with_yyyyMM) {
-        Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{2})");
-        Matcher matcher = datePattern.matcher(with_yyyyMM);
-        if (matcher.find()) {
-            return matcher.group();
-        }
-        return "UNKNOWN_MONTH";
-    }
-
     public static LocalDateTime toLocalDateTime(Timestamp t) {
         Date date = new Date(t.getTime());
         LocalDateTime ld = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -99,20 +65,6 @@ public class Utils {
         return Math.sqrt((squareSum / count - (valueSum / count) * (valueSum / count)));
     }
 
-    public static List<Integer> intRange(int start, int end){
-        if (start < end){
-            List<Integer> l = new ArrayList<>();
-            for (int i = start; i<end; i++){
-                l.add(i);
-            }
-            return l;
-        } else if (start == end){
-            return Collections.singletonList(start);
-        } else {
-            throw new IllegalStateException("start > end!!!");
-        }
-    }
-
     /**
      * Downloads all files of the dataset to HDFS, if they not exists, using Nifi.
      * Also downloads the file with mappings between Zone Ids and Names.
@@ -150,6 +102,12 @@ public class Utils {
         }
     }
 
+    /**
+     * The actual preprocessing execution calling the NiFiAPI
+     * @param file_for_query the input filename on HDFS of the input dataset of the Query
+     * @param preprocessing_template_for_query the name of the NiFi template to use to preprocess
+     * @param force force the preprocessing by deleting input file already present on HDFS
+     */
     public static void doPreProcessing(String file_for_query, String preprocessing_template_for_query, boolean force){
         downloadFilesIfNeeded();
         if (force){

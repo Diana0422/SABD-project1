@@ -31,25 +31,22 @@ public class Query1 extends Query<Query1Result> {
 
     /**
      * Spark Query1:
-     * Average calculation on a monthly basis and on a subset of values:
-     * - avg passengers
-     * - avg tip/(total amount -toll amount)
-     *
+     * Average calculation on a monthly basis of tip/(total amount -toll amount)
      * @param spark the initialized SparkSession
      * @param file  the input file
      * @return List of computed means
      */
-    public List<Query1Result> multiMonthMeans(SparkSession spark, String file) {
+    public List<Query1Result> query1(SparkSession spark, String file) {
         return spark.read().parquet(file)
                 // Converts the typed Dataset<Row> to Dataset<Query1Bean>
                 .as(Encoders.bean(Query1Bean.class))
                 .toJavaRDD()
                 .mapToPair(q1 -> new Tuple2<>(new YearMonthKey(q1.getTpep_dropoff_datetime()), new Query1Calc(1, q1)))
-                /* after mapToPair: ((month, year), (1, passengers, ...)) */
+                /* after mapToPair: ((month, year), Query1Calc(count=1, ratio=tip_amount/(total-toll))) */
                 .reduceByKey(Query1Calc::sumWith)
-                /* after reduceByKey: ((month, year), (count, sum_passengers, ...)) */
-                .map(Query1Result::new)// Query1Result computes means inside the constructor
-                /* after mapValues: ((month, year), (passengers_mean, other_mean...)) */
+                /* after reduceByKey: ((month, year), Query1Calc(count=occurrences, ratio=sum_ratio) */
+                .map(Query1Result::new)// Query1Result computes means inside the constructor using Query1Calc methods
+                /* after map: (Query1Result(yearMonth=YearMonthKey(..), avgRatio=sum_ratio/count , count=occurrences )) */
                 .collect();
     }
 
@@ -65,20 +62,30 @@ public class Query1 extends Query<Query1Result> {
         q.closeSession();
     }
 
+    /**
+     * Triggers the execution of the Query using Spark
+     * @return a list of Query1Result instances
+     */
     public List<Query1Result> processing() {
         System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
-        return multiMonthMeans(spark, FILE_Q1);
+        return query1(spark, FILE_Q1);
     }
 
+    /**
+     * Triggers the execution of the preprocessing using NiFiAPI
+     */
     public void preProcessing() {
         Utils.doPreProcessing(FILE_Q1, PRE_PROCESSING_TEMPLATE_Q1, forcePreprocessing);
     }
 
 
+    /**
+     * Stores the result of the query given in input on the HDFS and also stores the same data on
+     * Redis (serving layer).
+     * @param query1 a list of Query1Result instances (one for each row)
+     */
     public void postProcessing(List<Query1Result> query1) {
         List<CSVQuery1> csvListResult = jc.parallelize(query1)
-                // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
-                // so we force it to use only 1 partition
                 .map(CSVQuery1::new)
                 .collect();
 
@@ -90,11 +97,19 @@ public class Query1 extends Query<Query1Result> {
 
     }
 
+    /**
+     * Stores the final output of the query given in input into the HDFS.
+     * @param query1CsvList the list of CSVQuery1 instances to save in the HDFS as a CSV file
+     * @param q the query executed
+     * @param <T> the specific type of Query executed
+     */
     public static <T extends QueryResult> void storeToCSVOnHDFS(List<CSVQuery1> query1CsvList, Query<T> q) {
         // Dataframe is NOT statically typed, but uses less memory (GC) than dataset
         DataFrameWriter<Row> finalResult = q.spark.createDataFrame(query1CsvList, CSVQuery1.class)
                 .select("year", new String[]{"month", "avgRatio", "count"}) // to set the correct order of columns!
                 .coalesce(1)
+                // sometimes spark produces two partitions (two output files) but the output has only 3 lines,
+                // so we force it to use only 1 partition
                 .sort("year", "month")
                 .write()
                 .mode("overwrite")
@@ -106,6 +121,11 @@ public class Query1 extends Query<Query1Result> {
         q.copyAndRenameOutput(OUT_HDFS_URL_Q1, RESULT_DIR1);
     }
 
+
+    /**
+     * Saves in Redis the final output ad a HashMap
+     * @param csvListResult the list of CSVQuery1 output instances
+     */
     public static void storeQuery1ToRedis(List<CSVQuery1> csvListResult) {
         try (Jedis jedis = new Jedis("redis://redis:6379")) {
             for (CSVQuery1 t : csvListResult) {
@@ -113,7 +133,7 @@ public class Query1 extends Query<Query1Result> {
                 m.put("year_month", t.getYearMonth());
                 m.put("avg_ratio", String.valueOf(t.getAvgRatio()));
                 m.put("count", String.valueOf(t.getCount()));
-                jedis.hset(t.getYearMonth(), m);
+                jedis.hset(t.getYearMonth(), m);//saves a HashMap for each instance with key YYYY/MM
             }
         }
         System.out.println("================= Stored on REDIS =================");
