@@ -63,7 +63,8 @@ public class QuerySQL2 extends Query<CSVQuery2> {
                 .withColumn("hour", date_trunc("hour", col("pickup"))) // gets the date and the hour
                 .createOrReplaceTempView("query2");
 
-        Dataset<Row> hourlyTips = spark.sql("SELECT hour, avg(tip_amount) as avg_tip, stddev(tip_amount) as stddev_tip \n" +
+        Dataset<Row> hourlyTips = spark.sql("SELECT hour, avg(tip_amount) as avg_tip, \n" +
+                                            "       stddev(tip_amount) as stddev_tip \n" +
                                             "FROM query2 \n" +
                                             "GROUP BY hour \n");
         hourlyTips.createOrReplaceTempView("hourly_tips");
