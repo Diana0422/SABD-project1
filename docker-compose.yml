@@ -70,7 +70,7 @@ services:
     env_file:
       - ./hadoop.env
 
-  datanode: # se il datanode va in un ciclo di riavvii, bisogna eliminare tutti i container e volumi di questo compose e riavviare.
+  datanode: # if the datanode loops between start and stop, all HDFS containers must be deleted
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
