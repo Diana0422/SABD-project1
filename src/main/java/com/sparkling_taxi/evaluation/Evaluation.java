@@ -45,7 +45,7 @@ public class Evaluation {
         Evaluation e;
 //        e = new Evaluation("-nifi&spark", 10);
 //        nifiAndSparkPerformance(e);
-        e = new Evaluation("-spark", 2);
+        e = new Evaluation("-spark", 10);
         sparkPerformance(e);
     }
 
