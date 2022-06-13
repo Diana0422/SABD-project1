@@ -45,6 +45,11 @@ public class QuerySQL3 extends Query<CSVQuery3> {
         }
     }
 
+    /**
+     * Does the preprocessing with using a fixed NiFi template, if the input file for processing is not already present.
+     * If the field forcePreprocessing is true, the preprocessing is always done.
+     * It also downloads the dataset, but only if they are not already downloaded on HDFS.
+     */
     public void preProcessing() {
         Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3, forcePreprocessing);
     }
@@ -54,7 +59,7 @@ public class QuerySQL3 extends Query<CSVQuery3> {
      * - the average number of passengers,
      * - the mean and standard deviation of fare_amount
      *
-     * @return the query3 result list
+     * @return the CsvQuery3 result list
      */
     public List<CSVQuery3> processing() {
         System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
@@ -66,7 +71,7 @@ public class QuerySQL3 extends Query<CSVQuery3> {
 
         // groups by day and location the number of trips with the location as destination,
         // the average numbers of passengers and fare amount and also the fare amount stdev.
-        // the only thing that remains to compute si the rank of each location
+        // the only thing that remains to compute is the rank of each location
         String sql = "SELECT day, location, count(location) AS occurrence, avg(passengers) as avg_passengers, " +
                      "avg(fare_amount) as avg_fare_amount, stddev(fare_amount) as stddev_fare_amount" +
                      " FROM query3 GROUP BY day, location";
@@ -84,6 +89,7 @@ public class QuerySQL3 extends Query<CSVQuery3> {
         String calcTop5 = "SELECT * FROM sql2 WHERE rank <= 5\n";
         List<Row> query3 = spark.sql(calcTop5).collectAsList();
 
+        // collects the taxi zones in a Map.
         Map<String, String> zones = spark.read()
                 .option("header", false)
                 .csv(ZONES_CSV)
@@ -94,8 +100,8 @@ public class QuerySQL3 extends Query<CSVQuery3> {
                 .map(row -> new Zone(row.getString(0), row.getString(1), row.getString(2)))
                 .collect(Collectors.toMap(Zone::getId, Zone::zoneString));
 
+        // gets five by five the most popular destinations and saves them in a single record (CSVQuery3)
         List<CSVQuery3> query3CsvList = new ArrayList<>();
-
         for (int i = 0; i < query3.size() / RANKING_SIZE; i++) {
             List<Row> five = getFive(query3, i);
             List<String> locations = new ArrayList<>();
@@ -104,7 +110,7 @@ public class QuerySQL3 extends Query<CSVQuery3> {
             List<Double> meanFareAmounts = new ArrayList<>();
             List<Double> stdDevFareAmounts = new ArrayList<>();
             for (Row row : five) {
-                locations.add(zones.get(String.valueOf(row.getLong(1))));
+                locations.add(zones.get(String.valueOf(row.getLong(1)))); // also maps the zones
                 trips.add(String.valueOf(row.getLong(2)));
                 meanPassengers.add(row.getDouble(3));
                 meanFareAmounts.add(row.getDouble(4));
@@ -116,13 +122,27 @@ public class QuerySQL3 extends Query<CSVQuery3> {
         return query3CsvList;
     }
 
+    /**
+     * Saves the result on Redis and on HDFS in CSV format.
+     * @param result a list of CSVQuery3
+     */
     public void postProcessing(List<CSVQuery3> query3CsvList) {
+        // saving the result on hdfs...
         Query3.storeToCSVOnHDFS(query3CsvList, this);
-        // REDIS
+        System.out.println("================== written csv to HDFS =================");
+        // ...and also on redis
         Query3.storeQuery3ToRedis(query3CsvList);
+        System.out.println("================== copied csv to local FS =================");
+
     }
 
-
+    /**
+     * Get max five consecutive elements from a list, starting from a multiple of five.
+     * @param list the list to get 5 elements from
+     * @param offset the index of the multiple of five. For the first 5 elements, 0, for the second 5 elements, 1 and so on.
+     * @return a list with max consecutive 5 elements from the input list.
+     * @param <T> the generic type of the list.
+     */
     public static <T> List<T> getFive(List<T> list, int offset) {
         int start = offset * 5;
         int size = list.size();

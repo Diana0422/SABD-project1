@@ -44,10 +44,19 @@ public abstract class Query<T extends QueryResult> {
         if (spark != null) spark.close();
     }
 
+    /**
+     * Does the preprocessing with using a fixed NiFi template, if the input file for processing is not already present.
+     * If the field forcePreprocessing is true, the preprocessing is always done.
+     * It also downloads the dataset, but only if they are not already downloaded on HDFS.
+     */
     public abstract void preProcessing();
 
     public abstract List<T> processing();
 
+    /**
+     * Implements the post processing for the query
+     * @param queryResultList a list of queryResults
+     */
     public abstract void postProcessing(List<T> queryResultList);
 
     public void copyAndRenameOutput(String outHDFS, String resultDir) {
