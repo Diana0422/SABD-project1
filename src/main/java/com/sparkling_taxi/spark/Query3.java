@@ -5,8 +5,6 @@ import com.sparkling_taxi.bean.query3.*;
 import com.sparkling_taxi.evaluation.Performance;
 import com.sparkling_taxi.sparksql.QuerySQL3;
 import com.sparkling_taxi.utils.Utils;
-import lombok.var;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -50,39 +48,42 @@ public class Query3 extends Query<Query3Result> {
     }
 
 
+    /**
+     * Triggers the execution of the preprocessing using NiFiAPI
+     */
     public void preProcessing() {
         Utils.doPreProcessing(FILE_Q3, PRE_PROCESSING_TEMPLATE_Q3, forcePreprocessing);
+    }
+
+    /**
+     * Triggers the execution of the Query using Spark
+     * @return a list of Query3Result instances
+     */
+    public List<Query3Result> processing() {
+        System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
+        return query3(spark, FILE_Q3);
     }
 
     /**
      * Identify the top-5 most popular DOLocationIDs, indicating for each one:
      * - the average number of passengers,
      * - the mean and standard deviation of fare_amount
+     * - the number of total trips
      *
      * @return the query3 result list
      */
-    public List<Query3Result> processing() {
-        System.out.println("======================= Running " + this.getClass().getSimpleName() + " =======================");
-        return mostPopularDestinationWithStdDev(spark, FILE_Q3);
-    }
-
-    public static List<Query3Result> mostPopularDestinationWithStdDev(SparkSession spark, String file) {
+    public static List<Query3Result> query3(SparkSession spark, String file) {
         return spark.read().parquet(file)
                 .as(Encoders.bean(Query3Bean.class))
                 .toJavaRDD()
-                // Every element in the PairRdd contains: (DOLocationID, (1, passengers, fare_amount))
-                // the "1" is used to count the occurrence of trips in the location
-                // after mapToPair: ((day, location), (1, passengers, fare_amount, square_fare_amount))
-                .mapToPair(bean -> new Tuple2<>(new DayLocationKey(bean.getTpep_dropoff_datetime(), bean.getDOLocationID()), new Query3Calc(1, bean))) // OK
-                // after reduceByKey: ((day, location), (day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount))
+                .mapToPair(bean -> new Tuple2<>(new DayLocationKey(bean.getTpep_dropoff_datetime(), bean.getDOLocationID()), new Query3Calc(1, bean)))
+                /* after mapToPair: (DayLocationKey(day=bean.getTpep_dropoff_datetime(), destination=bean.getDOLocationID()), Query3Calc(1, passengers, fare_amount, square_fare_amount)) */
                 .reduceByKey(Query3Calc::sumWith)
-                // moves the location inside the value and the key now is the day
-                .mapToPair(pair -> new Tuple2<>(pair._1.getDay(), new Tuple2<>(pair._1.getDestination(), pair._2)))
-                // group by day: (day, Iterable[locID, day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount)])
-                .groupByKey()
-                // gets the top5 locations.
-                // After flatMapValues: (day, (location, day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount))
-                .flatMapValues(t -> {
+                /* after reduceByKey: (DayLocationKey(day, destination), QueryCalc3(day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount))*/
+                .mapToPair(pair -> new Tuple2<>(pair._1.getDay(), new Tuple2<>(pair._1.getDestination(), pair._2)))// moves the destination inside the value and the key now is the day
+                .groupByKey()// group by day
+                /* after groupByKey: (day, Iterable[locID, day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount)])*/
+                .flatMapValues(t -> {// gets the top5 locations.
                     List<Tuple2<Long, Query3Calc>> list = StreamSupport.stream(t.spliterator(), false).collect(Collectors.toList());
                     List<Tuple2<Long, Query3Calc>> top = new ArrayList<>();
                     for (int i = 0; i < RANKING_SIZE; i++) {
@@ -94,11 +95,18 @@ public class Query3 extends Query<Query3Result> {
                     }
                     return top.iterator();
                 })
+                /* after flatMapValues: (day, (location, day_loc_trips, day_loc_sum_passengers, day_loc_sum_fare_amount, day_loc_sum_square_fare_amount))*/
                 .map(resultPair -> new Query3Result(resultPair._1, resultPair._2._1, resultPair._2._2))
+                /* after map: (Query3Result(location, day, trips, meanPassengers, meanFareAmount, stdDevFareAmount))*/
                 .collect();
     }
 
-    public void postProcessing(List<Query3Result> query3) {
+    /**
+     * Stores the result of the query given in input on the HDFS and also stores the same data on
+     * Redis (serving layer).
+     * @param result a list of Query3Result instances (one for each row)
+     */
+    public void postProcessing(List<Query3Result> result) {
         Map<String, String> zones = spark.read()
                 .option("header", false)
                 .csv(ZONES_CSV)
@@ -109,11 +117,11 @@ public class Query3 extends Query<Query3Result> {
                 .map(row -> new Zone(row.getString(0), row.getString(1), row.getString(2)))
                 .collect(Collectors.toMap(Zone::getId, Zone::zoneString));
 
-        query3 = query3.stream().sorted(Comparator.comparing(Query3Result::getDay)).collect(Collectors.toList());
+        result = result.stream().sorted(Comparator.comparing(Query3Result::getDay)).collect(Collectors.toList());
 
         List<CSVQuery3> query3CsvList = new ArrayList<>();
-        for (int i = 0; i < query3.size() / RANKING_SIZE; i++) {
-            List<Query3Result> five = QuerySQL3.getFive(query3, i);
+        for (int i = 0; i < result.size() / RANKING_SIZE; i++) {
+            List<Query3Result> five = QuerySQL3.getFive(result, i);
             List<String> locations = new ArrayList<>();
             List<String> trips = new ArrayList<>();
             List<Double> meanPassengers = new ArrayList<>();
@@ -135,6 +143,12 @@ public class Query3 extends Query<Query3Result> {
         storeQuery3ToRedis(query3CsvList);
     }
 
+    /**
+     * Stores the final output of the query given in input into the HDFS.
+     * @param query3CsvList the list of CSVQuery3 instances to save in the HDFS as a CSV file
+     * @param q the query executed
+     * @param <T> the specific type of Query executed
+     */
     public static <T extends QueryResult> void storeToCSVOnHDFS(List<CSVQuery3> query3CsvList, Query<T> q) {
         DataFrameWriter<Row> finalResult = q.spark.createDataFrame(query3CsvList, CSVQuery3.class)
                 .select("day",
@@ -158,6 +172,10 @@ public class Query3 extends Query<Query3Result> {
         System.out.println("================== copied csv to local FS =================");
     }
 
+    /**
+     * Saves in Redis the final output ad a HashMap
+     * @param query3CsvList the list of CSVQuery3 output instances
+     */
     public static void storeQuery3ToRedis(List<CSVQuery3> query3CsvList) {
         try (Jedis jedis = new Jedis(REDIS_URL)) {
             for (CSVQuery3 q : query3CsvList) {

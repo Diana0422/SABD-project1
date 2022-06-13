@@ -179,10 +179,8 @@ public class Query2 extends Query<Query2Result> {
                 /* after mapToPair: (hourTs, Query2Calc(count =1, tipAmount=bean.getTipAmount(), squareTipAmount=tipAmount*tipAmount, paymentDistribution = [0L, .., 1L, ..0L], locationDistribution = [0L, .., 1L, ..0L])) */
                 .reduceByKey(Query2Calc::sumWith) // sums all previous data by hour
                 /* after reduceByKey: (hourTs, Query2Calc(total_trip_count, sum_of_tips, sum_of_square_tips, final_payment_type_distribution, final_PULocation_trips_distribution)) */
-                // computes means, standard deviations, max payment types and location distribution of trips for each hour
-                // (hourTs, Query2Result(avgTip, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations)
                 .map(Query2Result::new)// computes average, standard deviations, max payment types and location distribution of trips for each hour
-                /* after map: (Query2Result(hour=hourString, avgTip=sum_of_trips/total_trip_count,    ))*/
+                /* after map: (Query2Result(hour=hourString, avgTip=sum_of_trips/total_trip_count, stdDevTip, mostPopularPaymentType, distribution_of_trips_for_265_locations))*/
                 .collect();
     }
 

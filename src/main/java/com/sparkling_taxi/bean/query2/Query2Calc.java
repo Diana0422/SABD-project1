@@ -66,6 +66,11 @@ public class Query2Calc implements Serializable {
         return Utils.stddev(count, tipAmount, squareTipAmount);
     }
 
+    /**
+     * Gets the payment type (numeric value) that corresponds to the highest value
+     * in the paymentTypeDistribution array.
+     * @return the Long value of the payment type
+     */
     public Long getMostPopularPaymentType() {
         // gets the payment type with max occurences. If nothing is found, returns the UNKNOWN type.
         long argmax = 0L;
@@ -80,6 +85,11 @@ public class Query2Calc implements Serializable {
         return argmax;
     }
 
+    /**
+     * Computes the distribution for each location Long in the array locationDistribution
+     * with respect to the total number of trips obtained previously
+     * @return array of Double that contains the percentage value of the distribution for each location
+     */
     public Double[] computeLocationDistribution() {
         Double[] percent = new Double[NUM_LOCATIONS.intValue()];
         for (int i = 0; i < NUM_LOCATIONS; i++) {
